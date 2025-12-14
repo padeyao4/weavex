@@ -1,20 +1,5 @@
 import { v4 } from "uuid";
-export interface PNode {
-  id: string; // 节点的唯一标识符
-  title: string; // 节点标题
-  description: string; // 节点描述
-  record: string; // 节点详细记录
-  readonly createdAt: Date; // 节点创建时间（只读）
-  readonly updatedAt: Date; // 节点最后更新时间（只读）
-  startAt: Date; // 节点开始时间
-  endAt: Date; // 节点结束时间
-  parents: PNode[]; // 父节点列表
-  children: PNode[]; // 子节点列表
-  nexts: PNode[]; // 后续节点列表
-  previous: PNode[]; // 前驱节点列表
-  completedAt: Date; // 节点完成时间
-  completed: boolean; // 节点是否已完成
-}
+import { PNode } from "./p-node";
 
 // 创建节点
 export function createNode(): PNode {
@@ -23,17 +8,58 @@ export function createNode(): PNode {
     title: "",
     description: "",
     record: "",
+    row: 0,
+    column: 0,
     createdAt: new Date(),
     updatedAt: new Date(),
     startAt: new Date(),
     endAt: new Date(),
-    parents: [],
+    parent: undefined,
     children: [],
     nexts: [],
     previous: [],
     completedAt: new Date(0),
     completed: false,
   };
+}
+
+export function addChild(parent: PNode, child: PNode): void {
+  parent.children.push(child);
+  child.parent = parent;
+}
+
+export function removeChild(parent: PNode, child: PNode): void {
+  const index = parent.children.indexOf(child);
+  if (index !== -1) {
+    parent.children.splice(index, 1);
+    child.parent = undefined;
+  }
+}
+
+export function addPrevious(parent: PNode, child: PNode): void {
+  parent.previous.push(child);
+  child.nexts.push(parent);
+}
+
+export function addNext(parent: PNode, child: PNode): void {
+  parent.nexts.push(child);
+  child.previous.push(parent);
+}
+
+export function removePrevious(parent: PNode, child: PNode): void {
+  const index = parent.previous.indexOf(child);
+  if (index !== -1) {
+    parent.previous.splice(index, 1);
+    child.nexts.splice(child.nexts.indexOf(parent), 1);
+  }
+}
+
+export function removeNext(parent: PNode, child: PNode): void {
+  const index = parent.nexts.indexOf(child);
+  if (index !== -1) {
+    parent.nexts.splice(index, 1);
+    child.previous.splice(child.previous.indexOf(parent), 1);
+  }
 }
 
 // 更新节点
@@ -66,66 +92,16 @@ export function resetNode(node: PNode): PNode {
   resetNode.completed = false;
   return resetNode;
 }
-// 生成假数据
-export function generateMockData(count: number): PNode[] {
-  const mockNodes: PNode[] = [];
-  const now = new Date();
 
-  for (let i = 0; i < count; i++) {
-    const id = v4();
-    const createdAt = new Date(
-      now.getTime() - Math.random() * 30 * 24 * 60 * 60 * 1000,
-    ); // 过去30天内随机时间
-    const startAt = new Date(
-      createdAt.getTime() + Math.random() * 7 * 24 * 60 * 60 * 1000,
-    ); // 创建后7天内开始
-    const endAt = new Date(
-      startAt.getTime() + Math.random() * 14 * 24 * 60 * 60 * 1000,
-    ); // 开始后14天内结束
-
-    const node: PNode = {
-      id,
-      title: `任务 ${i + 1}`,
-      description: `这是第 ${i + 1} 个任务的描述`,
-      record: `任务 ${i + 1} 的详细记录`,
-      createdAt,
-      updatedAt: new Date(
-        createdAt.getTime() + Math.random() * 10 * 24 * 60 * 60 * 1000,
-      ),
-      startAt,
-      endAt,
-      parents: [],
-      children: [],
-      nexts: [],
-      previous: [],
-      completedAt:
-        Math.random() > 0.5
-          ? new Date(endAt.getTime() - Math.random() * 3 * 24 * 60 * 60 * 1000)
-          : new Date(0),
-      completed: Math.random() > 0.5,
-    };
-
-    mockNodes.push(node);
-  }
-
-  // 随机建立一些关系
-  for (let i = 0; i < mockNodes.length; i++) {
-    const node = mockNodes[i];
-
-    // 随机添加父节点
-    if (i > 0 && Math.random() > 0.7) {
-      const parentIndex = Math.floor(Math.random() * i);
-      node.parents.push(mockNodes[parentIndex]);
-      mockNodes[parentIndex].children.push(node);
-    }
-
-    // 随机添加上一个节点
-    if (i > 0 && Math.random() > 0.6) {
-      const prevIndex = Math.floor(Math.random() * i);
-      node.previous.push(mockNodes[prevIndex]);
-      mockNodes[prevIndex].nexts.push(node);
-    }
-  }
-
-  return mockNodes;
+/**
+ * 创建模板数据
+ * @returns
+ */
+export function createTemplateData(): PNode[] {
+  const nodeA = createNode();
+  const nodeB = createNode();
+  const nodeC = createNode();
+  addNext(nodeA, nodeB);
+  addNext(nodeB, nodeC);
+  return [nodeA, nodeB, nodeC];
 }

@@ -1,23 +1,11 @@
 <script lang="ts" setup>
 import { Graph } from "@antv/g6";
 import { onMounted } from "vue";
-import { createNode, PNode } from "./utils/node-beans-util";
+import { createTemplateData } from "./utils/node-beans-util";
+import { convert2Data } from "./utils/graph-data-util";
 
-const root: PNode = createNode();
-
-const data = {
-    nodes: [
-        {
-            id: "node2",
-            x: 100,
-            y: 100,
-            size: {
-                width: 100,
-                height: 50,
-            },
-        },
-    ],
-};
+const templateData = createTemplateData();
+const data = convert2Data(templateData);
 
 onMounted(() => {
     const graph = new Graph({
@@ -47,7 +35,7 @@ onMounted(() => {
 <style scoped>
 #container {
     width: 100%;
-    height: 100%;
+    height: 100vh;
     background-color: #841;
 }
 </style>
