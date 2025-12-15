@@ -1,11 +1,10 @@
 <script lang="ts" setup>
 import { Graph } from "@antv/g6";
 import { onMounted } from "vue";
-import { createTemplateData } from "./utils/node-beans-util";
-import { convert2Data } from "./utils/graph-data-util";
+import { createTemplateData, convert } from "./utils";
 
-const templateData = createTemplateData();
-const data = convert2Data(templateData);
+const root = createTemplateData();
+const data = convert(root);
 
 onMounted(() => {
     const graph = new Graph({
@@ -20,11 +19,18 @@ onMounted(() => {
                 fill: "#e6f7ff", // 填充色
                 stroke: "#91d5ff", // 边框色
                 lineWidth: 1, // 边框宽度
-                r: 20, // 半径
-                labelText: (d) => d.id, // 标签文本
+                labelText: (d) => d.label as string, // 标签文本
             },
         },
-        behaviors: ["drag-element", "zoom-canvas", "drag-canvas"],
+        behaviors: [
+            {
+                type: "drag-element",
+            },
+            "zoom-canvas",
+            {
+                type: "drag-canvas",
+            },
+        ],
     });
     graph.render();
 });

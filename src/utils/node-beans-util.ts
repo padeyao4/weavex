@@ -26,6 +26,7 @@ export function createNode(): PNode {
 export function addChild(parent: PNode, child: PNode): void {
   parent.children.push(child);
   child.parent = parent;
+  // todo 所有子节点都需要添加parent
 }
 
 export function removeChild(parent: PNode, child: PNode): void {
@@ -34,6 +35,7 @@ export function removeChild(parent: PNode, child: PNode): void {
     parent.children.splice(index, 1);
     child.parent = undefined;
   }
+  // todo 所有子节点都需要移除parent
 }
 
 export function addPrevious(parent: PNode, child: PNode): void {
@@ -91,17 +93,4 @@ export function resetNode(node: PNode): PNode {
   resetNode.completedAt = new Date(0);
   resetNode.completed = false;
   return resetNode;
-}
-
-/**
- * 创建模板数据
- * @returns
- */
-export function createTemplateData(): PNode[] {
-  const nodeA = createNode();
-  const nodeB = createNode();
-  const nodeC = createNode();
-  addNext(nodeA, nodeB);
-  addNext(nodeB, nodeC);
-  return [nodeA, nodeB, nodeC];
 }
