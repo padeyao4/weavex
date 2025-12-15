@@ -10,22 +10,25 @@ export function createTemplateData(): PNode {
   nodeA.column = 0;
   nodeA.title = "Node A";
   const nodeB = createNode();
-  nodeB.column = 100;
+  nodeB.column = 200;
   nodeB.title = "Node B";
   const nodeC = createNode();
-  nodeC.column = 200;
+  nodeC.column = 400;
   nodeC.title = "Node C";
 
   const node1 = createNode();
-  node1.column = 300;
+  node1.column = 200;
+  node1.row = 0;
   node1.title = "Node 1";
 
   const node2 = createNode();
-  node2.column = 400;
+  node2.row = 0;
+  node2.column = 300;
   node2.title = "Node 2";
 
   const node3 = createNode();
-  node3.column = 500;
+  node3.row = 0;
+  node3.column = 300;
   node3.title = "Node 3";
 
   addNext(node1, node2);

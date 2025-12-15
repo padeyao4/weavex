@@ -31,6 +31,9 @@ onMounted(() => {
                 type: "drag-canvas",
             },
         ],
+        layout: {
+            type: "force",
+        },
     });
     graph.render();
 });

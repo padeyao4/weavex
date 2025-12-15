@@ -24,18 +24,39 @@ export function createNode(): PNode {
 }
 
 export function addChild(parent: PNode, child: PNode): void {
-  parent.children.push(child);
-  child.parent = parent;
-  // todo 所有子节点都需要添加parent
+  const visited = new Set<String>();
+  function dfs(node: PNode) {
+    if (visited.has(node.id)) {
+      return;
+    }
+    visited.add(node.id);
+    node.parent = parent;
+    parent.children.push(node);
+    for (const next of node.nexts) {
+      dfs(next);
+    }
+  }
+  dfs(child);
 }
 
 export function removeChild(parent: PNode, child: PNode): void {
-  const index = parent.children.indexOf(child);
-  if (index !== -1) {
-    parent.children.splice(index, 1);
-    child.parent = undefined;
+  const visited = new Set<String>();
+  function dfs(node: PNode) {
+    if (visited.has(node.id)) {
+      return;
+    }
+    visited.add(node.id);
+
+    const index = parent.children.indexOf(node);
+    if (index !== -1) {
+      parent.children.splice(index, 1);
+      node.parent = undefined;
+    }
+    for (const next of node.nexts) {
+      dfs(next);
+    }
   }
-  // todo 所有子节点都需要移除parent
+  dfs(child);
 }
 
 export function addPrevious(parent: PNode, child: PNode): void {
