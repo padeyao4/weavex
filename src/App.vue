@@ -5,9 +5,9 @@
 <script lang="ts" setup>
 import { Graph, GraphData } from "@antv/g6";
 import { onMounted } from "vue";
-import { mock3 } from "./utils";
+import { mock1 } from "./utils";
 
-const data: GraphData = mock3();
+const data: GraphData = mock1();
 
 onMounted(() => {
     // 创建图实例
@@ -25,7 +25,7 @@ onMounted(() => {
                 stroke: "#91d5ff",
                 lineWidth: 1,
                 radius: 4,
-                labelText: (d: any) => d.id,
+                labelText: (d: any) => d.title,
                 labelBackground: true,
                 labelBackgroundOpacity: 0.7,
                 labelBackgroundRadius: 2,
@@ -84,12 +84,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-* {
-    padding: 0;
-    margin: 0;
-    box-sizing: border-box;
-}
-
 #container {
     width: 100%;
     height: 100vh;
