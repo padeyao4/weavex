@@ -1,5 +1,5 @@
 <template>
-    <div id="container"></div>
+    <div id="container" class="w-full h-screen overflow-hidden" />
 </template>
 
 <script lang="ts" setup>
@@ -83,11 +83,4 @@ onMounted(() => {
 });
 </script>
 
-<style scoped>
-#container {
-    width: 100%;
-    height: 100vh;
-    border-radius: 4px;
-    overflow: hidden;
-}
-</style>
+<style scoped></style>
