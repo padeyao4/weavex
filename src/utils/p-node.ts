@@ -1,8 +1,6 @@
 export interface PNode {
   id: string; // 节点的唯一标识符
   title: string; // 节点标题
-  row: number; // 节点行数
-  column: number; // 节点列数
   description: string; // 节点描述
   record: string; // 节点详细记录
   readonly createdAt: Date; // 节点创建时间（只读）

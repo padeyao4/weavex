@@ -3,13 +3,11 @@
 </template>
 
 <script lang="ts" setup>
-import { Graph } from "@antv/g6";
+import { Graph, GraphData } from "@antv/g6";
 import { onMounted } from "vue";
-import { createTemplateData, convert } from "./utils";
+import { mock3 } from "./utils";
 
-// 创建测试数据
-const root = createTemplateData();
-const data = convert(root);
+const data: GraphData = mock3();
 
 onMounted(() => {
     // 创建图实例
@@ -21,13 +19,13 @@ onMounted(() => {
 
         // 节点配置
         node: {
-            type: "rect",
+            type: (value) => value.type ?? "rect",
             style: {
                 fill: "#e6f7ff",
                 stroke: "#91d5ff",
                 lineWidth: 1,
                 radius: 4,
-                labelText: (d: any) => d.label,
+                labelText: (d: any) => d.id,
                 labelBackground: true,
                 labelBackgroundOpacity: 0.7,
                 labelBackgroundRadius: 2,
@@ -53,8 +51,7 @@ onMounted(() => {
         edge: {
             type: "line",
             style: {
-                stroke: "#d9d9d9",
-                lineWidth: 1,
+                endArrow: true,
             },
         },
 
@@ -63,12 +60,9 @@ onMounted(() => {
 
         // 布局配置 - 使用内置的力导向布局
         layout: {
-            // type: "force",
-            type: "custom-layout",
-            linkDistance: 100,
-            nodeStrength: -30,
-            edgeStrength: 0.1,
-            preventOverlap: true,
+            type: "antv-dagre",
+            rankdir: "LR",
+            sortByCombo: true,
         },
 
         // 插件配置
@@ -86,19 +80,19 @@ onMounted(() => {
 
     // 渲染图形
     graph.render();
-
-    console.log("Graph created successfully");
-    console.log("Nodes:", graph.getNodeData());
-    console.log("Edges:", graph.getEdgeData());
-    console.log("Combos:", graph.getComboData());
 });
 </script>
 
 <style scoped>
+* {
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+}
+
 #container {
     width: 100%;
     height: 100vh;
-    /*border: 1px solid #ddd;*/
     border-radius: 4px;
     overflow: hidden;
 }

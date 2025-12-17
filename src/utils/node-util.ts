@@ -12,14 +12,12 @@ import { PNode } from "./p-node";
  *
  * @returns {PNode} 返回一个新创建的PNode对象
  */
-export function createNode(): PNode {
+export function createNode(title: string = ""): PNode {
   return {
     id: v4(), // 使用UUID v4生成全局唯一标识符
-    title: "", // 节点标题，默认为空
+    title: title, // 节点标题，默认为空
     description: "", // 节点描述，默认为空
     record: "", // 节点详细记录，默认为空
-    row: 0, // 行位置，默认为0
-    column: 0, // 列位置，默认为0
     createdAt: new Date(), // 创建时间，设置为当前时间
     updatedAt: new Date(), // 最后更新时间，设置为当前时间
     startAt: new Date(), // 开始时间，设置为当前时间
