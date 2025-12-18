@@ -54,7 +54,7 @@ export class CNode {
     node.nexts.push(this);
   }
 
-  addChildren(node: CNode) {
+  addChild(node: CNode) {
     this.children.push(node);
     node.parent = this;
   }
@@ -80,7 +80,7 @@ export class CNode {
     }
   }
 
-  removeChildren(node: CNode) {
+  removeChild(node: CNode) {
     const index = this.children.indexOf(node);
     if (index !== -1) {
       this.children.splice(index, 1);
@@ -244,6 +244,279 @@ export class CNode {
    * @returns {CNode} 随机生成的CNode对象，表示根节点
    */
   static generateRandomSimpleDAG(): CNode {
-    return CNode.faker();
+    // 生成3到10个随机节点
+    const nodeCount = Math.floor(Math.random() * 8) + 3;
+    const nodes: CNode[] = [];
+
+    // 创建所有节点
+    for (let i = 0; i < nodeCount; i++) {
+      const node = CNode.faker();
+      node.title = `Node ${i + 1}`;
+      nodes.push(node);
+    }
+
+    // 随机添加边，确保不形成环
+    // 使用邻接表来跟踪边
+    const adjacencyList: Map<string, string[]> = new Map();
+    nodes.forEach((node) => adjacencyList.set(node.id, []));
+
+    // 最大边数，避免图过于稠密
+    const maxEdges = Math.min(nodeCount * 2, (nodeCount * (nodeCount - 1)) / 2);
+    const edgeCount = Math.floor(Math.random() * maxEdges) + nodeCount - 1;
+
+    let edgesAdded = 0;
+
+    // 尝试添加边，最多尝试次数避免无限循环
+    const maxAttempts = edgeCount * 10;
+    let attempts = 0;
+
+    while (edgesAdded < edgeCount && attempts < maxAttempts) {
+      attempts++;
+
+      // 随机选择两个不同的节点
+      const sourceIndex = Math.floor(Math.random() * nodeCount);
+      let targetIndex = Math.floor(Math.random() * nodeCount);
+
+      // 确保目标节点不是源节点
+      while (targetIndex === sourceIndex) {
+        targetIndex = Math.floor(Math.random() * nodeCount);
+      }
+
+      const source = nodes[sourceIndex];
+      const target = nodes[targetIndex];
+
+      // 检查边是否已存在
+      if (adjacencyList.get(source.id)!.includes(target.id)) {
+        continue;
+      }
+
+      // 检查添加这条边是否会形成环
+      // 使用DFS检测从target到source是否有路径
+      const hasCycle = this.wouldCreateCycle(
+        source.id,
+        target.id,
+        adjacencyList
+      );
+
+      if (!hasCycle) {
+        // 添加边
+        source.addNext(target);
+        adjacencyList.get(source.id)!.push(target.id);
+        edgesAdded++;
+      }
+    }
+
+    // 找到可能的根节点（没有前驱节点的节点）
+    const rootCandidates = nodes.filter((node) => node.previous.length === 0);
+
+    if (rootCandidates.length === 0) {
+      // 如果没有节点没有前驱，选择第一个节点作为根
+      return nodes[0];
+    }
+
+    // 如果有多个候选根节点，随机选择一个
+    const rootIndex = Math.floor(Math.random() * rootCandidates.length);
+    return rootCandidates[rootIndex];
+  }
+
+  /**
+   * 检查添加从source到target的边是否会形成环
+   * @private
+   * @param sourceId 源节点ID
+   * @param targetId 目标节点ID
+   * @param adjacencyList 邻接表
+   * @returns {boolean} 如果会形成环则返回true
+   */
+  private static wouldCreateCycle(
+    sourceId: string,
+    targetId: string,
+    adjacencyList: Map<string, string[]>
+  ): boolean {
+    // 使用DFS检查从target到source是否有路径
+    const visited = new Set<string>();
+    const stack: string[] = [targetId];
+
+    while (stack.length > 0) {
+      const current = stack.pop()!;
+
+      if (current === sourceId) {
+        return true; // 找到环
+      }
+
+      if (!visited.has(current)) {
+        visited.add(current);
+        const neighbors = adjacencyList.get(current) || [];
+        for (const neighbor of neighbors) {
+          if (!visited.has(neighbor)) {
+            stack.push(neighbor);
+          }
+        }
+      }
+    }
+
+    return false; // 不会形成环
+  }
+
+  /**
+   * 剔除冗余边,
+   * 原理是如果有abc三个节点,边有a->b,b->c,a->c
+   * 那么a->c的边就属于冗余边,需要剔除
+   * 这个方法会修改当前DAG，删除所有冗余边
+   * @returns {number} 删除的冗余边数量
+   */
+  simplifyDAG(): number {
+    // 收集图中的所有节点
+    const allNodes = this.collectAllNodes();
+
+    if (allNodes.length <= 1) {
+      return 0; // 单个节点或空图不需要简化
+    }
+
+    // 拓扑排序
+    const topologicalOrder = this.topologicalSort(allNodes);
+
+    // 计算每个节点的可达集合（通过其他路径可达的节点）
+    const reachable = new Map<string, Set<string>>();
+
+    // 初始化可达集合
+    for (const node of allNodes) {
+      reachable.set(node.id, new Set<string>());
+    }
+
+    // 按拓扑逆序处理节点（从后往前）
+    for (let i = topologicalOrder.length - 1; i >= 0; i--) {
+      const node = topologicalOrder[i];
+      const nodeReachable = reachable.get(node.id)!;
+
+      // 合并所有直接后继的可达集合
+      for (const next of node.nexts) {
+        // 添加直接后继
+        nodeReachable.add(next.id);
+
+        // 合并后继的可达集合
+        const nextReachable = reachable.get(next.id)!;
+        for (const reachableId of nextReachable) {
+          nodeReachable.add(reachableId);
+        }
+      }
+    }
+
+    // 识别并删除冗余边
+    const edgesToRemove: Array<{ source: CNode; target: CNode }> = [];
+
+    for (const node of allNodes) {
+      // 检查每条直接边是否是冗余的
+      for (const next of node.nexts) {
+        // 如果next可以通过其他路径从node到达（除了直接边），那么这条直接边就是冗余的
+        // 检查node是否可以通过其他直接后继到达next
+        let isRedundant = false;
+
+        // 检查node的其他直接后继是否能够到达next
+        for (const otherNext of node.nexts) {
+          if (otherNext === next) continue; // 跳过当前边
+
+          const otherNextReachable = reachable.get(otherNext.id)!;
+          if (otherNextReachable.has(next.id)) {
+            isRedundant = true;
+            break;
+          }
+        }
+
+        if (isRedundant) {
+          edgesToRemove.push({ source: node, target: next });
+        }
+      }
+    }
+
+    // 删除冗余边
+    for (const { source, target } of edgesToRemove) {
+      source.removeNext(target);
+    }
+
+    // 返回删除的边数，方便调试和验证
+    return edgesToRemove.length;
+  }
+
+  /**
+   * 收集图中的所有节点（深度优先遍历）
+   * @private
+   * @returns {CNode[]} 图中的所有节点
+   */
+  private collectAllNodes(): CNode[] {
+    const visited = new Set<string>();
+    const allNodes: CNode[] = [];
+
+    const dfs = (node: CNode) => {
+      if (visited.has(node.id)) return;
+      visited.add(node.id);
+      allNodes.push(node);
+
+      // 遍历所有关系
+      [...node.children, ...node.nexts, ...node.previous].forEach(dfs);
+    };
+
+    dfs(this);
+    return allNodes;
+  }
+
+  /**
+   * 对DAG进行拓扑排序
+   * @private
+   * @param nodes 图中的所有节点
+   * @returns {CNode[]} 拓扑排序后的节点列表
+   */
+  private topologicalSort(nodes: CNode[]): CNode[] {
+    const visited = new Set<string>();
+    const tempMark = new Set<string>();
+    const result: CNode[] = [];
+
+    const visit = (node: CNode) => {
+      if (tempMark.has(node.id)) {
+        throw new Error("图中存在环，无法进行拓扑排序");
+      }
+
+      if (!visited.has(node.id)) {
+        tempMark.add(node.id);
+
+        // 只处理nexts关系（有向边）
+        for (const next of node.nexts) {
+          visit(next);
+        }
+
+        tempMark.delete(node.id);
+        visited.add(node.id);
+        result.unshift(node); // 添加到结果开头，实现逆后序
+      }
+    };
+
+    for (const node of nodes) {
+      if (!visited.has(node.id)) {
+        visit(node);
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * 生成随机嵌套的复杂DAG图
+   * @returns
+   */
+  static generateRandomCompoundDAG(): CNode {
+    const root = CNode.generateRandomSimpleDAG();
+    root.simplifyDAG();
+    const allNodes = root.collectAllNodes();
+    for (const node of allNodes) {
+      const rand = Math.random();
+      if (rand < 0.4) {
+        const child = CNode.generateRandomSimpleDAG();
+        child.simplifyDAG();
+        const allChildNodes = child.collectAllNodes();
+        for (const childNode of allChildNodes) {
+          node.addChild(childNode);
+        }
+      }
+    }
+    return root;
   }
 }

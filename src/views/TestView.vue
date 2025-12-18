@@ -10,6 +10,7 @@ import { CNode } from "@/utils";
 const taskStore = useTaskStore();
 
 const createTestTask = () => {
-  taskStore.add(CNode.faker());
+  const task = CNode.generateRandomCompoundDAG();
+  taskStore.add(task);
 };
 </script>
