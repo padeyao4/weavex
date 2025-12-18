@@ -8,5 +8,5 @@
 import { useTaskStore } from "@/store/task";
 import PoTaskList from "@/components/PoTaskList.vue";
 const taskStore = useTaskStore();
-taskStore.generateFakerTasks(20);
+taskStore.generateFakerTasks(0);
 </script>

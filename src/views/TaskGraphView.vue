@@ -1,15 +1,28 @@
 <template>
   <div>
-    <div style="height: 56px">header</div>
+    <div style="height: 56px">header {{ taskId }}</div>
     <div style="height: calc(100% - 56px)" id="container"></div>
   </div>
 </template>
 <script setup lang="ts">
-import { convert, mock1 } from "@/utils";
+import { useTaskStore } from "@/store/task";
+import { convert } from "@/utils";
 import { Graph, GraphData } from "@antv/g6";
-import { onMounted } from "vue";
+import { onMounted, computed } from "vue";
+import { useRoute } from "vue-router";
+import { router } from "@/route";
 
-const data: GraphData = convert(mock1());
+const route = useRoute();
+const taskId = route.params.taskId;
+const taskStore = useTaskStore();
+const task = computed(() => taskStore.getTaskById(taskId as string));
+
+if (task.value) {
+  var data: GraphData = convert(task.value!);
+} else {
+  router.push({ name: "tasksSummery" });
+}
+
 onMounted(() => {
   // 创建图实例
   const graph = new Graph({

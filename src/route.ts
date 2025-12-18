@@ -20,6 +20,7 @@ export const router = createRouter({
           children: [
             {
               path: "summery",
+              name: "tasksSummery",
               component: TasksSummeryView,
             },
             {

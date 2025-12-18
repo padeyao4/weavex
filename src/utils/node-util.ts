@@ -41,7 +41,7 @@ export function createNode(title: string = ""): PNode {
  * @param {PNode} parent - 父节点
  * @param {PNode} child - 要添加的子节点
  */
-export function addChild(parent: PNode, child: PNode): void {
+export function addChildWithRaletion(parent: PNode, child: PNode): void {
   // 使用Set记录已访问的节点，防止在循环引用或重复关系中无限递归
   const visited = new Set<String>();
 
@@ -86,7 +86,7 @@ export function addChild(parent: PNode, child: PNode): void {
  * @param {PNode} parent - 父节点
  * @param {PNode} child - 要移除的子节点
  */
-export function removeChild(parent: PNode, child: PNode): void {
+export function removeChildWithRaletion(parent: PNode, child: PNode): void {
   // 使用Set记录已访问的节点，防止在循环引用或重复关系中无限递归
   const visited = new Set<String>();
 
@@ -234,7 +234,7 @@ export function updateNode(
   node: PNode,
   title: string,
   description: string,
-  record: string,
+  record: string
 ): PNode {
   // 创建节点的浅拷贝，避免直接修改原对象
   const updatedNode = { ...node };

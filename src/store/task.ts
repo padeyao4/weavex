@@ -21,4 +21,8 @@ export const useTaskStore = defineStore("tasks", {
       }
     },
   },
+  getters: {
+    getTaskById: (state) => (id: string) =>
+      state.tasks.find((task) => task.id === id),
+  },
 });
