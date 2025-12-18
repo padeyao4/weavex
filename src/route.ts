@@ -1,0 +1,46 @@
+import { createRouter, createWebHistory } from "vue-router";
+import IndexView from "./views/IndexView.vue";
+import TasksView from "./views/TasksView.vue";
+import NotesView from "./views/NotesView.vue";
+import TasksSummeryView from "./views/TasksSummeryView.vue";
+import TaskGraphView from "./views/TaskGraphView.vue";
+import SettingsView from "./views/SettingsView.vue";
+
+export const router = createRouter({
+  history: createWebHistory(),
+  routes: [
+    {
+      path: "/a",
+      component: IndexView,
+      children: [
+        {
+          path: "tasks",
+          component: TasksView,
+          children: [
+            {
+              path: "summery",
+              component: TasksSummeryView,
+            },
+            {
+              path: "graph/:taskId",
+              component: TaskGraphView,
+            },
+          ],
+        },
+        {
+          path: "notes",
+          component: NotesView,
+        },
+      ],
+    },
+    {
+      path: "/settings",
+      name: "settings",
+      component: SettingsView,
+    },
+    {
+      path: "/",
+      redirect: "/a/tasks/summery",
+    },
+  ],
+});
