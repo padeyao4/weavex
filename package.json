@@ -13,6 +13,7 @@
   "dependencies": {
     "@antv/g6": "^5.0.50",
     "@element-plus/icons-vue": "^2.3.2",
+    "@faker-js/faker": "^10.1.0",
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-opener": "^2",
     "@types/splitpanes": "^2.2.6",

@@ -5,11 +5,11 @@
 </template>
 <script setup lang="ts">
 import { useTaskStore } from "@/store/task";
-import { createNode } from "@/utils";
+import { CNode } from "@/utils";
 
 const taskStore = useTaskStore();
 
 const createTestTask = () => {
-  taskStore.add(createNode("123"));
+  taskStore.add(CNode.faker());
 };
 </script>

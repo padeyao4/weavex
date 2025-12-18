@@ -1,24 +1,16 @@
 import { defineStore } from "pinia";
-import { createNode, PNode } from "../utils";
+import { CNode } from "../utils";
 
 export const useTaskStore = defineStore("tasks", {
   state: () => ({
-    tasks: [] as PNode[],
+    tasks: [] as CNode[],
   }),
   actions: {
-    add(task: Partial<PNode>) {
-      const node = createNode();
-      const newNode = { ...node, ...task };
-      this.tasks.push(newNode);
+    add(task: CNode) {
+      this.tasks.push(task);
     },
     remove(id: string) {
       this.tasks = this.tasks.filter((task) => task.id !== id);
-    },
-    generateFakerTasks(count: number) {
-      for (let i = 0; i < count; i++) {
-        const task = createNode(`Task ${i + 1}`);
-        this.add(task);
-      }
     },
   },
   getters: {

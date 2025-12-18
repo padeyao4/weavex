@@ -6,7 +6,6 @@
 </template>
 <script setup lang="ts">
 import { useTaskStore } from "@/store/task";
-import { convert } from "@/utils";
 import { Graph, GraphData } from "@antv/g6";
 import { onMounted, computed } from "vue";
 import { useRoute } from "vue-router";
@@ -18,7 +17,7 @@ const taskStore = useTaskStore();
 const task = computed(() => taskStore.getTaskById(taskId as string));
 
 if (task.value) {
-  var data: GraphData = convert(task.value!);
+  var data: GraphData = task.value.toGraphData();
 } else {
   router.push({ name: "tasksSummery" });
 }

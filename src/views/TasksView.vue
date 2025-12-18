@@ -5,8 +5,5 @@
   </div>
 </template>
 <script setup lang="ts">
-import { useTaskStore } from "@/store/task";
 import PoTaskList from "@/components/PoTaskList.vue";
-const taskStore = useTaskStore();
-taskStore.generateFakerTasks(0);
 </script>
