@@ -5,11 +5,11 @@
   </div>
 </template>
 <script setup lang="ts">
-import { mock1 } from "@/utils";
+import { convert, mock1 } from "@/utils";
 import { Graph, GraphData } from "@antv/g6";
 import { onMounted } from "vue";
 
-const data: GraphData = mock1();
+const data: GraphData = convert(mock1());
 onMounted(() => {
   // 创建图实例
   const graph = new Graph({

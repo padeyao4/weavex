@@ -5,6 +5,7 @@ import NotesView from "./views/NotesView.vue";
 import TasksSummeryView from "./views/TasksSummeryView.vue";
 import TaskGraphView from "./views/TaskGraphView.vue";
 import SettingsView from "./views/SettingsView.vue";
+import TestView from "./views/TestView.vue";
 
 export const router = createRouter({
   history: createWebHistory(),
@@ -30,6 +31,11 @@ export const router = createRouter({
         {
           path: "notes",
           component: NotesView,
+        },
+        {
+          path: "test",
+          name: "test",
+          component: TestView,
         },
       ],
     },
