@@ -69,7 +69,7 @@ onMounted(() => {
     },
 
     // 交互行为
-    behaviors: ["drag-element", "zoom-canvas", "drag-canvas"],
+    behaviors: ["zoom-canvas", "drag-canvas"],
 
     // 布局配置 - 使用内置的力导向布局
     layout: {

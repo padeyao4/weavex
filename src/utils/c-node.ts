@@ -14,7 +14,7 @@ export class CNode {
   updatedAt: Date = new Date(); // 节点最后更新时间
   startAt: Date = new Date(); // 节点开始时间
   endAt: Date = new Date(); // 节点结束时间
-  parent?: CNode; // 父节点
+  parent?: CNode = undefined; // 父节点
   children: CNode[] = []; // 子节点列表
   nexts: CNode[] = []; // 后续节点列表
   previous: CNode[] = []; // 前驱节点列表
@@ -23,6 +23,12 @@ export class CNode {
 
   constructor() {
     this.id = uuidv4();
+  }
+
+  static from(node: Partial<CNode>): CNode {
+    const newNode = new CNode();
+    Object.assign(newNode, node);
+    return newNode;
   }
 
   /**

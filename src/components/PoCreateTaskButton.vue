@@ -23,16 +23,16 @@
 </template>
 <script setup lang="ts">
 import { useTaskStore } from "@/store/task";
-import { PNode } from "@/utils";
+import { CNode } from "@/utils";
 import { ref } from "vue";
 
 const taskStore = useTaskStore();
 const showTaskForm = ref(false);
-const newTaskForm = ref<Partial<PNode>>({});
+const newTaskForm = ref<Partial<CNode>>({});
 
 const createTask = () => {
   showTaskForm.value = true;
-  taskStore.add(newTaskForm.value);
+  taskStore.add(CNode.from(newTaskForm.value as any));
   showTaskForm.value = false;
 };
 </script>
