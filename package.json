@@ -16,6 +16,7 @@
     "@faker-js/faker": "^10.1.0",
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-opener": "^2",
+    "@tauri-apps/plugin-store": "^2.4.1",
     "@types/splitpanes": "^2.2.6",
     "element-plus": "^2.12.0",
     "pinia": "^3.0.4",
