@@ -2,7 +2,7 @@ import { PGraph } from "@/types";
 import { defineStore } from "pinia";
 import { ref } from "vue";
 
-export const useGraphListStore = defineStore(
+export const useGraphsStore = defineStore(
   "graph-storage",
   () => {
     const allGraphs = ref<Record<string, PGraph>>({});

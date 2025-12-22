@@ -25,6 +25,7 @@ export const router = createRouter({
             },
             {
               path: "graph/:taskId",
+              name: "taskGraph",
               component: TaskGraphView,
             },
           ],
@@ -47,6 +48,7 @@ export const router = createRouter({
     },
     {
       path: "/",
+      name: "index",
       redirect: "/a/tasks/summery",
     },
   ],

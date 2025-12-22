@@ -6,4 +6,10 @@
 </template>
 <script setup lang="ts">
 import PoTaskList from "@/components/PoTaskList.vue";
+
+import { useGraphListStore, useGraphsStore } from "@/store";
+
+const graphsStore = useGraphsStore();
+const graphListStore = useGraphListStore();
+graphListStore.loadGraphList(graphsStore.allGraphs);
 </script>

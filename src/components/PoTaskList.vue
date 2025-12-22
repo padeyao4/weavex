@@ -6,12 +6,12 @@
     <hr />
     <el-scrollbar class="overflow-auto">
       <div
-        v-for="task in taskStore.tasks"
-        :key="task.id"
+        v-for="meta in graphListStore.graphsMeta"
+        :key="meta.id"
         class="m-4 p-2 bg-amber-500"
       >
-        <router-link :to="`/a/tasks/graph/${task.id}`">
-          {{ task.title }}
+        <router-link :to="`/a/tasks/graph/${meta.id}`">
+          {{ meta.name }}
         </router-link>
       </div>
     </el-scrollbar>
@@ -22,8 +22,9 @@
 </template>
 
 <script setup lang="ts">
-import { useTaskStore } from "@/store/task";
 import PoCreateTaskButton from "@/components/PoCreateTaskButton.vue";
+import { useGraphListStore } from "@/store";
 import { ElScrollbar } from "element-plus";
-const taskStore = useTaskStore();
+
+const graphListStore = useGraphListStore();
 </script>
