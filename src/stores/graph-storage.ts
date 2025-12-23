@@ -16,8 +16,13 @@ export const useGraphsStore = defineStore("graph-storage", () => {
     }
   }
 
+  function findById(id: string): PGraph | undefined {
+    return allGraphs.value[id];
+  }
+
   return {
     allGraphs,
     generateRandomGraph,
+    findById,
   };
 });

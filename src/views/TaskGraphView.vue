@@ -8,12 +8,19 @@
 import { Graph } from "@antv/g6";
 import { onMounted } from "vue";
 import { useRoute } from "vue-router";
+import { useGraphDetailStore, useGraphsStore } from "@/stores";
 
 const route = useRoute();
 const taskId = route.params.taskId;
+const graphsStore = useGraphsStore();
+const graphDetailStore = useGraphDetailStore();
+
+const graph = graphsStore.findById(taskId as string);
+
+graphDetailStore.setGraph(graph);
 
 // todo 添加测试数据
-const data = {};
+const data = graphDetailStore.toGraphData();
 
 onMounted(() => {
     // 创建图实例

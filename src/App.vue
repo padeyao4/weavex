@@ -2,7 +2,7 @@
     <router-view />
 </template>
 <script setup lang="ts">
-import { useGraphsStore } from "@/store";
+import { useGraphsStore } from "@/stores";
 
 const graphsStore = useGraphsStore();
 graphsStore.generateRandomGraph();
