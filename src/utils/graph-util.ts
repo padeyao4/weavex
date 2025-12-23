@@ -2,6 +2,7 @@ import { PGraph, PNode } from "@/types";
 import { v4 } from "uuid";
 import { ComboData, EdgeData, GraphData, NodeData } from "@antv/g6";
 import { NodeUtil } from "./node-util";
+import { faker } from "@faker-js/faker";
 
 export class GraphUtils {
   static createGraph(graph: Partial<PGraph> = {}): PGraph {
@@ -16,10 +17,16 @@ export class GraphUtils {
     return { id, name, createdAt, updatedAt, rootNodeIds, nodes };
   }
 
+  static fakerGraph() {
+    return this.createGraph({
+      name: faker.book.title(),
+    });
+  }
+
   static updateGraph(
     graph: PGraph,
     name: string,
-    rootNodeIds: string[]
+    rootNodeIds: string[],
   ): PGraph {
     return {
       ...graph,
@@ -119,5 +126,61 @@ export class GraphUtils {
       edges,
       combos,
     };
+  }
+
+  /**
+   * 随机生成一个简单的一层DAG图
+   * @param size 节点数量（默认 10）
+   * @param maxEdge 每个源节点最大出边数（默认 3）
+   * @returns 生成的 PGraph
+   */
+  static randomSampleGraph(size: number = 10, maxEdge: number = 3): PGraph {
+    const graph = this.fakerGraph(); // 假设 createGraph() 返回 { id, name, createdAt 等基础字段 }
+
+    const nodes: PNode[] = [];
+
+    // 1. 创建所有节点（使用 createNode 或 fakerNode）
+    for (let i = 0; i < size; i++) {
+      // 你可以根据需要切换为 NodeUtil.fakerNode()
+      const node = NodeUtil.createNode();
+      graph.nodes[node.id] = node;
+      nodes.push(node);
+    }
+
+    if (size <= 1) {
+      // 单个节点或空图：它自己就是根
+      if (size === 1) {
+        graph.rootNodeIds = [nodes[0].id];
+      }
+      return graph;
+    }
+
+    // 2. 划分 source（前半）和 sink（后半）
+    const mid = Math.max(1, Math.floor(size / 2));
+    const sources = nodes.slice(0, mid);
+    const sinks = nodes.slice(mid);
+
+    // 3. 从 sources 向 sinks 随机连边（保证无环、单层）
+    for (const source of sources) {
+      const maxPossible = Math.min(maxEdge, sinks.length);
+      const edgeCount =
+        maxPossible > 0 ? Math.floor(Math.random() * (maxPossible + 1)) : 0;
+
+      const shuffled = [...sinks].sort(() => 0.5 - Math.random());
+      const targets = shuffled.slice(0, edgeCount);
+
+      for (const sink of targets) {
+        source.nexts.push(sink.id);
+        sink.prevs.push(source.id);
+        // 注意：不设置 parent/children，保持扁平 DAG
+      }
+    }
+
+    // 4. 收集所有 rootNodeIds（即 prevs 为空的节点）
+    graph.rootNodeIds = nodes
+      .filter((node) => node.prevs.length === 0)
+      .map((node) => node.id);
+
+    return graph;
   }
 }

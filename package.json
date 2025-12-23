@@ -17,11 +17,9 @@
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-opener": "^2",
     "@tauri-apps/plugin-store": "^2.4.1",
-    "@types/splitpanes": "^2.2.6",
     "element-plus": "^2.12.0",
     "pinia": "^3.0.4",
     "pinia-plugin-persistedstate": "^4.7.1",
-    "splitpanes": "^4.0.4",
     "uuid": "^13.0.0",
     "vue": "^3.5.13",
     "vue-router": "^4.6.4"
