@@ -75,13 +75,14 @@ export class GraphUtils {
           id: `${node.id}_tail`,
           combo: node.id,
         });
-      }
-
-      if (NodeUtil.isChild(node)) {
+      } else {
         nodes.push({
           id: node.id,
           combo: node.parent,
         });
+      }
+
+      if (NodeUtil.isChild(node)) {
         // 如果是子节点，并且没有前驱节点
         if (NodeUtil.noPrev(node)) {
           edges.push({
@@ -126,6 +127,23 @@ export class GraphUtils {
       edges,
       combos,
     };
+  }
+
+  static generateMackGraph(): PGraph {
+    const graph = this.fakerGraph();
+    const nodeA = NodeUtil.createNode({ title: "a" });
+    const nodeB = NodeUtil.createNode({ title: "b" });
+    const nodeC = NodeUtil.createNode({ title: "c" });
+    const nodeD = NodeUtil.createNode({ title: "d" });
+    NodeUtil.addNext(nodeA, nodeB);
+    NodeUtil.addNext(nodeB, nodeC);
+    NodeUtil.addNext(nodeC, nodeD);
+    graph.rootNodeIds.push(nodeA.id);
+    graph.nodes[nodeA.id] = nodeA;
+    graph.nodes[nodeB.id] = nodeB;
+    graph.nodes[nodeC.id] = nodeC;
+    graph.nodes[nodeD.id] = nodeD;
+    return graph;
   }
 
   /**

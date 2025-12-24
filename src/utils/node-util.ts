@@ -53,6 +53,38 @@ export class NodeUtil {
     child.parent = parent.id;
   }
 
+  static addNext(node: PNode, next: PNode) {
+    node.nexts.push(next.id);
+    next.prevs.push(node.id);
+  }
+
+  static removeNext(node: PNode, next: PNode) {
+    const index = node.nexts.indexOf(next.id);
+    if (index !== -1) {
+      node.nexts.splice(index, 1);
+    }
+    const prevIndex = next.prevs.indexOf(node.id);
+    if (prevIndex !== -1) {
+      next.prevs.splice(prevIndex, 1);
+    }
+  }
+
+  static addPrev(node: PNode, prev: PNode) {
+    node.prevs.push(prev.id);
+    prev.nexts.push(node.id);
+  }
+
+  static removePrev(node: PNode, prev: PNode) {
+    const index = node.prevs.indexOf(prev.id);
+    if (index !== -1) {
+      node.prevs.splice(index, 1);
+    }
+    const nextIndex = prev.nexts.indexOf(node.id);
+    if (nextIndex !== -1) {
+      prev.nexts.splice(nextIndex, 1);
+    }
+  }
+
   static removeChild(parent: PNode, child: PNode) {
     const index = parent.children.indexOf(child.id);
     if (index !== -1) {

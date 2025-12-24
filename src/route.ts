@@ -47,8 +47,7 @@ export const router = createRouter({
       component: SettingsView,
     },
     {
-      path: "/",
-      name: "index",
+      path: "/:pathMatch(.*)*",
       redirect: "/a/tasks/summery",
     },
   ],
