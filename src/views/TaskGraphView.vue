@@ -19,7 +19,6 @@ const graph = graphsStore.findById(taskId as string);
 
 graphDetailStore.setGraph(graph);
 
-// todo 添加测试数据
 const data = graphDetailStore.toGraphData();
 console.log(data);
 

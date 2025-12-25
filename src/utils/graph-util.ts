@@ -63,21 +63,27 @@ export class GraphUtils {
       if (NodeUtil.isCombo(node)) {
         combos.push({
           id: node.id,
+          data: { ...node },
           combo: node.parent,
         });
 
         nodes.push({
-          id: `${node.id}_head`,
+          id: `${node.id}-head`,
+          data: { ...node },
+          type: "circle",
           combo: node.id,
         });
 
         nodes.push({
-          id: `${node.id}_tail`,
+          id: `${node.id}-tail`,
+          data: { ...node },
+          type: "triangle",
           combo: node.id,
         });
       } else {
         nodes.push({
           id: node.id,
+          data: { ...node },
           combo: node.parent,
         });
       }
@@ -86,24 +92,24 @@ export class GraphUtils {
         // 如果是子节点，并且没有前驱节点
         if (NodeUtil.noPrev(node)) {
           edges.push({
-            id: `${node.id}_head_${node.id}`,
-            source: `${node.id}_head`,
+            id: `${node.parent}-head_${node.id}`,
+            source: `${node.parent}-head`,
             target: node.id,
           });
         }
         // 如果是子节点，并且没有后继节点
         if (NodeUtil.noNext(node)) {
           edges.push({
-            id: `${node.id}_${node.id}_tail`,
+            id: `${node.id}_${node.parent}-tail`,
             source: node.id,
-            target: `${node.id}_tail`,
+            target: `${node.parent}-tail`,
           });
         }
       }
 
       for (const next of node.nexts) {
-        const sourceId = NodeUtil.isCombo(node) ? `${node.id}_tail` : node.id;
-        const targetId = NodeUtil.isCombo(mapper[next]) ? `${next}_head` : next;
+        const sourceId = NodeUtil.isCombo(node) ? `${node.id}-tail` : node.id;
+        const targetId = NodeUtil.isCombo(mapper[next]) ? `${next}-head` : next;
         edges.push({
           id: `${sourceId}_${targetId}`,
           source: sourceId,
@@ -135,14 +141,50 @@ export class GraphUtils {
     const nodeB = NodeUtil.createNode({ title: "b" });
     const nodeC = NodeUtil.createNode({ title: "c" });
     const nodeD = NodeUtil.createNode({ title: "d" });
-    NodeUtil.addNext(nodeA, nodeB);
-    NodeUtil.addNext(nodeB, nodeC);
-    NodeUtil.addNext(nodeC, nodeD);
-    graph.rootNodeIds.push(nodeA.id);
+    const node1 = NodeUtil.createNode({ title: "1" });
+    const node2 = NodeUtil.createNode({ title: "2" });
+    const node3 = NodeUtil.createNode({ title: "3" });
     graph.nodes[nodeA.id] = nodeA;
     graph.nodes[nodeB.id] = nodeB;
     graph.nodes[nodeC.id] = nodeC;
     graph.nodes[nodeD.id] = nodeD;
+    graph.nodes[node1.id] = node1;
+    graph.nodes[node2.id] = node2;
+    graph.nodes[node3.id] = node3;
+    NodeUtil.addNext(nodeA, nodeB);
+    NodeUtil.addNext(nodeB, nodeC);
+    NodeUtil.addNext(nodeC, nodeD);
+    NodeUtil.addNext(node1, node2);
+    NodeUtil.addNext(node1, node3);
+    NodeUtil.traverseAndAddChildren(nodeB, node1, graph.nodes);
+    graph.rootNodeIds.push(nodeA.id);
+    return graph;
+  }
+
+  static generateMackGraph2(): PGraph {
+    const graph = this.fakerGraph();
+    const nodeA = NodeUtil.createNode({ title: "a" });
+    const nodeB = NodeUtil.createNode({ title: "b" });
+    graph.nodes[nodeA.id] = nodeA;
+    graph.nodes[nodeB.id] = nodeB;
+    NodeUtil.addChild(nodeA, nodeB);
+    // NodeUtil.traverseAndAddChildren(nodeA, nodeB, graph.nodes);
+    graph.rootNodeIds.push(nodeA.id);
+    return graph;
+  }
+
+  static generateMackGraph3(): PGraph {
+    const graph = this.fakerGraph();
+    const nodeA = NodeUtil.createNode({ title: "a" });
+    const nodeB = NodeUtil.createNode({ title: "b" });
+    const nodeC = NodeUtil.createNode({ title: "c" });
+    graph.nodes[nodeA.id] = nodeA;
+    graph.nodes[nodeB.id] = nodeB;
+    graph.nodes[nodeC.id] = nodeC;
+    NodeUtil.addNext(nodeA, nodeC);
+    NodeUtil.addChild(nodeA, nodeB);
+    // NodeUtil.traverseAndAddChildren(nodeA, nodeB, graph.nodes);
+    graph.rootNodeIds.push(nodeA.id);
     return graph;
   }
 

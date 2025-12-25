@@ -10,8 +10,8 @@ export const useGraphsStore = defineStore("graph-storage", () => {
    * Generates random graphs and adds them to the allGraphs store.
    */
   function generateRandomGraph() {
-    for (let i = 0; i < 10; i++) {
-      const graph = GraphUtils.randomSampleGraph();
+    for (let i = 0; i < 1; i++) {
+      const graph = GraphUtils.generateMackGraph();
       allGraphs.value[graph.id] = graph;
     }
   }

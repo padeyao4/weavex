@@ -48,6 +48,24 @@ export class NodeUtil {
     };
   }
 
+  static traverseAndAddChildren(
+    parent: PNode,
+    child: PNode,
+    nodeMap: Record<string, PNode>,
+  ) {
+    const visited = new Set<string>([...parent.children]);
+    function travel(node: PNode) {
+      if (visited.has(node.id)) return;
+      visited.add(node.id);
+      NodeUtil.addChild(parent, node);
+      const nodeIds = [...node.nexts, ...node.prevs];
+      for (const nodeId of nodeIds) {
+        travel(nodeMap[nodeId]);
+      }
+    }
+    travel(child);
+  }
+
   static addChild(parent: PNode, child: PNode) {
     parent.children.push(child.id);
     child.parent = parent.id;
