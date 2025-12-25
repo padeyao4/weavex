@@ -49,8 +49,10 @@ export class GraphUtils {
    * 将graph中的nodes数据转为GraphData数据
    * @returns
    */
-  static toGraphData(graph: PGraph): GraphData {
-    const mapper = graph.nodes;
+  static toGraphData(graph?: Partial<PGraph>): GraphData {
+    const mapper = graph?.nodes ?? {};
+    const rootNodeIds = graph?.rootNodeIds ?? [];
+
     const nodes: NodeData[] = [];
     const edges: EdgeData[] = [];
     const combos: ComboData[] = [];
@@ -123,7 +125,7 @@ export class GraphUtils {
       }
     }
 
-    for (const rootId of graph.rootNodeIds) {
+    for (const rootId of rootNodeIds) {
       const root = mapper[rootId];
       travel(root);
     }

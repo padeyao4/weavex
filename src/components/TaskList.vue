@@ -6,7 +6,7 @@
         <hr />
         <el-scrollbar class="overflow-auto">
             <div
-                v-for="meta in graphListStore.graphsMeta"
+                v-for="meta in graphsMeta"
                 :key="meta.id"
                 class="m-4 p-2 bg-amber-500"
             >
@@ -23,8 +23,9 @@
 
 <script setup lang="ts">
 import PoCreateTaskButton from "@/components/PoCreateTaskButton.vue";
-import { useGraphListStore } from "@/stores";
+import { useGraphsStore } from "@/stores";
 import { ElScrollbar } from "element-plus";
 
-const graphListStore = useGraphListStore();
+const graphsStore = useGraphsStore();
+const graphsMeta = graphsStore.graphsMeta;
 </script>

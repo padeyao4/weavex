@@ -8,19 +8,16 @@
 import { Graph } from "@antv/g6";
 import { onMounted } from "vue";
 import { useRoute } from "vue-router";
-import { useGraphDetailStore, useGraphsStore } from "@/stores";
+import { useCurrentGraphStore, useGraphsStore } from "@/stores";
+import { GraphUtils } from "@/utils";
 
 const route = useRoute();
 const taskId = route.params.taskId;
+const currentGraphStore = useCurrentGraphStore();
+currentGraphStore.setGraph({ id: taskId as string });
 const graphsStore = useGraphsStore();
-const graphDetailStore = useGraphDetailStore();
 
-const graph = graphsStore.findById(taskId as string);
-
-graphDetailStore.setGraph(graph);
-
-const data = graphDetailStore.toGraphData();
-console.log(data);
+const data = GraphUtils.toGraphData(graphsStore.currentGraph);
 
 onMounted(() => {
     // 创建图实例
