@@ -1,6 +1,6 @@
 import { PGraph } from "@/types";
 import { defineStore } from "pinia";
-import { computed, ref } from "vue";
+import { computed, reactive, ref } from "vue";
 import { GraphUtils } from "@/utils";
 
 export const useCurrentGraphStore = defineStore("graph-detail", () => {
@@ -17,13 +17,13 @@ export const useCurrentGraphStore = defineStore("graph-detail", () => {
 });
 
 export const useGraphsStore = defineStore("graph-storage", () => {
-  const allGraphs = ref<Record<string, PGraph>>({});
+  const allGraphs = reactive<Record<string, PGraph>>({});
 
   const currentGraphStore = useCurrentGraphStore();
 
   const currentGraph = computed(() => {
     if (!currentGraphStore.currentGraphId) return undefined;
-    return allGraphs.value[currentGraphStore.currentGraphId];
+    return allGraphs[currentGraphStore.currentGraphId];
   });
 
   /**
@@ -32,12 +32,16 @@ export const useGraphsStore = defineStore("graph-storage", () => {
   function generateRandomGraph() {
     for (let i = 0; i < 1; i++) {
       const graph = GraphUtils.generateMackGraph();
-      allGraphs.value[graph.id] = graph;
+      allGraphs[graph.id] = graph;
     }
   }
 
+  function addGraph(graph: PGraph) {
+    allGraphs[graph.id] = graph;
+  }
+
   const graphsMeta = computed(() => {
-    return Object.values(allGraphs.value).map((graph) => ({
+    return Object.values(allGraphs).map((graph) => ({
       id: graph.id,
       name: graph.name,
       createdAt: graph.createdAt,
@@ -50,5 +54,6 @@ export const useGraphsStore = defineStore("graph-storage", () => {
     generateRandomGraph,
     graphsMeta,
     currentGraph,
+    addGraph,
   };
 });

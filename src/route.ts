@@ -1,10 +1,10 @@
 import { createRouter, createWebHistory } from "vue-router";
-import IndexView from "./views/IndexView.vue";
-import TasksView from "./views/TasksView.vue";
+import IndexView from "./views/IndexView/index.vue";
+import TasksView from "./views/TasksView/index.vue";
 import NotesView from "./views/NotesView.vue";
 import TasksSummeryView from "./views/TasksSummeryView.vue";
 import TaskGraphView from "./views/TaskGraphView.vue";
-import SettingsView from "./views/SettingsView.vue";
+import SettingsView from "./views/SettingsView/index.vue";
 import TestView from "./views/TestView.vue";
 
 export const router = createRouter({

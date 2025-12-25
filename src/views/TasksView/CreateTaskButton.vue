@@ -4,15 +4,8 @@
         <el-form :model="newTaskForm" label-width="80px">
             <el-form-item label="标题" required>
                 <el-input
-                    v-model="newTaskForm.title"
+                    v-model="newTaskForm.name"
                     placeholder="请输入任务标题"
-                />
-            </el-form-item>
-            <el-form-item label="描述">
-                <el-input
-                    v-model="newTaskForm.description"
-                    type="textarea"
-                    placeholder="请输入任务描述"
                 />
             </el-form-item>
         </el-form>
@@ -26,13 +19,18 @@
 </template>
 <script setup lang="ts">
 import { ref } from "vue";
-import { PNode } from "@/types";
+import { PGraph } from "@/types";
+import { useGraphsStore } from "@/stores";
+import { GraphUtils } from "@/utils";
 
 const showTaskForm = ref(false);
-const newTaskForm = ref<Partial<PNode>>({});
+const newTaskForm = ref<Partial<PGraph>>({});
+const graphsStore = useGraphsStore();
 
 const createTask = () => {
-    showTaskForm.value = true;
+    const graph = GraphUtils.createGraph(newTaskForm.value);
+    graphsStore.addGraph(graph);
     showTaskForm.value = false;
+    newTaskForm.value = {};
 };
 </script>

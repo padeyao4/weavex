@@ -5,5 +5,5 @@
     </div>
 </template>
 <script setup lang="ts">
-import TaskList from "@/components/TaskList.vue";
+import TaskList from "./TaskList.vue";
 </script>

@@ -5,7 +5,7 @@ import { NodeUtil } from "./node-util";
 import { faker } from "@faker-js/faker";
 
 export class GraphUtils {
-  static createGraph(graph: Partial<PGraph> = {}): PGraph {
+  static createGraph(graph?: Partial<PGraph>): PGraph {
     const {
       id = v4(),
       name = "",
@@ -13,7 +13,7 @@ export class GraphUtils {
       updatedAt = Date.now(),
       rootNodeIds = [],
       nodes = {},
-    } = graph;
+    } = graph || {};
     return { id, name, createdAt, updatedAt, rootNodeIds, nodes };
   }
 
