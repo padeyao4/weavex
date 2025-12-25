@@ -1,4 +1,4 @@
-import { PGraph } from "@/types";
+import { PGraph, PNode } from "@/types";
 import { defineStore } from "pinia";
 import { computed, reactive, ref } from "vue";
 import { GraphUtils } from "@/utils";
@@ -31,8 +31,19 @@ export const useGraphsStore = defineStore("graph-storage", () => {
    */
   function generateRandomGraph() {
     for (let i = 0; i < 1; i++) {
-      const graph = GraphUtils.generateMackGraph();
+      const graph = GraphUtils.generateMackGraph4();
       allGraphs[graph.id] = graph;
+    }
+  }
+
+  function addNode(graph?: Partial<PGraph>, node?: PNode) {
+    if (graph?.id && node) {
+      const item = allGraphs[graph.id];
+      item.updatedAt = Date.now();
+      item.nodes[node.id] = node;
+      if (!item.rootNodeIds.includes(node.id)) {
+        item.rootNodeIds.push(node.id);
+      }
     }
   }
 
@@ -54,6 +65,7 @@ export const useGraphsStore = defineStore("graph-storage", () => {
     generateRandomGraph,
     graphsMeta,
     currentGraph,
+    addNode,
     addGraph,
   };
 });

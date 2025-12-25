@@ -190,6 +190,14 @@ export class GraphUtils {
     return graph;
   }
 
+  static generateMackGraph4(): PGraph {
+    const graph = this.fakerGraph();
+    const nodeA = NodeUtil.createNode({ title: "a" });
+    graph.nodes[nodeA.id] = nodeA;
+    graph.rootNodeIds.push(nodeA.id);
+    return graph;
+  }
+
   /**
    * 随机生成一个简单的一层DAG图
    * @param size 节点数量（默认 10）
