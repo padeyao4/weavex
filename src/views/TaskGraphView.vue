@@ -58,12 +58,16 @@ onMounted(() => {
                                 },
                                 { name: "删除节点", value: "node:delete" },
                                 {
-                                    name: "删除前置节点",
-                                    value: "node:delete-with-prev",
+                                    name: "删除前置关系",
+                                    value: "node:delete-prev-edge",
                                 },
                                 {
-                                    name: "删除后续节点",
-                                    value: "node:delete-with-next",
+                                    name: "删除后续关系",
+                                    value: "node:delete-next-edge",
+                                },
+                                {
+                                    name: "删除且保留关系",
+                                    value: "node:delete-keep-edge",
                                 },
                             ];
                         case "edge":
@@ -77,6 +81,10 @@ onMounted(() => {
                                 {
                                     name: "删除组合",
                                     value: "combo:delete",
+                                },
+                                {
+                                    name: "删除且保留关系",
+                                    value: "combo:delete-keep-edge",
                                 },
                             ];
                         case "canvas":
@@ -93,6 +101,56 @@ onMounted(() => {
                     current?: Element,
                 ) => {
                     switch (value) {
+                        case "node:delete-keep-edge":
+                        case "combo:delete-keep-edge":
+                            if (current) {
+                                const currentNode =
+                                    graphsStore.currentGraph?.nodes[current.id];
+                                // 删除当前节点但保留当前节点的关系，比如 a->b->c ,当删除b的时候，变成a->c
+                                // 如果有 a->c b->c  c->d ,当删除c的时候，变成a->d b->d
+                                // 如果有 a->c b->c  c->d c->e ,删除c的时候，变成 a->d b->d a->e b->e
+
+                                if (currentNode) {
+                                    const prevs = [...currentNode.prevs];
+                                    const nexts = [...currentNode.nexts];
+
+                                    // 为每一对（前驱，后继）建立新的边
+                                    for (const prevId of prevs) {
+                                        for (const nextId of nexts) {
+                                            // 避免创建重复的边
+                                            const prevNode =
+                                                graphsStore.currentGraph?.nodes[
+                                                    prevId
+                                                ];
+                                            const nextNode =
+                                                graphsStore.currentGraph?.nodes[
+                                                    nextId
+                                                ];
+                                            if (
+                                                prevNode &&
+                                                nextNode &&
+                                                !prevNode.nexts.includes(nextId)
+                                            ) {
+                                                graphsStore.addEdge(
+                                                    graphsStore.currentGraph,
+                                                    prevId,
+                                                    nextId,
+                                                );
+                                            }
+                                        }
+                                    }
+
+                                    // 删除当前节点
+                                    graphsStore.removeNode(
+                                        graphsStore.currentGraph,
+                                        [current.id],
+                                    );
+                                }
+
+                                graph.setData(data.value);
+                                graph.render();
+                            }
+                            break;
                         case "node:delete":
                         case "combo:delete":
                             if (current) {
@@ -212,6 +270,50 @@ onMounted(() => {
                                 );
                                 graph.setData(data.value);
                                 graph.render();
+                            }
+                            break;
+                        case "node:delete-prev-edge":
+                            // 删除当前节点的所有前置节点（实际上是删除边）
+                            if (current) {
+                                const currentNode =
+                                    graphsStore.currentGraph?.nodes[current.id];
+                                // 创建要删除的边列表
+                                const edgesToDelete =
+                                    currentNode?.prevs.map((id) => ({
+                                        from: id,
+                                        to: current.id,
+                                    })) || [];
+
+                                if (edgesToDelete.length > 0) {
+                                    graphsStore.removeEdge(
+                                        graphsStore.currentGraph,
+                                        edgesToDelete,
+                                    );
+                                    graph.setData(data.value);
+                                    graph.render();
+                                }
+                            }
+                            break;
+                        case "node:delete-next-edge":
+                            // 删除当前节点的所有后续节点（实际上是删除边）
+                            if (current) {
+                                const currentNode =
+                                    graphsStore.currentGraph?.nodes[current.id];
+                                // 创建要删除的边列表
+                                const edgesToDelete =
+                                    currentNode?.nexts.map((id) => ({
+                                        from: current.id,
+                                        to: id,
+                                    })) || [];
+
+                                if (edgesToDelete.length > 0) {
+                                    graphsStore.removeEdge(
+                                        graphsStore.currentGraph,
+                                        edgesToDelete,
+                                    );
+                                    graph.setData(data.value);
+                                    graph.render();
+                                }
                             }
                             break;
                         case "edge:delete":
