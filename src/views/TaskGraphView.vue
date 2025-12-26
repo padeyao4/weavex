@@ -6,9 +6,65 @@
       id="container"
       @contextmenu.prevent
     />
-    <el-drawer v-model="drawer" title="I am the title" :with-header="false">
-      <span>Hi there!</span>
-      <!-- todo  -->
+    <el-drawer
+      v-model="drawer"
+      title="节点详情"
+      :with-header="false"
+      size="400px"
+    >
+      <div class="node-drawer">
+        <el-form :model="drawerNode" label-width="80px" class="node-form">
+          <el-form-item label="节点名称" required>
+            <el-input v-model="drawerNode.name" placeholder="请输入节点名称" />
+          </el-form-item>
+          <el-form-item label="描述">
+            <el-input
+              v-model="drawerNode.description"
+              type="textarea"
+              :rows="3"
+              placeholder="请输入节点描述"
+            />
+          </el-form-item>
+          <el-form-item label="详细记录">
+            <el-input
+              v-model="drawerNode.record"
+              type="textarea"
+              :rows="5"
+              placeholder="请输入节点详细记录"
+            />
+          </el-form-item>
+          <el-form-item label="开始时间">
+            <el-date-picker
+              v-model="drawerNode.startAt"
+              type="datetime"
+              placeholder="选择开始时间"
+              :default-value="new Date()"
+              value-format="timestamp"
+            />
+          </el-form-item>
+          <el-form-item label="结束时间">
+            <el-date-picker
+              v-model="drawerNode.endAt"
+              type="datetime"
+              placeholder="选择结束时间"
+              :default-value="new Date()"
+              value-format="timestamp"
+            />
+          </el-form-item>
+          <el-form-item label="完成状态">
+            <el-switch v-model="drawerNode.completed" />
+            <span style="margin-left: 8px; color: #666; font-size: 12px">
+              {{ drawerNode.completed ? "已完成" : "未完成" }}
+            </span>
+          </el-form-item>
+          <el-form-item>
+            <div class="form-actions">
+              <el-button type="primary" @click="saveNode()">保存</el-button>
+              <el-button @click="drawer = false">取消</el-button>
+            </div>
+          </el-form-item>
+        </el-form>
+      </div>
     </el-drawer>
   </div>
 </template>
@@ -16,8 +72,9 @@
 import { useCurrentGraphStore, useGraphsStore } from "@/stores";
 import { GraphUtils, NodeUtil } from "@/utils";
 import { Element, Graph, IElementEvent, NodeEvent } from "@antv/g6";
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, reactive } from "vue";
 import { useRoute } from "vue-router";
+import { PNode } from "@/types";
 
 const route = useRoute();
 const taskId = route.params.taskId;
@@ -30,10 +87,12 @@ const data = computed(() => {
 });
 
 const drawer = ref(false);
+const drawerNode = reactive<PNode>(NodeUtil.createNode());
+
+let graph: Graph | null = null;
 
 onMounted(() => {
-  // 创建图实例
-  const graph = new Graph({
+  graph = new Graph({
     container: "container",
     autoResize: true,
     autoFit: "center",
@@ -140,16 +199,16 @@ onMounted(() => {
                   ]);
                 }
 
-                graph.setData(data.value);
-                graph.render();
+                graph?.setData(data.value);
+                graph?.render();
               }
               break;
             case "node:delete":
             case "combo:delete":
               if (current) {
                 graphsStore.removeNode(graphsStore.currentGraph, [current.id]);
-                graph.setData(data.value);
-                graph.render();
+                graph?.setData(data.value);
+                graph?.render();
               }
               break;
             case "node:add-next":
@@ -165,8 +224,8 @@ onMounted(() => {
                   current.id,
                   nextNode.id
                 );
-                graph.setData(data.value);
-                graph.render();
+                graph?.setData(data.value);
+                graph?.render();
               }
               break;
             case "node:insert-next":
@@ -192,8 +251,8 @@ onMounted(() => {
                   nextNode.id
                 );
                 // 添加边
-                graph.setData(data.value);
-                graph.render();
+                graph?.setData(data.value);
+                graph?.render();
               }
               break;
             case "node:add-prev":
@@ -209,8 +268,8 @@ onMounted(() => {
                   prevNode.id,
                   current.id
                 );
-                graph.setData(data.value);
-                graph.render();
+                graph?.setData(data.value);
+                graph?.render();
               }
               break;
             case "node:insert-prev":
@@ -239,8 +298,8 @@ onMounted(() => {
                   prevNode.id,
                   current.id
                 );
-                graph.setData(data.value);
-                graph.render();
+                graph?.setData(data.value);
+                graph?.render();
               }
               break;
             case "node:delete-prev-edge":
@@ -259,8 +318,8 @@ onMounted(() => {
                     graphsStore.currentGraph,
                     edgesToDelete
                   );
-                  graph.setData(data.value);
-                  graph.render();
+                  graph?.setData(data.value);
+                  graph?.render();
                 }
               }
               break;
@@ -280,23 +339,23 @@ onMounted(() => {
                     graphsStore.currentGraph,
                     edgesToDelete
                   );
-                  graph.setData(data.value);
-                  graph.render();
+                  graph?.setData(data.value);
+                  graph?.render();
                 }
               }
               break;
             case "edge:delete":
               if (current) {
                 graphsStore.removeEdge(graphsStore.currentGraph, [current.id]);
-                graph.setData(data.value);
-                graph.render();
+                graph?.setData(data.value);
+                graph?.render();
               }
               break;
             case "canvas:add-node":
               const node = NodeUtil.fakerNode();
               graphsStore.addNode(graphsStore.currentGraph, node);
-              graph.setData(data.value);
-              graph.render();
+              graph?.setData(data.value);
+              graph?.render();
               break;
             default:
               console.warn(`Unknown action: ${value}`);
@@ -371,9 +430,104 @@ onMounted(() => {
   graph.on(NodeEvent.CLICK, (evt: IElementEvent & { target: Element }) => {
     const nodeId = evt.target.id;
     const node = graphsStore.currentGraph?.nodes[nodeId];
-    drawer.value = true;
-    // todo 将node信息填入el-drawer内用于展示,并且可以编辑
+    if (node) {
+      Object.keys(drawerNode).forEach(
+        (key) => delete drawerNode[key as keyof PNode]
+      );
+      Object.assign(drawerNode, node);
+      drawer.value = true;
+    }
   });
   graph.render();
 });
+
+function saveNode() {
+  if (!graph) return;
+  if (drawerNode.id) {
+    graphsStore.updateNode(graphsStore.currentGraph, drawerNode);
+    // 更新图数据
+    if (graph) {
+      graph.setData(data.value);
+      graph.render();
+    }
+    drawer.value = false;
+  }
+}
 </script>
+
+<style scoped>
+.node-drawer {
+  padding: 20px;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.node-form {
+  max-width: 100%;
+}
+
+.node-form :deep(.el-form-item) {
+  margin-bottom: 20px;
+}
+
+.node-form :deep(.el-form-item__label) {
+  color: var(--vscode-secondary-foreground);
+  font-size: 13px;
+  font-weight: 500;
+  padding-right: 12px;
+}
+
+.node-form :deep(.el-input__wrapper),
+.node-form :deep(.el-textarea__inner) {
+  background-color: var(--vscode-input-background);
+  border: 1px solid var(--vscode-border);
+  border-radius: 4px;
+  box-shadow: none;
+  padding: 8px 12px;
+}
+
+.node-form :deep(.el-input__wrapper:hover),
+.node-form :deep(.el-textarea__inner:hover) {
+  border-color: var(--vscode-focus-border);
+  background-color: var(--vscode-background);
+}
+
+.node-form :deep(.el-input__wrapper.is-focus),
+.node-form :deep(.el-textarea__inner:focus) {
+  border-color: var(--vscode-focus-border);
+  box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.1);
+}
+
+.node-form :deep(.el-input__inner),
+.node-form :deep(.el-textarea__inner) {
+  color: var(--vscode-input-foreground);
+  font-size: 13px;
+  background: transparent;
+  border: none;
+}
+
+.node-form :deep(.el-input__inner::placeholder),
+.node-form :deep(.el-textarea__inner::placeholder) {
+  color: var(--vscode-secondary-foreground);
+}
+
+.node-form :deep(.el-date-editor) {
+  width: 100%;
+}
+
+.node-form :deep(.el-switch) {
+  --el-switch-on-color: var(--vscode-button-background);
+  --el-switch-off-color: var(--vscode-border);
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.form-actions :deep(.el-button) {
+  min-width: 80px;
+}
+</style>

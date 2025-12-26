@@ -84,6 +84,20 @@ export const useGraphsStore = defineStore("graph-storage", () => {
     }
   }
 
+  function updateNode(partialGraph?: Partial<PGraph>, node?: PNode) {
+    if (partialGraph?.id && node) {
+      const graph = allGraphs[partialGraph.id];
+      if (graph.nodes[node.id]) {
+        graph.nodes[node.id] = {
+          ...graph.nodes[node.id],
+          ...node,
+          updatedAt: Date.now(),
+        };
+        graph.updatedAt = Date.now();
+      }
+    }
+  }
+
   function addGraph(graph: PGraph) {
     allGraphs[graph.id] = graph;
   }
@@ -116,6 +130,7 @@ export const useGraphsStore = defineStore("graph-storage", () => {
     addEdge,
     removeNode,
     removeEdge,
+    updateNode,
     addGraph,
     removeGraph,
   };
