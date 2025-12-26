@@ -39,7 +39,21 @@ onMounted(() => {
                 getItems: (e: IElementEvent) => {
                     switch (e.targetType) {
                         case "node":
-                            return [{ name: "删除节点", value: "node:delete" }];
+                            return [
+                                {
+                                    name: "添加后续节点",
+                                    value: "node:add-next",
+                                },
+                                {
+                                    name: "添加前置节点",
+                                    value: "node:add-prev",
+                                },
+                                {
+                                    name: "插入后续节点",
+                                    value: "node:insert-next",
+                                },
+                                { name: "删除节点", value: "node:delete" },
+                            ];
                         case "edge":
                             return [{ name: "删除边", value: "edge:delete" }];
                         case "combo":
@@ -74,6 +88,60 @@ onMounted(() => {
                                     graphsStore.currentGraph,
                                     [current.id],
                                 );
+                                graph.setData(data.value);
+                                graph.render();
+                            }
+                            break;
+                        case "node:add-next":
+                            if (current) {
+                                const nextNode = NodeUtil.fakerNode();
+
+                                nextNode.parent =
+                                    graphsStore.currentGraph?.nodes[
+                                        current.id
+                                    ].parent;
+
+                                graphsStore.addNode(
+                                    graphsStore.currentGraph,
+                                    nextNode,
+                                );
+                                graphsStore.addEdge(
+                                    graphsStore.currentGraph,
+                                    current.id,
+                                    nextNode.id,
+                                );
+                                graph.setData(data.value);
+                                graph.render();
+                            }
+                            break;
+                        case "node:insert-next":
+                            if (current) {
+                                const nextNode = NodeUtil.fakerNode();
+                                const currentNode =
+                                    graphsStore.currentGraph?.nodes[current.id];
+                                nextNode.parent = currentNode?.parent;
+                                graphsStore.addNode(
+                                    graphsStore.currentGraph,
+                                    nextNode,
+                                );
+                                currentNode?.nexts.forEach((id) => {
+                                    graphsStore.addEdge(
+                                        graphsStore.currentGraph,
+                                        nextNode.id,
+                                        id,
+                                    );
+                                    graphsStore.removeEdge(
+                                        graphsStore.currentGraph,
+                                        [{ from: currentNode?.id, to: id }],
+                                    );
+                                });
+
+                                graphsStore.addEdge(
+                                    graphsStore.currentGraph,
+                                    currentNode?.id,
+                                    nextNode.id,
+                                );
+                                // 添加边
                                 graph.setData(data.value);
                                 graph.render();
                             }

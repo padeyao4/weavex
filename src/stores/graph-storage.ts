@@ -44,10 +44,16 @@ export const useGraphsStore = defineStore("graph-storage", () => {
     }
   }
 
+  function addEdge(partialGraph?: Partial<PGraph>, from?: string, to?: string) {
+    if (partialGraph?.id && from && to) {
+      const graph = allGraphs[partialGraph.id];
+      GraphUtils.addEdge(graph, from, to);
+    }
+  }
+
   function addNode(partialGraph?: Partial<PGraph>, node?: PNode) {
     if (partialGraph?.id && node) {
       const graph = allGraphs[partialGraph.id];
-      graph.updatedAt = Date.now();
       graph.nodes[node.id] = node;
       if (!graph.rootNodeIds.includes(node.id)) {
         graph.rootNodeIds.push(node.id);
@@ -64,11 +70,15 @@ export const useGraphsStore = defineStore("graph-storage", () => {
     }
   }
 
-  function removeEdge(partialGraph?: Partial<PGraph>, ids?: string[]) {
+  function removeEdge(
+    partialGraph?: Partial<PGraph>,
+    ids?: string[] | { from: string; to: string }[],
+  ) {
     if (partialGraph?.id && ids?.length) {
       const graph = allGraphs[partialGraph.id];
       ids?.forEach((id) => {
-        const [from, to] = id.split("_", 2);
+        const [from, to] =
+          typeof id === "string" ? id.split("_", 2) : [id.from, id.to];
         GraphUtils.removeEdge(graph, from, to);
       });
     }
@@ -93,6 +103,7 @@ export const useGraphsStore = defineStore("graph-storage", () => {
     graphsMeta,
     currentGraph,
     addNode,
+    addEdge,
     removeNode,
     removeEdge,
     addGraph,
