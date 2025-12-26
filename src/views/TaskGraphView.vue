@@ -4,16 +4,20 @@
     <div
       style="height: calc(100% - 56px)"
       id="container"
-      @contextmenu.prevent="() => {}"
-    ></div>
+      @contextmenu.prevent
+    />
+    <el-drawer v-model="drawer" title="I am the title" :with-header="false">
+      <span>Hi there!</span>
+      <!-- todo  -->
+    </el-drawer>
   </div>
 </template>
 <script setup lang="ts">
-import { Graph, IElementEvent, Element } from "@antv/g6";
-import { computed, onMounted } from "vue";
-import { useRoute } from "vue-router";
 import { useCurrentGraphStore, useGraphsStore } from "@/stores";
 import { GraphUtils, NodeUtil } from "@/utils";
+import { Element, Graph, IElementEvent, NodeEvent } from "@antv/g6";
+import { computed, onMounted, ref } from "vue";
+import { useRoute } from "vue-router";
 
 const route = useRoute();
 const taskId = route.params.taskId;
@@ -24,6 +28,8 @@ const graphsStore = useGraphsStore();
 const data = computed(() => {
   return GraphUtils.toGraphData(graphsStore.currentGraph);
 });
+
+const drawer = ref(false);
 
 onMounted(() => {
   // 创建图实例
@@ -361,6 +367,12 @@ onMounted(() => {
       rankdir: "LR",
       sortByCombo: true,
     },
+  });
+  graph.on(NodeEvent.CLICK, (evt: IElementEvent & { target: Element }) => {
+    const nodeId = evt.target.id;
+    const node = graphsStore.currentGraph?.nodes[nodeId];
+    drawer.value = true;
+    // todo 将node信息填入el-drawer内用于展示,并且可以编辑
   });
   graph.render();
 });
