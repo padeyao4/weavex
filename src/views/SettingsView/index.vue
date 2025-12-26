@@ -52,7 +52,7 @@ function handleBack() {
                         cx="10"
                         cy="10"
                         r="6.5"
-                        fill="var(--vscode-active-background)"
+                        fill="var(--vscode-sidebar-background)"
                         stroke="var(--vscode-focus-border)"
                         stroke-width="1.5"
                     />
@@ -154,7 +154,7 @@ function handleBack() {
 
 .settings-header {
     height: 64px;
-    background-color: var(--vscode-sidebar-background);
+    background-color: var(--vscode-background);
     border-bottom: 1px solid var(--vscode-border);
     display: flex;
     align-items: center;
@@ -180,7 +180,7 @@ function handleBack() {
 }
 
 .back-button:hover {
-    background-color: var(--vscode-hover-background);
+    background-color: var(--vscode-sidebar-background);
 }
 
 .back-button:hover .back-icon path {
@@ -217,14 +217,22 @@ function handleBack() {
     width: 100%;
     margin: 0 auto;
     padding: 24px;
+    background-color: var(--vscode-background);
 }
 
 .settings-section {
     margin-bottom: 32px;
+    background-color: var(--vscode-sidebar-background);
+    border: 1px solid var(--vscode-border);
+    border-radius: 8px;
+    overflow: hidden;
 }
 
 .section-header {
-    margin-bottom: 16px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--vscode-border);
+    background-color: var(--vscode-active-background);
+    margin-bottom: 0;
 }
 
 .section-title {
@@ -240,6 +248,7 @@ function handleBack() {
     height: 1px;
     background-color: var(--vscode-border);
     width: 100%;
+    margin-top: 8px;
 }
 
 .settings-section:last-child {

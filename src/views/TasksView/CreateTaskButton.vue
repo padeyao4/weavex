@@ -168,12 +168,12 @@ const createTask = () => {
 .create-task-button:hover {
     background-color: var(--vscode-focus-border);
     transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(0, 122, 204, 0.3);
+    box-shadow: 0 2px 8px rgba(0, 122, 204, 0.2);
 }
 
 .create-task-button:active {
     transform: translateY(0);
-    box-shadow: 0 1px 4px rgba(0, 122, 204, 0.2);
+    box-shadow: 0 1px 4px rgba(0, 122, 204, 0.15);
 }
 
 .button-content {
@@ -196,10 +196,10 @@ const createTask = () => {
 }
 
 .task-dialog :deep(.el-dialog) {
-    background-color: var(--vscode-sidebar-background);
+    background-color: var(--vscode-background);
     border: 1px solid var(--vscode-border);
     border-radius: 6px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
 }
 
 .task-dialog :deep(.el-dialog__header) {
@@ -213,12 +213,12 @@ const createTask = () => {
 }
 
 .task-dialog :deep(.el-dialog__headerbtn .el-dialog__close) {
-    color: var(--vscode-icon-foreground);
+    color: var(--vscode-secondary-foreground);
     font-size: 16px;
 }
 
 .task-dialog :deep(.el-dialog__headerbtn:hover .el-dialog__close) {
-    color: var(--vscode-icon-hover-foreground);
+    color: var(--vscode-foreground);
 }
 
 .task-dialog :deep(.el-dialog__body) {
@@ -261,6 +261,7 @@ const createTask = () => {
 .task-input :deep(.el-input__wrapper) {
     background-color: var(--vscode-input-background);
     border: 1px solid var(--vscode-border);
+    background-color: var(--vscode-input-background);
     border-radius: 4px;
     box-shadow: none;
     padding: 8px 12px;
@@ -268,11 +269,13 @@ const createTask = () => {
 
 .task-input :deep(.el-input__wrapper:hover) {
     border-color: var(--vscode-focus-border);
+    background-color: var(--vscode-background);
 }
 
 .task-input :deep(.el-input__wrapper.is-focus) {
     border-color: var(--vscode-focus-border);
-    box-shadow: 0 0 0 1px var(--vscode-focus-border);
+    box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.1);
+    border-color: var(--vscode-focus-border);
 }
 
 .task-input :deep(.el-input__inner) {
@@ -314,7 +317,7 @@ const createTask = () => {
 }
 
 .dialog-button.secondary {
-    background-color: transparent;
+    background-color: var(--vscode-sidebar-background);
     color: var(--vscode-secondary-foreground);
     border-color: var(--vscode-border);
 }
@@ -337,7 +340,7 @@ const createTask = () => {
 }
 
 .dialog-button.primary:disabled {
-    background-color: var(--vscode-input-background);
+    background-color: var(--vscode-sidebar-background);
     color: var(--vscode-secondary-foreground);
     border-color: var(--vscode-border);
     cursor: not-allowed;
@@ -345,7 +348,7 @@ const createTask = () => {
 }
 
 .dialog-button.primary:disabled:hover {
-    background-color: var(--vscode-input-background);
+    background-color: var(--vscode-sidebar-background);
     border-color: var(--vscode-border);
 }
 </style>

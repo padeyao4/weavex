@@ -16,23 +16,23 @@
                         width="12"
                         height="12"
                         rx="2"
-                        fill="var(--vscode-icon-foreground)"
+                        fill="var(--vscode-secondary-foreground)"
                     />
                     <path
                         d="M5 5H11"
-                        stroke="var(--vscode-sidebar-background)"
+                        stroke="var(--vscode-background)"
                         stroke-width="1.5"
                         stroke-linecap="round"
                     />
                     <path
                         d="M5 8H11"
-                        stroke="var(--vscode-sidebar-background)"
+                        stroke="var(--vscode-background)"
                         stroke-width="1.5"
                         stroke-linecap="round"
                     />
                     <path
                         d="M5 11H8"
-                        stroke="var(--vscode-sidebar-background)"
+                        stroke="var(--vscode-background)"
                         stroke-width="1.5"
                         stroke-linecap="round"
                     />
@@ -50,7 +50,7 @@
                     >
                         <path
                             d="M12.5 2.5V5.5H9.5"
-                            stroke="var(--vscode-icon-foreground)"
+                            stroke="var(--vscode-secondary-foreground)"
                             stroke-width="1.5"
                             stroke-linecap="round"
                             stroke-linejoin="round"
@@ -64,7 +64,7 @@
                         />
                         <path
                             d="M2.15 5C2.52 3.84 3.34 2.87 4.44 2.31C5.54 1.75 6.84 1.65 8.02 2.03C9.2 2.41 10.17 3.24 10.73 4.34C11.29 5.44 11.39 6.74 11.01 7.92M1.99 9C1.62 10.16 1.72 11.46 2.28 12.56C2.84 13.66 3.77 14.49 4.95 14.87C6.13 15.25 7.43 15.15 8.53 14.59C9.63 14.03 10.46 13.1 10.84 11.92"
-                            stroke="var(--vscode-icon-foreground)"
+                            stroke="var(--vscode-secondary-foreground)"
                             stroke-width="1.5"
                             stroke-linecap="round"
                         />
@@ -82,12 +82,12 @@
                             cx="6"
                             cy="6"
                             r="4.5"
-                            stroke="var(--vscode-icon-foreground)"
+                            stroke="var(--vscode-secondary-foreground)"
                             stroke-width="1.5"
                         />
                         <path
                             d="M10 10L13 13"
-                            stroke="var(--vscode-icon-foreground)"
+                            stroke="var(--vscode-secondary-foreground)"
                             stroke-width="1.5"
                             stroke-linecap="round"
                         />
@@ -116,7 +116,7 @@
                                 :stroke="
                                     $route.name === 'tasksSummery'
                                         ? 'var(--vscode-focus-border)'
-                                        : 'var(--vscode-icon-foreground)'
+                                        : 'var(--vscode-secondary-foreground)'
                                 "
                                 stroke-width="1.5"
                                 stroke-linecap="round"
@@ -126,7 +126,7 @@
                                 :stroke="
                                     $route.name === 'tasksSummery'
                                         ? 'var(--vscode-focus-border)'
-                                        : 'var(--vscode-icon-foreground)'
+                                        : 'var(--vscode-secondary-foreground)'
                                 "
                                 stroke-width="1.5"
                                 stroke-linecap="round"
@@ -177,7 +177,7 @@
                                                 :stroke="
                                                     $route.params.id === meta.id
                                                         ? 'var(--vscode-focus-border)'
-                                                        : 'var(--vscode-icon-foreground)'
+                                                        : 'var(--vscode-secondary-foreground)'
                                                 "
                                                 stroke-width="1.5"
                                             />
@@ -186,7 +186,7 @@
                                                 :stroke="
                                                     $route.params.id === meta.id
                                                         ? 'var(--vscode-focus-border)'
-                                                        : 'var(--vscode-icon-foreground)'
+                                                        : 'var(--vscode-secondary-foreground)'
                                                 "
                                                 stroke-width="1.5"
                                                 stroke-linecap="round"
@@ -196,7 +196,7 @@
                                                 :stroke="
                                                     $route.params.id === meta.id
                                                         ? 'var(--vscode-focus-border)'
-                                                        : 'var(--vscode-icon-foreground)'
+                                                        : 'var(--vscode-secondary-foreground)'
                                                 "
                                                 stroke-width="1.5"
                                                 stroke-linecap="round"
@@ -304,7 +304,7 @@ const formatDate = (dateString: string | number | Date) => {
     background: transparent;
     border: none;
     border-radius: 4px;
-    color: var(--vscode-icon-foreground);
+    color: var(--vscode-secondary-foreground);
     cursor: pointer;
     padding: 0;
     transition: all 0.2s ease;

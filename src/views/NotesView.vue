@@ -16,7 +16,7 @@
                             width="16"
                             height="16"
                             rx="3"
-                            fill="var(--vscode-active-background)"
+                            fill="var(--vscode-sidebar-background)"
                             stroke="var(--vscode-focus-border)"
                             stroke-width="1.5"
                         />
@@ -104,31 +104,31 @@
                             width="40"
                             height="40"
                             rx="6"
-                            fill="var(--vscode-sidebar-background)"
+                            fill="var(--vscode-background)"
                             stroke="var(--vscode-border)"
                             stroke-width="2"
                         />
                         <path
                             d="M20 20H44"
-                            stroke="var(--vscode-icon-foreground)"
+                            stroke="var(--vscode-secondary-foreground)"
                             stroke-width="2"
                             stroke-linecap="round"
                         />
                         <path
                             d="M20 28H44"
-                            stroke="var(--vscode-icon-foreground)"
+                            stroke="var(--vscode-secondary-foreground)"
                             stroke-width="2"
                             stroke-linecap="round"
                         />
                         <path
                             d="M20 36H44"
-                            stroke="var(--vscode-icon-foreground)"
+                            stroke="var(--vscode-secondary-foreground)"
                             stroke-width="2"
                             stroke-linecap="round"
                         />
                         <path
                             d="M52 20V44"
-                            stroke="var(--vscode-icon-foreground)"
+                            stroke="var(--vscode-secondary-foreground)"
                             stroke-width="2"
                             stroke-linecap="round"
                         />
@@ -136,7 +136,7 @@
                             cx="32"
                             cy="32"
                             r="16"
-                            fill="var(--vscode-background)"
+                            fill="var(--vscode-sidebar-background)"
                             stroke="var(--vscode-border)"
                             stroke-width="2"
                             stroke-dasharray="4 4"
@@ -299,7 +299,7 @@ const createNote = () => {
 .notes-header {
     padding: 16px 24px;
     border-bottom: 1px solid var(--vscode-border);
-    background-color: var(--vscode-sidebar-background);
+    background-color: var(--vscode-background);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -318,7 +318,7 @@ const createNote = () => {
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: var(--vscode-active-background);
+    background-color: var(--vscode-sidebar-background);
     border-radius: 8px;
     border: 1px solid var(--vscode-border);
 }
@@ -483,7 +483,7 @@ const createNote = () => {
     align-items: center;
     gap: 12px;
     padding: 12px 16px;
-    background-color: var(--vscode-sidebar-background);
+    background-color: var(--vscode-background);
     border: 1px solid var(--vscode-border);
     border-radius: 6px;
     text-align: left;
@@ -491,7 +491,7 @@ const createNote = () => {
 }
 
 .hint-item:hover {
-    background-color: var(--vscode-hover-background);
+    background-color: var(--vscode-sidebar-background);
     border-color: var(--vscode-focus-border);
     transform: translateX(4px);
 }

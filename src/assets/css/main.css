@@ -1,38 +1,38 @@
 @import "tailwindcss";
 
-/* VS Code深色主题CSS变量 */
+/* VS Code亮色主题CSS变量 */
 :root {
     /* 主色调 */
-    --vscode-background: #1e1e1e;
-    --vscode-sidebar-background: #252526;
-    --vscode-active-background: #2d2d30;
-    --vscode-hover-background: #2a2d2e;
-    --vscode-selection-background: #094771;
-    --vscode-foreground: #cccccc;
-    --vscode-secondary-foreground: #858585;
-    --vscode-border: #3c3c3c;
+    --vscode-background: #ffffff;
+    --vscode-sidebar-background: #f3f3f3;
+    --vscode-active-background: #e4e6f1;
+    --vscode-hover-background: #e8e8e8;
+    --vscode-selection-background: #add6ff;
+    --vscode-foreground: #333333;
+    --vscode-secondary-foreground: #6c6c6c;
+    --vscode-border: #cccccc;
     --vscode-focus-border: #007acc;
-    --vscode-button-background: #0e639c;
+    --vscode-button-background: #007acc;
     --vscode-button-foreground: #ffffff;
-    --vscode-input-background: #3c3c3c;
-    --vscode-input-foreground: #cccccc;
+    --vscode-input-background: #ffffff;
+    --vscode-input-foreground: #333333;
 
     /* 状态颜色 */
-    --vscode-error: #f48771;
-    --vscode-warning: #cca700;
-    --vscode-info: #3794ff;
-    --vscode-success: #89d185;
+    --vscode-error: #e51400;
+    --vscode-warning: #bf8803;
+    --vscode-info: #1a85ff;
+    --vscode-success: #388a34;
 
     /* 图标颜色 */
-    --vscode-icon-foreground: #c5c5c5;
-    --vscode-icon-hover-foreground: #ffffff;
+    --vscode-icon-foreground: #424242;
+    --vscode-icon-hover-foreground: #000000;
 
     /* 滚动条 */
-    --vscode-scrollbar-shadow: #000000;
-    --vscode-scrollbar-background: #2d2d30;
-    --vscode-scrollbar-slider-background: #424242;
-    --vscode-scrollbar-slider-hover-background: #4a4a4a;
-    --vscode-scrollbar-slider-active-background: #565656;
+    --vscode-scrollbar-shadow: #00000020;
+    --vscode-scrollbar-background: #f3f3f3;
+    --vscode-scrollbar-slider-background: #c1c1c1;
+    --vscode-scrollbar-slider-hover-background: #a8a8a8;
+    --vscode-scrollbar-slider-active-background: #787878;
 }
 
 /* 基础样式重置与配置 */
@@ -133,6 +133,7 @@ button:hover {
 
 ::-webkit-scrollbar-track {
     background-color: var(--vscode-scrollbar-background);
+    border-radius: 7px;
 }
 
 ::-webkit-scrollbar-thumb {
@@ -160,20 +161,23 @@ button:hover {
     border-radius: 4px;
     padding: 12px;
     margin-bottom: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .vscode-card:hover {
     background-color: var(--vscode-hover-background);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 
 .vscode-card.active {
     background-color: var(--vscode-active-background);
     border-color: var(--vscode-focus-border);
+    box-shadow: 0 2px 8px rgba(0, 122, 204, 0.15);
 }
 
 .vscode-icon-button {
     background: transparent;
-    border: none;
+    border: 1px solid var(--vscode-border);
     color: var(--vscode-icon-foreground);
     cursor: pointer;
     padding: 6px;
@@ -181,16 +185,19 @@ button:hover {
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: all 0.2s ease;
 }
 
 .vscode-icon-button:hover {
     background-color: var(--vscode-hover-background);
     color: var(--vscode-icon-hover-foreground);
+    border-color: var(--vscode-focus-border);
 }
 
 .vscode-icon-button.active {
     background-color: var(--vscode-active-background);
     color: var(--vscode-focus-border);
+    border-color: var(--vscode-focus-border);
 }
 
 .text-center {
@@ -221,22 +228,22 @@ button:hover {
 
 .vscode-badge.success {
     background-color: var(--vscode-success);
-    color: #000000;
+    color: #ffffff;
 }
 
 .vscode-badge.warning {
     background-color: var(--vscode-warning);
-    color: #000000;
+    color: #ffffff;
 }
 
 .vscode-badge.error {
     background-color: var(--vscode-error);
-    color: #000000;
+    color: #ffffff;
 }
 
 .vscode-badge.info {
     background-color: var(--vscode-info);
-    color: #000000;
+    color: #ffffff;
 }
 
 /* 基础响应式断点示例 */

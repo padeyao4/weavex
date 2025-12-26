@@ -15,23 +15,25 @@
                         width="18"
                         height="18"
                         rx="3"
-                        fill="var(--vscode-button-background)"
+                        fill="var(--vscode-active-background)"
+                        stroke="var(--vscode-focus-border)"
+                        stroke-width="1.5"
                     />
                     <path
                         d="M8 8H16"
-                        stroke="var(--vscode-button-foreground)"
+                        stroke="var(--vscode-focus-border)"
                         stroke-width="2"
                         stroke-linecap="round"
                     />
                     <path
                         d="M8 12H16"
-                        stroke="var(--vscode-button-foreground)"
+                        stroke="var(--vscode-focus-border)"
                         stroke-width="2"
                         stroke-linecap="round"
                     />
                     <path
                         d="M8 16H12"
-                        stroke="var(--vscode-button-foreground)"
+                        stroke="var(--vscode-focus-border)"
                         stroke-width="2"
                         stroke-linecap="round"
                     />
@@ -67,13 +69,13 @@
                                 $route.name === 'tasksSummery' ||
                                 $route.path.startsWith('/a/tasks')
                                     ? 'var(--vscode-active-background)'
-                                    : 'transparent'
+                                    : 'var(--vscode-sidebar-background)'
                             "
                             :stroke="
                                 $route.name === 'tasksSummery' ||
                                 $route.path.startsWith('/a/tasks')
                                     ? 'var(--vscode-focus-border)'
-                                    : 'var(--vscode-border)'
+                                    : 'var(--vscode-icon-foreground)'
                             "
                             stroke-width="1.5"
                         />
@@ -83,7 +85,7 @@
                                 $route.name === 'tasksSummery' ||
                                 $route.path.startsWith('/a/tasks')
                                     ? 'var(--vscode-focus-border)'
-                                    : 'var(--vscode-icon-foreground)'
+                                    : 'var(--vscode-secondary-foreground)'
                             "
                             stroke-width="1.5"
                             stroke-linecap="round"
@@ -94,7 +96,7 @@
                                 $route.name === 'tasksSummery' ||
                                 $route.path.startsWith('/a/tasks')
                                     ? 'var(--vscode-focus-border)'
-                                    : 'var(--vscode-icon-foreground)'
+                                    : 'var(--vscode-secondary-foreground)'
                             "
                             stroke-width="1.5"
                             stroke-linecap="round"
@@ -105,7 +107,7 @@
                                 $route.name === 'tasksSummery' ||
                                 $route.path.startsWith('/a/tasks')
                                     ? 'var(--vscode-focus-border)'
-                                    : 'var(--vscode-icon-foreground)'
+                                    : 'var(--vscode-secondary-foreground)'
                             "
                             stroke-width="1.5"
                             stroke-linecap="round"
@@ -137,12 +139,12 @@
                             :fill="
                                 $route.name === 'notes'
                                     ? 'var(--vscode-active-background)'
-                                    : 'transparent'
+                                    : 'var(--vscode-sidebar-background)'
                             "
                             :stroke="
                                 $route.name === 'notes'
                                     ? 'var(--vscode-focus-border)'
-                                    : 'var(--vscode-border)'
+                                    : 'var(--vscode-icon-foreground)'
                             "
                             stroke-width="1.5"
                         />
@@ -151,7 +153,7 @@
                             :stroke="
                                 $route.name === 'notes'
                                     ? 'var(--vscode-focus-border)'
-                                    : 'var(--vscode-icon-foreground)'
+                                    : 'var(--vscode-secondary-foreground)'
                             "
                             stroke-width="1.5"
                             stroke-linecap="round"
@@ -161,7 +163,7 @@
                             :stroke="
                                 $route.name === 'notes'
                                     ? 'var(--vscode-focus-border)'
-                                    : 'var(--vscode-icon-foreground)'
+                                    : 'var(--vscode-secondary-foreground)'
                             "
                             stroke-width="1.5"
                             stroke-linecap="round"
@@ -171,7 +173,7 @@
                             :stroke="
                                 $route.name === 'notes'
                                     ? 'var(--vscode-focus-border)'
-                                    : 'var(--vscode-icon-foreground)'
+                                    : 'var(--vscode-secondary-foreground)'
                             "
                             stroke-width="1.5"
                             stroke-linecap="round"
@@ -181,7 +183,7 @@
                             :stroke="
                                 $route.name === 'notes'
                                     ? 'var(--vscode-focus-border)'
-                                    : 'var(--vscode-icon-foreground)'
+                                    : 'var(--vscode-secondary-foreground)'
                             "
                             stroke-width="1.5"
                             stroke-linecap="round"
@@ -213,12 +215,12 @@
                             :fill="
                                 $route.name === 'test'
                                     ? 'var(--vscode-active-background)'
-                                    : 'transparent'
+                                    : 'var(--vscode-sidebar-background)'
                             "
                             :stroke="
                                 $route.name === 'test'
                                     ? 'var(--vscode-focus-border)'
-                                    : 'var(--vscode-border)'
+                                    : 'var(--vscode-icon-foreground)'
                             "
                             stroke-width="1.5"
                         />
@@ -227,7 +229,7 @@
                             :stroke="
                                 $route.name === 'test'
                                     ? 'var(--vscode-focus-border)'
-                                    : 'var(--vscode-icon-foreground)'
+                                    : 'var(--vscode-secondary-foreground)'
                             "
                             stroke-width="1.5"
                             stroke-linecap="round"
@@ -240,7 +242,7 @@
                             :fill="
                                 $route.name === 'test'
                                     ? 'var(--vscode-focus-border)'
-                                    : 'var(--vscode-icon-foreground)'
+                                    : 'var(--vscode-secondary-foreground)'
                             "
                         />
                     </svg>
@@ -270,12 +272,12 @@
                             :fill="
                                 $route.path.startsWith('/settings')
                                     ? 'var(--vscode-active-background)'
-                                    : 'transparent'
+                                    : 'var(--vscode-sidebar-background)'
                             "
                             :stroke="
                                 $route.path.startsWith('/settings')
                                     ? 'var(--vscode-focus-border)'
-                                    : 'var(--vscode-border)'
+                                    : 'var(--vscode-secondary-foreground)'
                             "
                             stroke-width="1.5"
                         />
@@ -286,7 +288,7 @@
                             :fill="
                                 $route.path.startsWith('/settings')
                                     ? 'var(--vscode-focus-border)'
-                                    : 'var(--vscode-icon-foreground)'
+                                    : 'var(--vscode-secondary-foreground)'
                             "
                         />
                         <path
@@ -294,7 +296,7 @@
                             :stroke="
                                 $route.path.startsWith('/settings')
                                     ? 'var(--vscode-focus-border)'
-                                    : 'var(--vscode-icon-foreground)'
+                                    : 'var(--vscode-secondary-foreground)'
                             "
                             stroke-width="1.5"
                             stroke-linecap="round"
@@ -304,7 +306,7 @@
                             :stroke="
                                 $route.path.startsWith('/settings')
                                     ? 'var(--vscode-focus-border)'
-                                    : 'var(--vscode-icon-foreground)'
+                                    : 'var(--vscode-secondary-foreground)'
                             "
                             stroke-width="1.5"
                             stroke-linecap="round"
@@ -314,7 +316,7 @@
                             :stroke="
                                 $route.path.startsWith('/settings')
                                     ? 'var(--vscode-focus-border)'
-                                    : 'var(--vscode-icon-foreground)'
+                                    : 'var(--vscode-secondary-foreground)'
                             "
                             stroke-width="1.5"
                             stroke-linecap="round"
@@ -324,7 +326,7 @@
                             :stroke="
                                 $route.path.startsWith('/settings')
                                     ? 'var(--vscode-focus-border)'
-                                    : 'var(--vscode-icon-foreground)'
+                                    : 'var(--vscode-secondary-foreground)'
                             "
                             stroke-width="1.5"
                             stroke-linecap="round"
@@ -334,7 +336,7 @@
                             :stroke="
                                 $route.path.startsWith('/settings')
                                     ? 'var(--vscode-focus-border)'
-                                    : 'var(--vscode-icon-foreground)'
+                                    : 'var(--vscode-secondary-foreground)'
                             "
                             stroke-width="1.5"
                             stroke-linecap="round"
@@ -344,7 +346,7 @@
                             :stroke="
                                 $route.path.startsWith('/settings')
                                     ? 'var(--vscode-focus-border)'
-                                    : 'var(--vscode-icon-foreground)'
+                                    : 'var(--vscode-secondary-foreground)'
                             "
                             stroke-width="1.5"
                             stroke-linecap="round"
@@ -354,7 +356,7 @@
                             :stroke="
                                 $route.path.startsWith('/settings')
                                     ? 'var(--vscode-focus-border)'
-                                    : 'var(--vscode-icon-foreground)'
+                                    : 'var(--vscode-secondary-foreground)'
                             "
                             stroke-width="1.5"
                             stroke-linecap="round"
@@ -364,7 +366,7 @@
                             :stroke="
                                 $route.path.startsWith('/settings')
                                     ? 'var(--vscode-focus-border)'
-                                    : 'var(--vscode-icon-foreground)'
+                                    : 'var(--vscode-secondary-foreground)'
                             "
                             stroke-width="1.5"
                             stroke-linecap="round"
