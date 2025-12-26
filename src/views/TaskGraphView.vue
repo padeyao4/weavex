@@ -52,7 +52,19 @@ onMounted(() => {
                                     name: "插入后续节点",
                                     value: "node:insert-next",
                                 },
+                                {
+                                    name: "插入前置节点",
+                                    value: "node:insert-prev",
+                                },
                                 { name: "删除节点", value: "node:delete" },
+                                {
+                                    name: "删除前置节点",
+                                    value: "node:delete-with-prev",
+                                },
+                                {
+                                    name: "删除后续节点",
+                                    value: "node:delete-with-next",
+                                },
                             ];
                         case "edge":
                             return [{ name: "删除边", value: "edge:delete" }];
@@ -142,6 +154,62 @@ onMounted(() => {
                                     nextNode.id,
                                 );
                                 // 添加边
+                                graph.setData(data.value);
+                                graph.render();
+                            }
+                            break;
+                        case "node:add-prev":
+                            // 添加前置节点
+                            if (current) {
+                                const prevNode = NodeUtil.fakerNode();
+                                const currentNode =
+                                    graphsStore.currentGraph?.nodes[current.id];
+                                prevNode.parent = currentNode?.parent;
+
+                                graphsStore.addNode(
+                                    graphsStore.currentGraph,
+                                    prevNode,
+                                );
+                                graphsStore.addEdge(
+                                    graphsStore.currentGraph,
+                                    prevNode.id,
+                                    current.id,
+                                );
+                                graph.setData(data.value);
+                                graph.render();
+                            }
+                            break;
+                        case "node:insert-prev":
+                            // 插入前置节点
+                            if (current) {
+                                const prevNode = NodeUtil.fakerNode();
+                                const currentNode =
+                                    graphsStore.currentGraph?.nodes[current.id];
+                                prevNode.parent = currentNode?.parent;
+
+                                graphsStore.addNode(
+                                    graphsStore.currentGraph,
+                                    prevNode,
+                                );
+
+                                // 将当前节点的所有前驱节点转移到新节点前面
+                                currentNode?.prevs.forEach((id) => {
+                                    graphsStore.addEdge(
+                                        graphsStore.currentGraph,
+                                        id,
+                                        prevNode.id,
+                                    );
+                                    graphsStore.removeEdge(
+                                        graphsStore.currentGraph,
+                                        [{ from: id, to: currentNode?.id }],
+                                    );
+                                });
+
+                                graphsStore.addEdge(
+                                    graphsStore.currentGraph,
+                                    prevNode.id,
+                                    current.id,
+                                );
                                 graph.setData(data.value);
                                 graph.render();
                             }
