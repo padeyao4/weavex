@@ -32,6 +32,7 @@ export const router = createRouter({
         },
         {
           path: "notes",
+          name: "notes",
           component: NotesView,
         },
         {
