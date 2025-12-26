@@ -1,24 +1,63 @@
 @import "tailwindcss";
 
+/* VS Code深色主题CSS变量 */
+:root {
+    /* 主色调 */
+    --vscode-background: #1e1e1e;
+    --vscode-sidebar-background: #252526;
+    --vscode-active-background: #2d2d30;
+    --vscode-hover-background: #2a2d2e;
+    --vscode-selection-background: #094771;
+    --vscode-foreground: #cccccc;
+    --vscode-secondary-foreground: #858585;
+    --vscode-border: #3c3c3c;
+    --vscode-focus-border: #007acc;
+    --vscode-button-background: #0e639c;
+    --vscode-button-foreground: #ffffff;
+    --vscode-input-background: #3c3c3c;
+    --vscode-input-foreground: #cccccc;
+
+    /* 状态颜色 */
+    --vscode-error: #f48771;
+    --vscode-warning: #cca700;
+    --vscode-info: #3794ff;
+    --vscode-success: #89d185;
+
+    /* 图标颜色 */
+    --vscode-icon-foreground: #c5c5c5;
+    --vscode-icon-hover-foreground: #ffffff;
+
+    /* 滚动条 */
+    --vscode-scrollbar-shadow: #000000;
+    --vscode-scrollbar-background: #2d2d30;
+    --vscode-scrollbar-slider-background: #424242;
+    --vscode-scrollbar-slider-hover-background: #4a4a4a;
+    --vscode-scrollbar-slider-active-background: #565656;
+}
+
 /* 基础样式重置与配置 */
 * {
-  box-sizing: border-box;
+    box-sizing: border-box;
 }
 
 html {
-  font-size: 16px;
-  line-height: 1.5;
-  -webkit-text-size-adjust: 100%;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-text-size-adjust: 100%;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: var(--vscode-background);
+    color: var(--vscode-foreground);
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, sans-serif;
-  color: #333;
-  background-color: #fff;
-  min-height: 100vh;
+    font-family:
+        -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+        Arial, sans-serif;
+    color: var(--vscode-foreground);
+    background-color: var(--vscode-background);
+    min-height: 100vh;
+    margin: 0;
 }
 
 h1,
@@ -27,70 +66,182 @@ h3,
 h4,
 h5,
 h6 {
-  font-weight: 600;
-  line-height: 1.25;
-  margin-bottom: 0.5em;
+    font-weight: 600;
+    line-height: 1.25;
+    margin-bottom: 0.5em;
+    color: var(--vscode-foreground);
 }
 
 p {
-  margin-bottom: 1em;
+    margin-bottom: 1em;
+    color: var(--vscode-foreground);
 }
 
 a {
-  color: #0066cc;
-  text-decoration: none;
+    color: var(--vscode-button-background);
+    text-decoration: none;
 }
 
 a:hover {
-  text-decoration: underline;
+    text-decoration: underline;
+    color: var(--vscode-focus-border);
 }
 
 img,
 video {
-  max-width: 100%;
-  height: auto;
-  display: block;
+    max-width: 100%;
+    height: auto;
+    display: block;
 }
 
 ul,
 ol {
-  list-style-position: inside;
-  margin-bottom: 1em;
+    list-style-position: inside;
+    margin-bottom: 1em;
 }
 
 button,
 input,
 select,
 textarea {
-  font-family: inherit;
-  font-size: inherit;
-  line-height: inherit;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  padding: 0.375em 0.75em;
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+    border: 1px solid var(--vscode-border);
+    border-radius: 4px;
+    padding: 0.375em 0.75em;
+    background-color: var(--vscode-input-background);
+    color: var(--vscode-input-foreground);
 }
 
 button {
-  cursor: pointer;
-  background-color: #f0f0f0;
-  color: #333;
+    cursor: pointer;
+    background-color: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+    border: 1px solid transparent;
 }
 
 button:hover {
-  background-color: #e0e0e0;
+    background-color: var(--vscode-focus-border);
+}
+
+/* VS Code风格滚动条 */
+::-webkit-scrollbar {
+    width: 14px;
+    height: 14px;
+}
+
+::-webkit-scrollbar-track {
+    background-color: var(--vscode-scrollbar-background);
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: var(--vscode-scrollbar-slider-background);
+    border-radius: 7px;
+    border: 3px solid var(--vscode-scrollbar-background);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: var(--vscode-scrollbar-slider-hover-background);
+}
+
+::-webkit-scrollbar-thumb:active {
+    background-color: var(--vscode-scrollbar-slider-active-background);
+}
+
+::-webkit-scrollbar-corner {
+    background-color: var(--vscode-scrollbar-background);
+}
+
+/* 基础组件样式 */
+.vscode-card {
+    background-color: var(--vscode-sidebar-background);
+    border: 1px solid var(--vscode-border);
+    border-radius: 4px;
+    padding: 12px;
+    margin-bottom: 8px;
+}
+
+.vscode-card:hover {
+    background-color: var(--vscode-hover-background);
+}
+
+.vscode-card.active {
+    background-color: var(--vscode-active-background);
+    border-color: var(--vscode-focus-border);
+}
+
+.vscode-icon-button {
+    background: transparent;
+    border: none;
+    color: var(--vscode-icon-foreground);
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.vscode-icon-button:hover {
+    background-color: var(--vscode-hover-background);
+    color: var(--vscode-icon-hover-foreground);
+}
+
+.vscode-icon-button.active {
+    background-color: var(--vscode-active-background);
+    color: var(--vscode-focus-border);
 }
 
 .text-center {
-  text-align: center;
+    text-align: center;
 }
 
 .hidden {
-  display: none !important;
+    display: none !important;
+}
+
+/* 分隔线样式 */
+.vscode-divider {
+    border: none;
+    border-top: 1px solid var(--vscode-border);
+    margin: 8px 0;
+}
+
+/* 标签样式 */
+.vscode-badge {
+    display: inline-block;
+    padding: 2px 6px;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 10px;
+    background-color: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+}
+
+.vscode-badge.success {
+    background-color: var(--vscode-success);
+    color: #000000;
+}
+
+.vscode-badge.warning {
+    background-color: var(--vscode-warning);
+    color: #000000;
+}
+
+.vscode-badge.error {
+    background-color: var(--vscode-error);
+    color: #000000;
+}
+
+.vscode-badge.info {
+    background-color: var(--vscode-info);
+    color: #000000;
 }
 
 /* 基础响应式断点示例 */
 @media (max-width: 768px) {
-  html {
-    font-size: 14px;
-  }
+    html {
+        font-size: 14px;
+    }
 }
