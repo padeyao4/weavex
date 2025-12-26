@@ -72,7 +72,7 @@ export const useGraphsStore = defineStore("graph-storage", () => {
 
   function removeEdge(
     partialGraph?: Partial<PGraph>,
-    ids?: string[] | { from: string; to: string }[],
+    ids?: string[] | { from: string; to: string }[]
   ) {
     if (partialGraph?.id && ids?.length) {
       const graph = allGraphs[partialGraph.id];
@@ -86,6 +86,16 @@ export const useGraphsStore = defineStore("graph-storage", () => {
 
   function addGraph(graph: PGraph) {
     allGraphs[graph.id] = graph;
+  }
+
+  function removeGraph(graphId: string) {
+    if (allGraphs[graphId]) {
+      delete allGraphs[graphId];
+      // 如果删除的是当前选中的graph，清空当前选中
+      if (currentGraphStore.currentGraphId === graphId) {
+        currentGraphStore.setGraph();
+      }
+    }
   }
 
   const graphsMeta = computed(() => {
@@ -107,5 +117,6 @@ export const useGraphsStore = defineStore("graph-storage", () => {
     removeNode,
     removeEdge,
     addGraph,
+    removeGraph,
   };
 });
