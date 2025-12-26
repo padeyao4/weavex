@@ -1,7 +1,7 @@
 import { PGraph, PNode } from "@/types";
 import { defineStore } from "pinia";
 import { computed, reactive, ref } from "vue";
-import { GraphUtils } from "@/utils";
+import { GraphUtils, Mock } from "@/utils";
 
 /**
  * 当前选中的图谱存储
@@ -39,7 +39,7 @@ export const useGraphsStore = defineStore("graph-storage", () => {
    */
   function generateRandomGraph() {
     for (let i = 0; i < 1; i++) {
-      const graph = GraphUtils.generateMackGraph();
+      const graph = Mock.data01();
       allGraphs[graph.id] = graph;
     }
   }
@@ -58,12 +58,18 @@ export const useGraphsStore = defineStore("graph-storage", () => {
   function removeNode(partialGraph?: Partial<PGraph>, ids?: string[]) {
     if (partialGraph?.id && ids?.length) {
       const graph = allGraphs[partialGraph.id];
-      graph.updatedAt = Date.now();
-      ids.forEach((id) => {
-        delete graph.nodes[id];
-        // todo 考虑所有涉及到该id的node都要修改
-        // 
-        graph.rootNodeIds = graph.rootNodeIds.filter((nodeId) => nodeId !== id);
+      ids?.forEach((id) => {
+        GraphUtils.removeNode(graph, id);
+      });
+    }
+  }
+
+  function removeEdge(partialGraph?: Partial<PGraph>, ids?: string[]) {
+    if (partialGraph?.id && ids?.length) {
+      const graph = allGraphs[partialGraph.id];
+      ids?.forEach((id) => {
+        const [from, to] = id.split("_", 2);
+        GraphUtils.removeEdge(graph, from, to);
       });
     }
   }
@@ -88,6 +94,7 @@ export const useGraphsStore = defineStore("graph-storage", () => {
     currentGraph,
     addNode,
     removeNode,
+    removeEdge,
     addGraph,
   };
 });

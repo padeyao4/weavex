@@ -36,15 +36,6 @@ export class GraphUtils {
     };
   }
 
-  static createNodeData(node: PNode): NodeData {
-    return {
-      id: node.id,
-      label: node.title,
-      data: { ...node },
-      combo: node.parent,
-    };
-  }
-
   static addNode(graph: PGraph, node: PNode) {
     graph.updatedAt = Date.now();
     graph.nodes[node.id] = node;
@@ -55,16 +46,47 @@ export class GraphUtils {
 
   static removeNode(graph: PGraph, id: string) {
     graph.updatedAt = Date.now();
-    // todo
+    graph.rootNodeIds = graph.rootNodeIds.filter((nodeId) => nodeId !== id);
+    // 查找当前节点，
+    const node: PNode | undefined = graph.nodes[id];
+    // 删除节点prevs关系
+    node?.prevs.forEach((prevId) => {
+      const prevNode = graph.nodes[prevId];
+      prevNode.nexts = prevNode.nexts.filter((nextId) => nextId !== id);
+    });
+    // 删除节点nexts关系
+    node?.nexts.forEach((nextId) => {
+      const nextNode = graph.nodes[nextId];
+      nextNode.prevs = nextNode.prevs.filter((prevId) => prevId !== id);
+    });
+    // 删除节点parent关系
+    if (node?.parent) {
+      const parentNode = graph.nodes[node.parent];
+      parentNode.children = parentNode.children.filter(
+        (childId) => childId !== id,
+      );
+    }
+    // 递归删除节点children关系
+    node?.children.forEach((childId) => {
+      this.removeNode(graph, childId);
+    });
+    // 从graph中删除
+    delete graph.nodes[id];
   }
 
-  static addEdge(graph: PGraph, from: PNode, target: PNode) {
-    // todo
+  static addEdge(graph: PGraph, from: PNode | string, to: PNode | string) {
+    const source: PNode = typeof from === "string" ? graph.nodes[from] : from;
+    const target: PNode = typeof to === "string" ? graph.nodes[to] : to;
+    source.nexts.push(target.id);
+    target.prevs.push(source.id);
   }
 
-  static removeEdge(graph: PGraph, from: PNode, target: PNode) {
+  static removeEdge(graph: PGraph, from: PNode | string, to: PNode | string) {
     graph.updatedAt = Date.now();
-    // todo
+    const source: PNode = typeof from === "string" ? graph.nodes[from] : from;
+    const target: PNode = typeof to === "string" ? graph.nodes[to] : to;
+    source.nexts = source.nexts.filter((id) => id !== target.id);
+    target.prevs = target.prevs.filter((id) => id !== source.id);
   }
 
   /**
@@ -159,120 +181,64 @@ export class GraphUtils {
     };
   }
 
-  static generateMackGraph(): PGraph {
-    const graph = this.fakerGraph();
-    const nodeA = NodeUtil.createNode({ title: "a" });
-    const nodeB = NodeUtil.createNode({ title: "b" });
-    const nodeC = NodeUtil.createNode({ title: "c" });
-    const nodeD = NodeUtil.createNode({ title: "d" });
-    const node1 = NodeUtil.createNode({ title: "1" });
-    const node2 = NodeUtil.createNode({ title: "2" });
-    const node3 = NodeUtil.createNode({ title: "3" });
-    graph.nodes[nodeA.id] = nodeA;
-    graph.nodes[nodeB.id] = nodeB;
-    graph.nodes[nodeC.id] = nodeC;
-    graph.nodes[nodeD.id] = nodeD;
-    graph.nodes[node1.id] = node1;
-    graph.nodes[node2.id] = node2;
-    graph.nodes[node3.id] = node3;
-    NodeUtil.addNext(nodeA, nodeB);
-    NodeUtil.addNext(nodeB, nodeC);
-    NodeUtil.addNext(nodeC, nodeD);
-    NodeUtil.addNext(node1, node2);
-    NodeUtil.addNext(node1, node3);
-    NodeUtil.traverseAndAddChildren(nodeB, node1, graph.nodes);
-    graph.rootNodeIds.push(nodeA.id);
-    return graph;
-  }
+  // static generateMackGraph(): PGraph {
+  //   const graph = this.fakerGraph();
+  //   const nodeA = NodeUtil.createNode({ title: "a" });
+  //   const nodeB = NodeUtil.createNode({ title: "b" });
+  //   const nodeC = NodeUtil.createNode({ title: "c" });
+  //   const nodeD = NodeUtil.createNode({ title: "d" });
+  //   const node1 = NodeUtil.createNode({ title: "1" });
+  //   const node2 = NodeUtil.createNode({ title: "2" });
+  //   const node3 = NodeUtil.createNode({ title: "3" });
+  //   graph.nodes[nodeA.id] = nodeA;
+  //   graph.nodes[nodeB.id] = nodeB;
+  //   graph.nodes[nodeC.id] = nodeC;
+  //   graph.nodes[nodeD.id] = nodeD;
+  //   graph.nodes[node1.id] = node1;
+  //   graph.nodes[node2.id] = node2;
+  //   graph.nodes[node3.id] = node3;
+  //   NodeUtil.addNext(nodeA, nodeB);
+  //   NodeUtil.addNext(nodeB, nodeC);
+  //   NodeUtil.addNext(nodeC, nodeD);
+  //   NodeUtil.addNext(node1, node2);
+  //   NodeUtil.addNext(node1, node3);
+  //   NodeUtil.traverseAndAddChildren(nodeB, node1, graph.nodes);
+  //   graph.rootNodeIds.push(nodeA.id);
+  //   return graph;
+  // }
 
-  static generateMackGraph2(): PGraph {
-    const graph = this.fakerGraph();
-    const nodeA = NodeUtil.createNode({ title: "a" });
-    const nodeB = NodeUtil.createNode({ title: "b" });
-    graph.nodes[nodeA.id] = nodeA;
-    graph.nodes[nodeB.id] = nodeB;
-    NodeUtil.addChild(nodeA, nodeB);
-    // NodeUtil.traverseAndAddChildren(nodeA, nodeB, graph.nodes);
-    graph.rootNodeIds.push(nodeA.id);
-    return graph;
-  }
+  // static generateMackGraph2(): PGraph {
+  //   const graph = this.fakerGraph();
+  //   const nodeA = NodeUtil.createNode({ title: "a" });
+  //   const nodeB = NodeUtil.createNode({ title: "b" });
+  //   graph.nodes[nodeA.id] = nodeA;
+  //   graph.nodes[nodeB.id] = nodeB;
+  //   NodeUtil.addChild(nodeA, nodeB);
+  //   // NodeUtil.traverseAndAddChildren(nodeA, nodeB, graph.nodes);
+  //   graph.rootNodeIds.push(nodeA.id);
+  //   return graph;
+  // }
 
-  static generateMackGraph3(): PGraph {
-    const graph = this.fakerGraph();
-    const nodeA = NodeUtil.createNode({ title: "a" });
-    const nodeB = NodeUtil.createNode({ title: "b" });
-    const nodeC = NodeUtil.createNode({ title: "c" });
-    graph.nodes[nodeA.id] = nodeA;
-    graph.nodes[nodeB.id] = nodeB;
-    graph.nodes[nodeC.id] = nodeC;
-    NodeUtil.addNext(nodeA, nodeC);
-    NodeUtil.addChild(nodeA, nodeB);
-    // NodeUtil.traverseAndAddChildren(nodeA, nodeB, graph.nodes);
-    graph.rootNodeIds.push(nodeA.id);
-    return graph;
-  }
+  // static generateMackGraph3(): PGraph {
+  //   const graph = this.fakerGraph();
+  //   const nodeA = NodeUtil.createNode({ title: "a" });
+  //   const nodeB = NodeUtil.createNode({ title: "b" });
+  //   const nodeC = NodeUtil.createNode({ title: "c" });
+  //   graph.nodes[nodeA.id] = nodeA;
+  //   graph.nodes[nodeB.id] = nodeB;
+  //   graph.nodes[nodeC.id] = nodeC;
+  //   NodeUtil.addNext(nodeA, nodeC);
+  //   NodeUtil.addChild(nodeA, nodeB);
+  //   // NodeUtil.traverseAndAddChildren(nodeA, nodeB, graph.nodes);
+  //   graph.rootNodeIds.push(nodeA.id);
+  //   return graph;
+  // }
 
-  static generateMackGraph4(): PGraph {
-    const graph = this.fakerGraph();
-    const nodeA = NodeUtil.createNode({ title: "a" });
-    graph.nodes[nodeA.id] = nodeA;
-    graph.rootNodeIds.push(nodeA.id);
-    return graph;
-  }
-
-  /**
-   * 随机生成一个简单的一层DAG图
-   * @param size 节点数量（默认 10）
-   * @param maxEdge 每个源节点最大出边数（默认 3）
-   * @returns 生成的 PGraph
-   */
-  static randomSampleGraph(size: number = 10, maxEdge: number = 3): PGraph {
-    const graph = this.fakerGraph(); // 假设 createGraph() 返回 { id, name, createdAt 等基础字段 }
-
-    const nodes: PNode[] = [];
-
-    // 1. 创建所有节点（使用 createNode 或 fakerNode）
-    for (let i = 0; i < size; i++) {
-      // 你可以根据需要切换为 NodeUtil.fakerNode()
-      const node = NodeUtil.createNode();
-      graph.nodes[node.id] = node;
-      nodes.push(node);
-    }
-
-    if (size <= 1) {
-      // 单个节点或空图：它自己就是根
-      if (size === 1) {
-        graph.rootNodeIds = [nodes[0].id];
-      }
-      return graph;
-    }
-
-    // 2. 划分 source（前半）和 sink（后半）
-    const mid = Math.max(1, Math.floor(size / 2));
-    const sources = nodes.slice(0, mid);
-    const sinks = nodes.slice(mid);
-
-    // 3. 从 sources 向 sinks 随机连边（保证无环、单层）
-    for (const source of sources) {
-      const maxPossible = Math.min(maxEdge, sinks.length);
-      const edgeCount =
-        maxPossible > 0 ? Math.floor(Math.random() * (maxPossible + 1)) : 0;
-
-      const shuffled = [...sinks].sort(() => 0.5 - Math.random());
-      const targets = shuffled.slice(0, edgeCount);
-
-      for (const sink of targets) {
-        source.nexts.push(sink.id);
-        sink.prevs.push(source.id);
-        // 注意：不设置 parent/children，保持扁平 DAG
-      }
-    }
-
-    // 4. 收集所有 rootNodeIds（即 prevs 为空的节点）
-    graph.rootNodeIds = nodes
-      .filter((node) => node.prevs.length === 0)
-      .map((node) => node.id);
-
-    return graph;
-  }
+  // static generateMackGraph4(): PGraph {
+  //   const graph = this.fakerGraph();
+  //   const nodeA = NodeUtil.createNode({ title: "a" });
+  //   graph.nodes[nodeA.id] = nodeA;
+  //   graph.rootNodeIds.push(nodeA.id);
+  //   return graph;
+  // }
 }

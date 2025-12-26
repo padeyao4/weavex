@@ -6,7 +6,7 @@ export class NodeUtil {
   static createNode(node: Partial<PNode> = {}): PNode {
     const defaultNode = {
       id: uuidv4(),
-      title: "",
+      name: "",
       description: "",
       record: "",
       createdAt: Date.now(),
@@ -29,7 +29,7 @@ export class NodeUtil {
   static fakerNode(): PNode {
     const defaultNode = {
       id: uuidv4(),
-      title: faker.lorem.words(3),
+      name: faker.lorem.words(3),
       description: faker.lorem.sentences(2),
       record: faker.lorem.paragraphs(3),
       createdAt: Date.now(),

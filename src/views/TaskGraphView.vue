@@ -48,6 +48,10 @@ onMounted(() => {
                                     name: "添加子节点",
                                     value: "combo:add-child",
                                 },
+                                {
+                                    name: "删除组合",
+                                    value: "combo:delete",
+                                },
                             ];
                         case "canvas":
                             return [
@@ -60,23 +64,29 @@ onMounted(() => {
                 onClick: (
                     value: any,
                     _target: HTMLElement,
-                    current: Element,
+                    current?: Element,
                 ) => {
                     switch (value) {
                         case "node:delete":
-                            graph.removeNodeData([current.id]);
-                            graph.render();
-                            graphsStore.removeNode(graphsStore.currentGraph, [
-                                current.id,
-                            ]);
-                            break;
-                        case "edge":
-                            if (value === "delete-edge") {
-                                // todo
+                        case "combo:delete":
+                            if (current) {
+                                graphsStore.removeNode(
+                                    graphsStore.currentGraph,
+                                    [current.id],
+                                );
+                                graph.setData(data.value);
+                                graph.render();
                             }
                             break;
-                        case "combo":
-                            console.log(current.id);
+                        case "edge:delete":
+                            if (current) {
+                                graphsStore.removeEdge(
+                                    graphsStore.currentGraph,
+                                    [current.id],
+                                );
+                                graph.setData(data.value);
+                                graph.render();
+                            }
                             break;
                         case "canvas:add-node":
                             const node = NodeUtil.fakerNode();
@@ -88,6 +98,9 @@ onMounted(() => {
                                 },
                             ]);
                             graph.render();
+                            break;
+                        default:
+                            console.warn(`Unknown action: ${value}`);
                             break;
                     }
                 },
@@ -110,7 +123,7 @@ onMounted(() => {
                 stroke: "#91d5ff",
                 lineWidth: 1,
                 radius: 4,
-                labelText: (d: any) => d.data.title,
+                labelText: (d: any) => d.data.name,
                 labelBackground: true,
                 labelBackgroundOpacity: 0.7,
                 labelBackgroundRadius: 2,
@@ -125,7 +138,6 @@ onMounted(() => {
                 stroke: "#1890ff",
                 lineWidth: 1,
                 radius: 4,
-                labelText: (d: any) => d.label,
                 labelFill: "#1890ff",
                 labelFontSize: 14,
                 labelFontWeight: "bold",
