@@ -9,8 +9,8 @@
     </div>
 </template>
 <script setup lang="ts">
-import { Graph } from "@antv/g6";
-import { computed, nextTick, onMounted } from "vue";
+import { Graph, IElementEvent, Element } from "@antv/g6";
+import { computed, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import { useCurrentGraphStore, useGraphsStore } from "@/stores";
 import { GraphUtils, NodeUtil } from "@/utils";
@@ -29,29 +29,66 @@ onMounted(() => {
     // 创建图实例
     const graph = new Graph({
         container: "container",
-        autoFit: "center",
         autoResize: true,
+        autoFit: "center",
         data: data.value,
         plugins: [
             {
                 type: "contextmenu",
                 trigger: "contextmenu",
-                // 只在节点上开启右键菜单，默认全部元素都开启
-                enable: (e: any) => e.targetType === "canvas",
-                getItems: () => {
-                    return [{ name: "添加节点", value: "add-node" }];
+                getItems: (e: IElementEvent) => {
+                    switch (e.targetType) {
+                        case "node":
+                            return [{ name: "删除节点", value: "node:delete" }];
+                        case "edge":
+                            return [{ name: "删除边", value: "edge:delete" }];
+                        case "combo":
+                            return [
+                                {
+                                    name: "添加子节点",
+                                    value: "combo:add-child",
+                                },
+                            ];
+                        case "canvas":
+                            return [
+                                { name: "添加节点", value: "canvas:add-node" },
+                            ];
+                        default:
+                            return [];
+                    }
                 },
-                onClick: (value: any) => {
-                    if (value === "add-node") {
-                        const node = NodeUtil.fakerNode();
-                        graphsStore.addNode(graphsStore.currentGraph, node);
-                        graph.addNodeData([
-                            {
-                                id: node.id,
-                                data: { ...node },
-                            },
-                        ]);
-                        graph.render();
+                onClick: (
+                    value: any,
+                    _target: HTMLElement,
+                    current: Element,
+                ) => {
+                    switch (value) {
+                        case "node:delete":
+                            graph.removeNodeData([current.id]);
+                            graph.render();
+                            graphsStore.removeNode(graphsStore.currentGraph, [
+                                current.id,
+                            ]);
+                            break;
+                        case "edge":
+                            if (value === "delete-edge") {
+                                // todo
+                            }
+                            break;
+                        case "combo":
+                            console.log(current.id);
+                            break;
+                        case "canvas:add-node":
+                            const node = NodeUtil.fakerNode();
+                            graphsStore.addNode(graphsStore.currentGraph, node);
+                            graph.addNodeData([
+                                {
+                                    id: node.id,
+                                    data: { ...node },
+                                },
+                            ]);
+                            graph.render();
+                            break;
                     }
                 },
             },

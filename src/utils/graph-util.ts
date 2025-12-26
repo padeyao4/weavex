@@ -45,6 +45,28 @@ export class GraphUtils {
     };
   }
 
+  static addNode(graph: PGraph, node: PNode) {
+    graph.updatedAt = Date.now();
+    graph.nodes[node.id] = node;
+    if (!graph.rootNodeIds.includes(node.id)) {
+      graph.rootNodeIds.push(node.id);
+    }
+  }
+
+  static removeNode(graph: PGraph, id: string) {
+    graph.updatedAt = Date.now();
+    // todo
+  }
+
+  static addEdge(graph: PGraph, from: PNode, target: PNode) {
+    // todo
+  }
+
+  static removeEdge(graph: PGraph, from: PNode, target: PNode) {
+    graph.updatedAt = Date.now();
+    // todo
+  }
+
   /**
    * 将graph中的nodes数据转为GraphData数据
    * @returns

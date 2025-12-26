@@ -3,9 +3,17 @@ import { defineStore } from "pinia";
 import { computed, reactive, ref } from "vue";
 import { GraphUtils } from "@/utils";
 
+/**
+ * 当前选中的图谱存储
+ * 用于管理当前正在查看或编辑的图谱ID
+ */
 export const useCurrentGraphStore = defineStore("graph-detail", () => {
   const currentGraphId = ref<string | undefined>();
 
+  /**
+   * 设置当前图谱
+   * @param graph - 图谱对象（可选），如果提供则使用其ID，否则清空当前选中
+   */
   function setGraph(graph?: Partial<PGraph>) {
     currentGraphId.value = graph?.id;
   }
@@ -31,19 +39,32 @@ export const useGraphsStore = defineStore("graph-storage", () => {
    */
   function generateRandomGraph() {
     for (let i = 0; i < 1; i++) {
-      const graph = GraphUtils.generateMackGraph4();
+      const graph = GraphUtils.generateMackGraph();
       allGraphs[graph.id] = graph;
     }
   }
 
-  function addNode(graph?: Partial<PGraph>, node?: PNode) {
-    if (graph?.id && node) {
-      const item = allGraphs[graph.id];
-      item.updatedAt = Date.now();
-      item.nodes[node.id] = node;
-      if (!item.rootNodeIds.includes(node.id)) {
-        item.rootNodeIds.push(node.id);
+  function addNode(partialGraph?: Partial<PGraph>, node?: PNode) {
+    if (partialGraph?.id && node) {
+      const graph = allGraphs[partialGraph.id];
+      graph.updatedAt = Date.now();
+      graph.nodes[node.id] = node;
+      if (!graph.rootNodeIds.includes(node.id)) {
+        graph.rootNodeIds.push(node.id);
       }
+    }
+  }
+
+  function removeNode(partialGraph?: Partial<PGraph>, ids?: string[]) {
+    if (partialGraph?.id && ids?.length) {
+      const graph = allGraphs[partialGraph.id];
+      graph.updatedAt = Date.now();
+      ids.forEach((id) => {
+        delete graph.nodes[id];
+        // todo 考虑所有涉及到该id的node都要修改
+        // 
+        graph.rootNodeIds = graph.rootNodeIds.filter((nodeId) => nodeId !== id);
+      });
     }
   }
 
@@ -66,6 +87,7 @@ export const useGraphsStore = defineStore("graph-storage", () => {
     graphsMeta,
     currentGraph,
     addNode,
+    removeNode,
     addGraph,
   };
 });
