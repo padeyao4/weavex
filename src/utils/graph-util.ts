@@ -44,11 +44,39 @@ export class GraphUtils {
     }
   }
 
+  static addChildWidthTravel(
+    graph: PGraph,
+    parent: PNode | string,
+    child: PNode | string,
+  ) {
+    const parentNode =
+      typeof parent === "string" ? graph.nodes[parent] : parent;
+    const childNode = typeof child === "string" ? graph.nodes[child] : child;
+    if (!parentNode || !childNode) return;
+    const set = new Set<string>();
+    function travel(id: string) {
+      if (set.has(id)) return;
+      set.add(id);
+      const node = graph.nodes[id];
+      const nodeIds = [...node.nexts, ...node.prevs];
+      nodeIds.forEach(travel);
+    }
+    travel(childNode.id);
+    set.forEach((id) => {
+      const node = graph.nodes[id];
+      node.parent = parentNode.id;
+      parentNode.children = [...new Set([...parentNode.children, node.id])];
+    });
+  }
+
   static removeNode(graph: PGraph, id: string) {
     graph.updatedAt = Date.now();
-    graph.rootNodeIds = graph.rootNodeIds.filter((nodeId) => nodeId !== id);
     // 查找当前节点，
     const node: PNode | undefined = graph.nodes[id];
+    // 重建rootIds
+    graph.rootNodeIds = [
+      ...new Set([...graph.rootNodeIds, ...node.nexts]),
+    ].filter((nodeId) => nodeId !== id);
     // 删除节点prevs关系
     node?.prevs.forEach((prevId) => {
       const prevNode = graph.nodes[prevId];
@@ -79,6 +107,9 @@ export class GraphUtils {
     const target: PNode = typeof to === "string" ? graph.nodes[to] : to;
     source.nexts.push(target.id);
     target.prevs.push(source.id);
+    graph.rootNodeIds = graph.rootNodeIds.filter(
+      (nodeId) => nodeId !== target.id,
+    );
   }
 
   static removeEdge(graph: PGraph, from: PNode | string, to: PNode | string) {
@@ -87,6 +118,7 @@ export class GraphUtils {
     const target: PNode = typeof to === "string" ? graph.nodes[to] : to;
     source.nexts = source.nexts.filter((id) => id !== target.id);
     target.prevs = target.prevs.filter((id) => id !== source.id);
+    graph.rootNodeIds = [...new Set([...graph.rootNodeIds, target.id])];
   }
 
   /**
@@ -180,65 +212,4 @@ export class GraphUtils {
       combos,
     };
   }
-
-  // static generateMackGraph(): PGraph {
-  //   const graph = this.fakerGraph();
-  //   const nodeA = NodeUtil.createNode({ title: "a" });
-  //   const nodeB = NodeUtil.createNode({ title: "b" });
-  //   const nodeC = NodeUtil.createNode({ title: "c" });
-  //   const nodeD = NodeUtil.createNode({ title: "d" });
-  //   const node1 = NodeUtil.createNode({ title: "1" });
-  //   const node2 = NodeUtil.createNode({ title: "2" });
-  //   const node3 = NodeUtil.createNode({ title: "3" });
-  //   graph.nodes[nodeA.id] = nodeA;
-  //   graph.nodes[nodeB.id] = nodeB;
-  //   graph.nodes[nodeC.id] = nodeC;
-  //   graph.nodes[nodeD.id] = nodeD;
-  //   graph.nodes[node1.id] = node1;
-  //   graph.nodes[node2.id] = node2;
-  //   graph.nodes[node3.id] = node3;
-  //   NodeUtil.addNext(nodeA, nodeB);
-  //   NodeUtil.addNext(nodeB, nodeC);
-  //   NodeUtil.addNext(nodeC, nodeD);
-  //   NodeUtil.addNext(node1, node2);
-  //   NodeUtil.addNext(node1, node3);
-  //   NodeUtil.traverseAndAddChildren(nodeB, node1, graph.nodes);
-  //   graph.rootNodeIds.push(nodeA.id);
-  //   return graph;
-  // }
-
-  // static generateMackGraph2(): PGraph {
-  //   const graph = this.fakerGraph();
-  //   const nodeA = NodeUtil.createNode({ title: "a" });
-  //   const nodeB = NodeUtil.createNode({ title: "b" });
-  //   graph.nodes[nodeA.id] = nodeA;
-  //   graph.nodes[nodeB.id] = nodeB;
-  //   NodeUtil.addChild(nodeA, nodeB);
-  //   // NodeUtil.traverseAndAddChildren(nodeA, nodeB, graph.nodes);
-  //   graph.rootNodeIds.push(nodeA.id);
-  //   return graph;
-  // }
-
-  // static generateMackGraph3(): PGraph {
-  //   const graph = this.fakerGraph();
-  //   const nodeA = NodeUtil.createNode({ title: "a" });
-  //   const nodeB = NodeUtil.createNode({ title: "b" });
-  //   const nodeC = NodeUtil.createNode({ title: "c" });
-  //   graph.nodes[nodeA.id] = nodeA;
-  //   graph.nodes[nodeB.id] = nodeB;
-  //   graph.nodes[nodeC.id] = nodeC;
-  //   NodeUtil.addNext(nodeA, nodeC);
-  //   NodeUtil.addChild(nodeA, nodeB);
-  //   // NodeUtil.traverseAndAddChildren(nodeA, nodeB, graph.nodes);
-  //   graph.rootNodeIds.push(nodeA.id);
-  //   return graph;
-  // }
-
-  // static generateMackGraph4(): PGraph {
-  //   const graph = this.fakerGraph();
-  //   const nodeA = NodeUtil.createNode({ title: "a" });
-  //   graph.nodes[nodeA.id] = nodeA;
-  //   graph.rootNodeIds.push(nodeA.id);
-  //   return graph;
-  // }
 }
