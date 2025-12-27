@@ -10,6 +10,10 @@ import piniaPluginPersistedstate from "pinia-plugin-persistedstate";
 import { warn, debug, trace, info, error } from "@tauri-apps/plugin-log";
 import { forwardConsole } from "./lib";
 
+// 监听窗口关闭
+// todo
+
+// 页面中的日志转发到控制台
 forwardConsole("log", trace);
 forwardConsole("debug", debug);
 forwardConsole("info", info);

@@ -46,4 +46,26 @@ export class LocalFs {
     console.debug("Graph file read: " + json);
     return JSON.parse(json);
   }
+
+  static async save(data: string) {
+    if (!(await this.exists(this.DATA_PATH))) {
+      console.debug("Data directory does not exist");
+      await mkdir(this.DATA_PATH, {
+        baseDir: BaseDirectory.Document,
+        recursive: true,
+      });
+      console.debug("Data directory created");
+    }
+
+    const path = await join(this.DATA_PATH, this.GRAPH_FILE_NAME);
+    try {
+      console.info("Saving graph file...");
+      await writeTextFile(path, data, {
+        baseDir: BaseDirectory.Document,
+      });
+      console.info("Success,Graph file saved.");
+    } catch (e) {
+      console.error(e);
+    }
+  }
 }

@@ -1,9 +1,8 @@
 import { PGraph, PNode } from "@/types";
 import { defineStore } from "pinia";
 import { computed, reactive, ref } from "vue";
-import { GraphUtils, Mock } from "@/utils";
+import { debounce, GraphUtils, Mock } from "@/utils";
 import { LocalFs } from "@/lib";
-
 /**
  * 当前选中的图谱存储
  * 用于管理当前正在查看或编辑的图谱ID
@@ -29,11 +28,15 @@ export const useCurrentGraphStore = defineStore("graph-detail", () => {
  * application的状态，有3种：
  * 待初始化，初始化中，已经初始化
  */
-type AppStatus = "pending" | "initializing" | "initialized";
+type AppStatus = "pending" | "initializing" | "initialized" | "error";
 
 export const useContextStore = defineStore("status", () => {
   const status = ref<AppStatus>("pending");
   const graphsStore = useGraphsStore();
+
+  function setStatus(st: AppStatus) {
+    status.value = st;
+  }
 
   async function initialize() {
     if (status.value === "pending") {
@@ -52,6 +55,7 @@ export const useContextStore = defineStore("status", () => {
   return {
     status,
     initialize,
+    setStatus,
   };
 });
 
@@ -79,6 +83,15 @@ export const useGraphsStore = defineStore("graph-storage", () => {
       const graph = Mock.data01();
       allGraphs[graph.id] = graph;
     }
+  }
+
+  function saveGraphs() {
+    const data = JSON.stringify(allGraphs);
+    LocalFs.save(data);
+  }
+
+  function debouncedSave() {
+    debounce(saveGraphs, 1000);
   }
 
   function addEdge(partialGraph?: Partial<PGraph>, from?: string, to?: string) {
@@ -171,5 +184,6 @@ export const useGraphsStore = defineStore("graph-storage", () => {
     addGraph,
     removeGraph,
     loadGraphs,
+    debouncedSave,
   };
 });
