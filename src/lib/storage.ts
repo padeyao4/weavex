@@ -8,7 +8,7 @@ import {
 } from "@tauri-apps/plugin-fs";
 
 export class LocalFs {
-  static DATA_PATH = "PossibleData";
+  static DATA_PATH = import.meta.env.VITE_APP_ENV === 'dev' ? 'PossibleDataDev' : 'PossibleData';
   static GRAPH_FILE_NAME = "graphs.json";
   static DEFAULT_GRAPHS = "{}";
 

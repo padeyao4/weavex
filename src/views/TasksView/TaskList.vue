@@ -37,39 +37,39 @@ const deleteTask = async (taskId: string) => {
 };
 
 const editTask = async (taskId: string) => {
-  try {
-    const task = graphsStore.allGraphs[taskId];
-    if (!task) return;
+    try {
+        const task = graphsStore.allGraphs[taskId];
+        if (!task) return;
 
-    const result = await ElMessageBox.prompt(
-      "请输入新的任务名称",
-      "修改任务名称",
-      {
-        confirmButtonText: "确定",
-        cancelButtonText: "取消",
-        inputValue: task.name,
-        inputValidator: (value) => {
-          if (!value || value.trim() === "") {
-            return "任务名称不能为空";
-          }
-          return true;
-        },
-        customClass: "edit-task-dialog",
-      }
-    );
+        const result = await ElMessageBox.prompt(
+            "请输入新的任务名称",
+            "修改任务名称",
+            {
+                confirmButtonText: "确定",
+                cancelButtonText: "取消",
+                inputValue: task.name,
+                inputValidator: (value) => {
+                    if (!value || value.trim() === "") {
+                        return "任务名称不能为空";
+                    }
+                    return true;
+                },
+                customClass: "edit-task-dialog",
+            }
+        );
 
-    const newName = result.value.trim();
-    if (newName && newName !== task.name) {
-      // 更新任务名称
-      graphsStore.updateGraph(taskId, { name: newName });
+        const newName = result.value.trim();
+        if (newName && newName !== task.name) {
+            // 更新任务名称
+            graphsStore.updateGraph(taskId, { name: newName });
 
-      // 触发保存
-      graphsStore.debouncedSave();
+            // 触发保存
+            graphsStore.debouncedSave();
+        }
+    } catch (error) {
+        // 用户取消了编辑
+        console.log("编辑已取消");
     }
-  } catch (error) {
-    // 用户取消了编辑
-    console.log("编辑已取消");
-  }
 };
 
 
@@ -108,12 +108,13 @@ const routeToTask = (taskId: string) => {
                                         <div class="task-item-title h-full grow overflow-hidden items-center">
                                             {{ meta.name }}
                                         </div>
-                                        <div class="flex flex-row shrink-0" v-show="hoveredTaskId===meta.id">
-                                             <div class="delete-button flex shrink-0 justify-center items-center"
+                                        <div class="flex flex-row shrink-0" v-show="hoveredTaskId === meta.id">
+                                            <div class="delete-button flex shrink-0 justify-center items-center"
                                                 @click.stop="deleteTask(meta.id)">
                                                 D
                                             </div>
-                                             <div class="edit-button flex shrink-0 justify-center items-center" @click.stop="editTask(meta.id)">
+                                            <div class="edit-button flex shrink-0 justify-center items-center"
+                                                @click.stop="editTask(meta.id)">
                                                 E
                                             </div>
                                         </div>
@@ -379,10 +380,6 @@ const routeToTask = (taskId: string) => {
     cursor: pointer;
     padding: 0;
     margin-left: 4px;
-}
-
-.task-item:hover .delete-button {
-    /*opacity: 1;*/
 }
 
 .delete-button:hover {

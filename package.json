@@ -1,13 +1,15 @@
 {
   "name": "possible",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.3.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --mode dev",
     "build": "vue-tsc --noEmit && vite build",
     "preview": "vite preview",
     "tauri": "tauri",
+    "app-dev": "tauri dev --config src-tauri/tauri.dev.conf.json",
+    "app-build": "tauri build",
     "test": "vitest"
   },
   "dependencies": {
