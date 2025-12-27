@@ -2,8 +2,8 @@
     <router-view />
 </template>
 <script setup lang="ts">
-import { useGraphsStore } from "@/stores";
+import { useContextStore } from "@/stores";
 
-const graphsStore = useGraphsStore();
-graphsStore.generateRandomGraph();
+const contextStore = useContextStore();
+await contextStore.initialize();
 </script>

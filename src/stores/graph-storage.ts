@@ -2,6 +2,7 @@ import { PGraph, PNode } from "@/types";
 import { defineStore } from "pinia";
 import { computed, reactive, ref } from "vue";
 import { GraphUtils, Mock } from "@/utils";
+import { LocalFs } from "@/lib";
 
 /**
  * 当前选中的图谱存储
@@ -21,6 +22,33 @@ export const useCurrentGraphStore = defineStore("graph-detail", () => {
   return {
     currentGraphId,
     setGraph,
+  };
+});
+
+/**
+ * application的状态，有3种：
+ * 待初始化，初始化中，已经初始化
+ */
+type AppStatus = "pending" | "initializing" | "initialized";
+
+export const useContextStore = defineStore("status", () => {
+  const status = ref<AppStatus>("pending");
+  const graphsStore = useGraphsStore();
+
+  async function initialize() {
+    if (status.value === "pending") {
+      status.value = "initializing";
+      // todo 读取graph json文件
+      const obj = await LocalFs.readGraphs();
+      console.log(obj);
+      // todo 加载graphsStore
+      status.value = "initialized";
+    }
+  }
+
+  return {
+    status,
+    initialize,
   };
 });
 
@@ -72,7 +100,7 @@ export const useGraphsStore = defineStore("graph-storage", () => {
 
   function removeEdge(
     partialGraph?: Partial<PGraph>,
-    ids?: string[] | { from: string; to: string }[]
+    ids?: string[] | { from: string; to: string }[],
   ) {
     if (partialGraph?.id && ids?.length) {
       const graph = allGraphs[partialGraph.id];

@@ -3,5 +3,17 @@
   "identifier": "default",
   "description": "Capability for the main window",
   "windows": ["main"],
-  "permissions": ["core:default", "opener:default", "store:default"]
+  "permissions": [
+    "core:default",
+    "opener:default",
+    "store:default",
+    "fs:default",
+    {
+      "identifier": "fs:scope",
+      "allow": [
+        { "path": "$APPDATA/databases/**" },
+        { "path": "$DOCUMENT/PossibleData/**" }
+      ]
+    }
+  ]
 }
