@@ -38,11 +38,14 @@ export const useContextStore = defineStore("status", () => {
   async function initialize() {
     if (status.value === "pending") {
       status.value = "initializing";
-      // todo 读取graph json文件
-      const obj = await LocalFs.readGraphs();
+      console.log("Initializing...");
+      // 读取graph json文件
+      const obj = await LocalFs.readGraphsWithInit();
       console.log(obj);
-      // todo 加载graphsStore
+      // 加载graphsStore
+      await graphsStore.loadGraphs(obj);
       status.value = "initialized";
+      console.log("Initialized");
     }
   }
 
@@ -56,6 +59,12 @@ export const useGraphsStore = defineStore("graph-storage", () => {
   const allGraphs = reactive<Record<string, PGraph>>({});
 
   const currentGraphStore = useCurrentGraphStore();
+
+  async function loadGraphs(obj: Record<string, PGraph>) {
+    Object.keys(obj).forEach((key) => {
+      allGraphs[key] = obj[key];
+    });
+  }
 
   const currentGraph = computed(() => {
     if (!currentGraphStore.currentGraphId) return undefined;
@@ -161,5 +170,6 @@ export const useGraphsStore = defineStore("graph-storage", () => {
     updateNode,
     addGraph,
     removeGraph,
+    loadGraphs,
   };
 });

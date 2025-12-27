@@ -1,12 +1,18 @@
 <template>
-    <div>
-        <el-button type="primary" @click="test">测试fs</el-button>
+    <div class="flex flex-col">
+        <el-button type="primary" @click="readFileTest">读取文件</el-button>
+        <el-button type="primary" @click="createDirectoryTest"
+            >创建目录</el-button
+        >
     </div>
 </template>
 <script setup lang="ts">
-import { LocalFs } from "@/lib";
-const test = async () => {
-    const content = await LocalFs.read("test.txt");
-    console.log("test.txt content:", content);
-};
+import { BaseDirectory, mkdir } from "@tauri-apps/plugin-fs";
+async function readFileTest() {}
+async function createDirectoryTest() {
+    await mkdir("testDir", {
+        recursive: true,
+        baseDir: BaseDirectory.Document,
+    });
+}
 </script>

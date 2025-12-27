@@ -16,6 +16,7 @@
     "@faker-js/faker": "^10.1.0",
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-fs": "^2.4.4",
+    "@tauri-apps/plugin-log": "^2.7.1",
     "@tauri-apps/plugin-opener": "^2",
     "@tauri-apps/plugin-store": "^2.4.1",
     "element-plus": "^2.12.0",

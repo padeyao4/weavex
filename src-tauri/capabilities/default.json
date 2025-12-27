@@ -11,9 +11,83 @@
     {
       "identifier": "fs:scope",
       "allow": [
-        { "path": "$APPDATA/databases/**" },
-        { "path": "$DOCUMENT/PossibleData/**" }
+        {
+          "path": "$APPDATA/**"
+        },
+        {
+          "path": "$DOCUMENT/**"
+        }
       ]
-    }
+    },
+    {
+      "identifier": "fs:allow-create",
+      "allow": [
+        {
+          "path": "$APPDATA/*"
+        },
+        {
+          "path": "$DOCUMENT/**"
+        }
+      ]
+    },
+    {
+      "identifier": "fs:allow-read",
+      "allow": [
+        {
+          "path": "$APPDATA/**"
+        },
+        {
+          "path": "$DOCUMENT/**"
+        }
+      ]
+    },
+    {
+      "identifier": "fs:allow-write",
+      "allow": [
+        {
+          "path": "$APPDATA/**"
+        },
+        {
+          "path": "$DOCUMENT/**"
+        }
+      ]
+    },
+    {
+      "identifier": "fs:allow-write-text-file",
+      "allow": [
+        {
+          "path": "$APPDATA/**"
+        },
+        {
+          "path": "$DOCUMENT/**"
+        }
+      ]
+    },
+    {
+      "identifier": "fs:write-files",
+      "allow": [
+        {
+          "path": "$APPDATA/**"
+        },
+        {
+          "path": "$DOCUMENT/**"
+        }
+      ]
+    },
+    {
+      "identifier": "fs:allow-exists",
+      "allow": [
+        {
+          "path": "$APPDATA/*"
+        },
+        {
+          "path": "$DOCUMENT/*"
+        },
+        {
+          "path": "$DOCUMENT/PossibleData/**"
+        }
+      ]
+    },
+    "log:default"
   ]
 }
