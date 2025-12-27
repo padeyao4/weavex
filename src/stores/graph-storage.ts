@@ -85,14 +85,12 @@ export const useGraphsStore = defineStore("graph-storage", () => {
     }
   }
 
-  function saveGraphs() {
+  async function saveGraphs() {
     const data = JSON.stringify(allGraphs);
-    LocalFs.save(data);
+    await LocalFs.save(data);
   }
 
-  function debouncedSave() {
-    debounce(saveGraphs, 1000);
-  }
+  const debouncedSave = debounce(saveGraphs, 1000);
 
   function addEdge(partialGraph?: Partial<PGraph>, from?: string, to?: string) {
     if (partialGraph?.id && from && to) {

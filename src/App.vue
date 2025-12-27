@@ -14,6 +14,7 @@ onMounted(async () => {
     try {
         await contextStore.initialize();
         watch([graphsStore.allGraphs], () => {
+            console.log("Graphs changed");
             graphsStore.debouncedSave();
         });
     } catch (error) {
