@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import CreateTaskButton from "./CreateTaskButton.vue";
+import DeleteIcon from "@/components/icons/DeleteIcon.vue";
+import EditIcon from "@/components/icons/EditIcon.vue";
 import { useGraphsStore } from "@/stores";
 import { ElScrollbar, ElMessageBox } from "element-plus";
 import { ref } from "vue";
@@ -13,7 +15,7 @@ const hoveredTaskId = ref<string | null>(null);
 const deleteTask = async (taskId: string) => {
     try {
         await ElMessageBox.confirm(
-            "确定要删除这个任务吗？此操作不可撤销。",
+            "确定要删除这个项目吗？此操作不可撤销。",
             "确认删除",
             {
                 confirmButtonText: "确定",
@@ -25,7 +27,7 @@ const deleteTask = async (taskId: string) => {
 
         graphsStore.removeGraph(taskId);
 
-        // 如果删除的是当前选中的任务，可能需要导航到其他页面
+        // 如果删除的是当前选中的项目，可能需要导航到其他页面
         // 这里可以根据需要添加导航逻辑
         if (route.params.taskId === taskId) {
             router.replace({ name: "tasksSummery" });
@@ -42,15 +44,15 @@ const editTask = async (taskId: string) => {
         if (!task) return;
 
         const result = await ElMessageBox.prompt(
-            "请输入新的任务名称",
-            "修改任务名称",
+            "请输入新的项目名称",
+            "修改项目名称",
             {
                 confirmButtonText: "确定",
                 cancelButtonText: "取消",
                 inputValue: task.name,
                 inputValidator: (value) => {
                     if (!value || value.trim() === "") {
-                        return "任务名称不能为空";
+                        return "项目名称不能为空";
                     }
                     return true;
                 },
@@ -60,7 +62,7 @@ const editTask = async (taskId: string) => {
 
         const newName = result.value.trim();
         if (newName && newName !== task.name) {
-            // 更新任务名称
+            // 更新项目名称
             graphsStore.updateGraph(taskId, { name: newName });
 
             // 触发保存
@@ -80,12 +82,6 @@ const routeToTask = (taskId: string) => {
 
 <template>
     <div class="task-list-container">
-        <div class="task-list-header">
-            <div class="header-title">
-                <span class="title-text">任务列表</span>
-            </div>
-        </div>
-
         <div class="task-list-content">
             <div class="quick-access">
                 <router-link :to="{ name: 'tasksSummery' }" class="quick-access-item"
@@ -111,11 +107,11 @@ const routeToTask = (taskId: string) => {
                                         <div class="flex flex-row shrink-0" v-show="hoveredTaskId === meta.id">
                                             <div class="delete-button flex shrink-0 justify-center items-center"
                                                 @click.stop="deleteTask(meta.id)">
-                                                D
+                                                <DeleteIcon />
                                             </div>
                                             <div class="edit-button flex shrink-0 justify-center items-center"
                                                 @click.stop="editTask(meta.id)">
-                                                E
+                                                <EditIcon />
                                             </div>
                                         </div>
                                     </div>
@@ -135,7 +131,7 @@ const routeToTask = (taskId: string) => {
 
 <style scoped>
 .task-list-container {
-    width: 250px;
+    width: 256px;
     height: 100vh;
     background-color: var(--vscode-sidebar-background);
     display: flex;
@@ -353,10 +349,10 @@ const routeToTask = (taskId: string) => {
 }
 
 .delete-button {
-    width: 30px;
-    height: 30px;
-    background: #fff123;
-    display: flex-inline;
+    width: 32px;
+    height: 32px;
+    background: transparent;
+    display: flex;
     align-items: center;
     justify-content: center;
     border: none;
@@ -368,10 +364,10 @@ const routeToTask = (taskId: string) => {
 }
 
 .edit-button {
-    width: 30px;
-    height: 30px;
-    background: #fff123;
-    display: flex-inline;
+    width: 32px;
+    height: 32px;
+    background: transparent;
+    display: flex;
     align-items: center;
     justify-content: center;
     border: none;
@@ -383,21 +379,26 @@ const routeToTask = (taskId: string) => {
 }
 
 .delete-button:hover {
-    /*background-color: var(--vscode-error-background);*/
-    /*color: var(--vscode-error-foreground);*/
-    background-color: #ff0000;
+    background-color: var(--vscode-error-background);
 }
 
-.edit-button:hover {
-    background-color: #007acc;
-}
-
-.delete-button:hover svg path {
+.delete-button:hover :deep(svg path) {
     stroke: var(--vscode-error-foreground);
 }
 
+.edit-button:hover {
+    background-color: var(--vscode-active-background);
+}
+
+.edit-button:hover :deep(svg path) {
+    stroke: var(--vscode-focus-border);
+}
+
+
+
 .task-list-footer {
-    padding: 12px 16px;
+    padding: 4px;
+    height: 56px;
     border-top: 1px solid var(--vscode-border);
     background-color: var(--vscode-sidebar-background);
 }

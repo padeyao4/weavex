@@ -3,119 +3,36 @@
         <button class="create-task-button" @click="showTaskForm = true">
             <div class="button-content">
                 <div class="button-icon">
-                    <svg
-                        width="16"
-                        height="16"
-                        viewBox="0 0 16 16"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                    >
-                        <rect
-                            x="2"
-                            y="2"
-                            width="12"
-                            height="12"
-                            rx="2"
-                            fill="var(--vscode-button-background)"
-                        />
-                        <path
-                            d="M8 5V11"
-                            stroke="var(--vscode-button-foreground)"
-                            stroke-width="1.5"
-                            stroke-linecap="round"
-                        />
-                        <path
-                            d="M5 8H11"
-                            stroke="var(--vscode-button-foreground)"
-                            stroke-width="1.5"
-                            stroke-linecap="round"
-                        />
-                    </svg>
+                    <CreateProjectIcon />
                 </div>
-                <span class="button-text">新建任务图</span>
+                <span class="button-text">新建项目</span>
             </div>
         </button>
 
-        <el-dialog
-            v-model="showTaskForm"
-            title="创建任务图"
-            width="400px"
-            class="task-dialog"
-        >
+        <el-dialog v-model="showTaskForm" title="创建项目" width="400px" class="task-dialog">
             <div class="dialog-content">
                 <div class="dialog-header">
-                    <svg
-                        width="20"
-                        height="20"
-                        viewBox="0 0 20 20"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="dialog-icon"
-                    >
-                        <rect
-                            x="3"
-                            y="3"
-                            width="14"
-                            height="14"
-                            rx="2"
-                            fill="var(--vscode-active-background)"
-                            stroke="var(--vscode-focus-border)"
-                            stroke-width="1.5"
-                        />
-                        <path
-                            d="M7 7H13"
-                            stroke="var(--vscode-focus-border)"
-                            stroke-width="1.5"
-                            stroke-linecap="round"
-                        />
-                        <path
-                            d="M7 10H13"
-                            stroke="var(--vscode-focus-border)"
-                            stroke-width="1.5"
-                            stroke-linecap="round"
-                        />
-                        <path
-                            d="M7 13H10"
-                            stroke="var(--vscode-focus-border)"
-                            stroke-width="1.5"
-                            stroke-linecap="round"
-                        />
-                    </svg>
-                    <h3 class="dialog-title">创建新任务图</h3>
+                    <CreateProjectIcon :active="true" />
+                    <h3 class="dialog-title">创建新项目</h3>
                 </div>
 
-                <el-form
-                    :model="newTaskForm"
-                    label-width="auto"
-                    class="task-form"
-                >
-                    <el-form-item label="任务图名称" required>
-                        <el-input
-                            v-model="newTaskForm.name"
-                            placeholder="请输入任务图名称"
-                            class="task-input"
-                            @keyup.enter="createTask"
-                        />
+                <el-form :model="newTaskForm" label-width="auto" class="task-form">
+                    <el-form-item label="项目名称" required>
+                        <el-input v-model="newTaskForm.name" placeholder="请输入项目名称" class="task-input"
+                            @keyup.enter="createTask" />
                     </el-form-item>
                     <div class="form-hint">
-                        输入一个描述性的名称来标识这个任务图
+                        输入一个描述性的名称来标识这个项目
                     </div>
                 </el-form>
             </div>
 
             <template #footer>
                 <div class="dialog-footer">
-                    <button
-                        class="dialog-button secondary"
-                        @click="showTaskForm = false"
-                    >
+                    <button class="dialog-button secondary" @click="showTaskForm = false">
                         取消
                     </button>
-                    <button
-                        class="dialog-button primary"
-                        @click="createTask"
-                        :disabled="!newTaskForm.name?.trim()"
-                    >
+                    <button class="dialog-button primary" @click="createTask" :disabled="!newTaskForm.name?.trim()">
                         创建
                     </button>
                 </div>
@@ -129,6 +46,7 @@ import { ref } from "vue";
 import { PGraph } from "@/types";
 import { useGraphsStore } from "@/stores";
 import { GraphUtils } from "@/utils";
+import CreateProjectIcon from "@/components/icons/CreateProjectIcon.vue";
 
 const showTaskForm = ref(false);
 const newTaskForm = ref<Partial<PGraph>>({});
@@ -147,33 +65,32 @@ const createTask = () => {
 <style scoped>
 .create-task-container {
     width: 100%;
+    height: 100%;
 }
 
 .create-task-button {
     width: 100%;
-    padding: 12px 16px;
-    background-color: var(--vscode-button-background);
-    color: var(--vscode-button-foreground);
-    border: none;
+    height: 100%;
+    background-color: var(--vscode-sidebar-background);
+    color: var(--vscode-foreground);
+    /*border: 1px solid var(--vscode-border);*/
     border-radius: 4px;
     cursor: pointer;
     transition: all 0.2s ease;
-    font-size: 13px;
-    font-weight: 500;
+    font-size: 14px;
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
+    text-align: left;
 }
 
 .create-task-button:hover {
-    background-color: var(--vscode-focus-border);
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(0, 122, 204, 0.2);
+    background-color: var(--vscode-hover-background);
+    /*border-color: var(--vscode-focus-border);*/
 }
 
 .create-task-button:active {
-    transform: translateY(0);
-    box-shadow: 0 1px 4px rgba(0, 122, 204, 0.15);
+    background-color: var(--vscode-active-background);
 }
 
 .button-content {
@@ -191,8 +108,7 @@ const createTask = () => {
 }
 
 .button-text {
-    font-size: 13px;
-    font-weight: 500;
+    font-size: 14px;
 }
 
 .task-dialog :deep(.el-dialog) {
