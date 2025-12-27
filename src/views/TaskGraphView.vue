@@ -1,72 +1,87 @@
 <template>
-  <div>
-    <div style="height: 56px">header {{ taskId }}</div>
-    <div
-      style="height: calc(100% - 56px)"
-      id="container"
-      @contextmenu.prevent
-    />
-    <el-drawer
-      v-model="drawer"
-      title="节点详情"
-      :with-header="false"
-      size="400px"
-    >
-      <div class="node-drawer">
-        <el-form :model="drawerNode" label-width="80px" class="node-form">
-          <el-form-item label="节点名称" required>
-            <el-input v-model="drawerNode.name" placeholder="请输入节点名称" />
-          </el-form-item>
-          <el-form-item label="描述">
-            <el-input
-              v-model="drawerNode.description"
-              type="textarea"
-              :rows="3"
-              placeholder="请输入节点描述"
-            />
-          </el-form-item>
-          <el-form-item label="详细记录">
-            <el-input
-              v-model="drawerNode.record"
-              type="textarea"
-              :rows="5"
-              placeholder="请输入节点详细记录"
-            />
-          </el-form-item>
-          <el-form-item label="开始时间">
-            <el-date-picker
-              v-model="drawerNode.startAt"
-              type="datetime"
-              placeholder="选择开始时间"
-              :default-value="new Date()"
-              value-format="timestamp"
-            />
-          </el-form-item>
-          <el-form-item label="结束时间">
-            <el-date-picker
-              v-model="drawerNode.endAt"
-              type="datetime"
-              placeholder="选择结束时间"
-              :default-value="new Date()"
-              value-format="timestamp"
-            />
-          </el-form-item>
-          <el-form-item label="完成状态">
-            <el-switch v-model="drawerNode.completed" />
-            <span style="margin-left: 8px; color: #666; font-size: 12px">
-              {{ drawerNode.completed ? "已完成" : "未完成" }}
-            </span>
-          </el-form-item>
-          <el-form-item>
-            <div class="form-actions">
-              <el-button type="primary" @click="saveNode()">保存</el-button>
-              <el-button @click="drawer = false">取消</el-button>
+    <div>
+        <div style="height: 56px">header {{ taskId }}</div>
+        <div
+            style="height: calc(100% - 56px)"
+            id="container"
+            @contextmenu.prevent
+        />
+        <el-drawer
+            v-model="drawer"
+            title="节点详情"
+            :with-header="false"
+            size="400px"
+        >
+            <div class="node-drawer">
+                <el-form
+                    :model="drawerNode"
+                    label-width="80px"
+                    class="node-form"
+                >
+                    <el-form-item label="节点名称" required>
+                        <el-input
+                            v-model="drawerNode.name"
+                            placeholder="请输入节点名称"
+                        />
+                    </el-form-item>
+                    <el-form-item label="描述">
+                        <el-input
+                            v-model="drawerNode.description"
+                            type="textarea"
+                            :rows="3"
+                            placeholder="请输入节点描述"
+                        />
+                    </el-form-item>
+                    <el-form-item label="详细记录">
+                        <el-input
+                            v-model="drawerNode.record"
+                            type="textarea"
+                            :rows="5"
+                            placeholder="请输入节点详细记录"
+                        />
+                    </el-form-item>
+                    <el-form-item label="开始时间">
+                        <el-date-picker
+                            v-model="drawerNode.startAt"
+                            type="datetime"
+                            placeholder="选择开始时间"
+                            :default-value="new Date()"
+                            value-format="timestamp"
+                        />
+                    </el-form-item>
+                    <el-form-item label="结束时间">
+                        <el-date-picker
+                            v-model="drawerNode.endAt"
+                            type="datetime"
+                            placeholder="选择结束时间"
+                            :default-value="new Date()"
+                            value-format="timestamp"
+                        />
+                    </el-form-item>
+                    <el-form-item label="完成状态">
+                        <el-switch v-model="drawerNode.completed" />
+                        <span
+                            style="
+                                margin-left: 8px;
+                                color: #666;
+                                font-size: 12px;
+                            "
+                        >
+                            {{ drawerNode.completed ? "已完成" : "未完成" }}
+                        </span>
+                    </el-form-item>
+                    <el-form-item>
+                        <div class="form-actions">
+                            <el-button type="primary" @click="saveNode()"
+                                >保存</el-button
+                            >
+                            <el-button @click="drawer = false">取消</el-button>
+                        </div>
+                    </el-form-item>
+                </el-form>
             </div>
-          </el-form-item>
-        </el-form>
-      </div>
-    </el-drawer>
-  </div>
+        </el-drawer>
+    </div>
 </template>
 <script setup lang="ts">
 import { useCurrentGraphStore, useGraphsStore } from "@/stores";
@@ -83,7 +98,7 @@ currentGraphStore.setGraph({ id: taskId as string });
 const graphsStore = useGraphsStore();
 
 const data = computed(() => {
-  return GraphUtils.toGraphData(graphsStore.currentGraph);
+    return GraphUtils.toGraphData(graphsStore.currentGraph);
 });
 
 const drawer = ref(false);
@@ -92,442 +107,479 @@ const drawerNode = reactive<PNode>(NodeUtil.createNode());
 let graph: Graph | null = null;
 
 onMounted(() => {
-  graph = new Graph({
-    container: "container",
-    autoResize: true,
-    autoFit: "center",
-    data: data.value,
-    plugins: [
-      {
-        type: "contextmenu",
-        trigger: "contextmenu",
-        getItems: (e: IElementEvent) => {
-          switch (e.targetType) {
-            case "node":
-              return [
-                {
-                  name: "添加后续节点",
-                  value: "node:add-next",
-                },
-                {
-                  name: "添加前置节点",
-                  value: "node:add-prev",
-                },
-                {
-                  name: "插入后续节点",
-                  value: "node:insert-next",
-                },
-                {
-                  name: "插入前置节点",
-                  value: "node:insert-prev",
-                },
-                { name: "删除节点", value: "node:delete" },
-                {
-                  name: "删除前置关系",
-                  value: "node:delete-prev-edge",
-                },
-                {
-                  name: "删除后续关系",
-                  value: "node:delete-next-edge",
-                },
-                {
-                  name: "删除且保留关系",
-                  value: "node:delete-keep-edge",
-                },
-              ];
-            case "edge":
-              return [{ name: "删除边", value: "edge:delete" }];
-            case "combo":
-              return [
-                {
-                  name: "添加子节点",
-                  value: "combo:add-child",
-                },
-                {
-                  name: "删除组合",
-                  value: "combo:delete",
-                },
-                {
-                  name: "删除且保留关系",
-                  value: "combo:delete-keep-edge",
-                },
-              ];
-            case "canvas":
-              return [{ name: "添加节点", value: "canvas:add-node" }];
-            default:
-              return [];
-          }
-        },
-        onClick: (value: any, _target: HTMLElement, current?: Element) => {
-          if (!current) return;
-          switch (value) {
-            case "node:delete-keep-edge":
-            case "combo:delete-keep-edge":
-              if (current) {
-                const currentNode = graphsStore.currentGraph?.nodes[current.id];
-                // 删除当前节点但保留当前节点的关系，比如 a->b->c ,当删除b的时候，变成a->c
-                // 如果有 a->c b->c  c->d ,当删除c的时候，变成a->d b->d
-                // 如果有 a->c b->c  c->d c->e ,删除c的时候，变成 a->d b->d a->e b->e
-
-                if (currentNode) {
-                  const prevs = [...currentNode.prevs];
-                  const nexts = [...currentNode.nexts];
-
-                  // 为每一对（前驱，后继）建立新的边
-                  for (const prevId of prevs) {
-                    for (const nextId of nexts) {
-                      // 避免创建重复的边
-                      const prevNode = graphsStore.currentGraph?.nodes[prevId];
-                      const nextNode = graphsStore.currentGraph?.nodes[nextId];
-                      if (
-                        prevNode &&
-                        nextNode &&
-                        !prevNode.nexts.includes(nextId)
-                      ) {
-                        graphsStore.addEdge(
-                          graphsStore.currentGraph,
-                          prevId,
-                          nextId
-                        );
-                      }
+    graph = new Graph({
+        container: "container",
+        autoResize: true,
+        autoFit: "center",
+        data: data.value,
+        plugins: [
+            {
+                type: "contextmenu",
+                trigger: "contextmenu",
+                getItems: (e: IElementEvent) => {
+                    switch (e.targetType) {
+                        case "node":
+                            return [
+                                {
+                                    name: "添加后续节点",
+                                    value: "node:add-next",
+                                },
+                                {
+                                    name: "添加前置节点",
+                                    value: "node:add-prev",
+                                },
+                                {
+                                    name: "插入后续节点",
+                                    value: "node:insert-next",
+                                },
+                                {
+                                    name: "插入前置节点",
+                                    value: "node:insert-prev",
+                                },
+                                { name: "删除节点", value: "node:delete" },
+                                {
+                                    name: "删除前置关系",
+                                    value: "node:delete-prev-edge",
+                                },
+                                {
+                                    name: "删除后续关系",
+                                    value: "node:delete-next-edge",
+                                },
+                                {
+                                    name: "删除且保留关系",
+                                    value: "node:delete-keep-edge",
+                                },
+                            ];
+                        case "edge":
+                            return [{ name: "删除边", value: "edge:delete" }];
+                        case "combo":
+                            return [
+                                {
+                                    name: "添加子节点",
+                                    value: "combo:add-child",
+                                },
+                                {
+                                    name: "删除组合",
+                                    value: "combo:delete",
+                                },
+                                {
+                                    name: "删除且保留关系",
+                                    value: "combo:delete-keep-edge",
+                                },
+                            ];
+                        case "canvas":
+                            return [
+                                { name: "添加节点", value: "canvas:add-node" },
+                            ];
+                        default:
+                            return [];
                     }
-                  }
+                },
+                onClick: (
+                    value: any,
+                    _target: HTMLElement,
+                    current?: Element,
+                ) => {
+                    if (!current) return;
+                    switch (value) {
+                        case "node:delete-keep-edge":
+                        case "combo:delete-keep-edge":
+                            if (current) {
+                                const currentNode =
+                                    graphsStore.currentGraph?.nodes[current.id];
+                                // 删除当前节点但保留当前节点的关系，比如 a->b->c ,当删除b的时候，变成a->c
+                                // 如果有 a->c b->c  c->d ,当删除c的时候，变成a->d b->d
+                                // 如果有 a->c b->c  c->d c->e ,删除c的时候，变成 a->d b->d a->e b->e
 
-                  // 删除当前节点
-                  graphsStore.removeNode(graphsStore.currentGraph, [
-                    current.id,
-                  ]);
-                }
+                                if (currentNode) {
+                                    const prevs = [...currentNode.prevs];
+                                    const nexts = [...currentNode.nexts];
 
-                graph?.setData(data.value);
-                graph?.render();
-              }
-              break;
-            case "node:delete":
-            case "combo:delete":
-              if (current) {
-                graphsStore.removeNode(graphsStore.currentGraph, [current.id]);
-                graph?.setData(data.value);
-                graph?.render();
-              }
-              break;
-            case "node:add-next":
-              if (current) {
-                const nextNode = NodeUtil.fakerNode();
+                                    // 为每一对（前驱，后继）建立新的边
+                                    for (const prevId of prevs) {
+                                        for (const nextId of nexts) {
+                                            // 避免创建重复的边
+                                            const prevNode =
+                                                graphsStore.currentGraph?.nodes[
+                                                    prevId
+                                                ];
+                                            const nextNode =
+                                                graphsStore.currentGraph?.nodes[
+                                                    nextId
+                                                ];
+                                            if (
+                                                prevNode &&
+                                                nextNode &&
+                                                !prevNode.nexts.includes(nextId)
+                                            ) {
+                                                graphsStore.addEdge(
+                                                    graphsStore.currentGraph,
+                                                    prevId,
+                                                    nextId,
+                                                );
+                                            }
+                                        }
+                                    }
 
-                nextNode.parent =
-                  graphsStore.currentGraph?.nodes[current.id].parent;
+                                    // 删除当前节点
+                                    graphsStore.removeNode(
+                                        graphsStore.currentGraph,
+                                        [current.id],
+                                    );
+                                }
 
-                graphsStore.addNode(graphsStore.currentGraph, nextNode);
-                graphsStore.addEdge(
-                  graphsStore.currentGraph,
-                  current.id,
-                  nextNode.id
-                );
-                graph?.setData(data.value);
-                graph?.render();
-              }
-              break;
-            case "node:insert-next":
-              if (current) {
-                const nextNode = NodeUtil.fakerNode();
-                const currentNode = graphsStore.currentGraph?.nodes[current.id];
-                nextNode.parent = currentNode?.parent;
-                graphsStore.addNode(graphsStore.currentGraph, nextNode);
-                currentNode?.nexts.forEach((id) => {
-                  graphsStore.addEdge(
-                    graphsStore.currentGraph,
-                    nextNode.id,
-                    id
-                  );
-                  graphsStore.removeEdge(graphsStore.currentGraph, [
-                    { from: currentNode?.id, to: id },
-                  ]);
-                });
+                                graph?.setData(data.value);
+                                graph?.render();
+                            }
+                            break;
+                        case "node:delete":
+                        case "combo:delete":
+                            if (current) {
+                                graphsStore.removeNode(
+                                    graphsStore.currentGraph,
+                                    [current.id],
+                                );
+                                graph?.setData(data.value);
+                                graph?.render();
+                            }
+                            break;
+                        case "node:add-next":
+                            if (current) {
+                                const nextNode = NodeUtil.fakerNode();
 
-                graphsStore.addEdge(
-                  graphsStore.currentGraph,
-                  currentNode?.id,
-                  nextNode.id
-                );
-                // 添加边
-                graph?.setData(data.value);
-                graph?.render();
-              }
-              break;
-            case "node:add-prev":
-              // 添加前置节点
-              if (current) {
-                const prevNode = NodeUtil.fakerNode();
-                const currentNode = graphsStore.currentGraph?.nodes[current.id];
-                prevNode.parent = currentNode?.parent;
+                                nextNode.parent =
+                                    graphsStore.currentGraph?.nodes[
+                                        current.id
+                                    ].parent;
 
-                graphsStore.addNode(graphsStore.currentGraph, prevNode);
-                graphsStore.addEdge(
-                  graphsStore.currentGraph,
-                  prevNode.id,
-                  current.id
-                );
-                graph?.setData(data.value);
-                graph?.render();
-              }
-              break;
-            case "node:insert-prev":
-              // 插入前置节点
-              if (current) {
-                const prevNode = NodeUtil.fakerNode();
-                const currentNode = graphsStore.currentGraph?.nodes[current.id];
-                prevNode.parent = currentNode?.parent;
+                                graphsStore.addNode(
+                                    graphsStore.currentGraph,
+                                    nextNode,
+                                );
+                                graphsStore.addEdge(
+                                    graphsStore.currentGraph,
+                                    current.id,
+                                    nextNode.id,
+                                );
+                                graph?.setData(data.value);
+                                graph?.render();
+                            }
+                            break;
+                        case "node:insert-next":
+                            if (current) {
+                                const nextNode = NodeUtil.fakerNode();
+                                const currentNode =
+                                    graphsStore.currentGraph?.nodes[current.id];
+                                nextNode.parent = currentNode?.parent;
+                                graphsStore.addNode(
+                                    graphsStore.currentGraph,
+                                    nextNode,
+                                );
+                                currentNode?.nexts.forEach((id) => {
+                                    graphsStore.addEdge(
+                                        graphsStore.currentGraph,
+                                        nextNode.id,
+                                        id,
+                                    );
+                                    graphsStore.removeEdge(
+                                        graphsStore.currentGraph,
+                                        [{ from: currentNode?.id, to: id }],
+                                    );
+                                });
 
-                graphsStore.addNode(graphsStore.currentGraph, prevNode);
+                                graphsStore.addEdge(
+                                    graphsStore.currentGraph,
+                                    currentNode?.id,
+                                    nextNode.id,
+                                );
+                                // 添加边
+                                graph?.setData(data.value);
+                                graph?.render();
+                            }
+                            break;
+                        case "node:add-prev":
+                            // 添加前置节点
+                            if (current) {
+                                const prevNode = NodeUtil.fakerNode();
+                                const currentNode =
+                                    graphsStore.currentGraph?.nodes[current.id];
+                                prevNode.parent = currentNode?.parent;
 
-                // 将当前节点的所有前驱节点转移到新节点前面
-                currentNode?.prevs.forEach((id) => {
-                  graphsStore.addEdge(
-                    graphsStore.currentGraph,
-                    id,
-                    prevNode.id
-                  );
-                  graphsStore.removeEdge(graphsStore.currentGraph, [
-                    { from: id, to: currentNode?.id },
-                  ]);
-                });
+                                graphsStore.addNode(
+                                    graphsStore.currentGraph,
+                                    prevNode,
+                                );
+                                graphsStore.addEdge(
+                                    graphsStore.currentGraph,
+                                    prevNode.id,
+                                    current.id,
+                                );
+                                graph?.setData(data.value);
+                                graph?.render();
+                            }
+                            break;
+                        case "node:insert-prev":
+                            // 插入前置节点
+                            if (current) {
+                                const prevNode = NodeUtil.fakerNode();
+                                const currentNode =
+                                    graphsStore.currentGraph?.nodes[current.id];
+                                prevNode.parent = currentNode?.parent;
 
-                graphsStore.addEdge(
-                  graphsStore.currentGraph,
-                  prevNode.id,
-                  current.id
-                );
-                graph?.setData(data.value);
-                graph?.render();
-              }
-              break;
-            case "node:delete-prev-edge":
-              // 删除当前节点的所有前置节点（实际上是删除边）
-              if (current) {
-                const currentNode = graphsStore.currentGraph?.nodes[current.id];
-                // 创建要删除的边列表
-                const edgesToDelete =
-                  currentNode?.prevs.map((id) => ({
-                    from: id,
-                    to: current.id,
-                  })) || [];
+                                graphsStore.addNode(
+                                    graphsStore.currentGraph,
+                                    prevNode,
+                                );
 
-                if (edgesToDelete.length > 0) {
-                  graphsStore.removeEdge(
-                    graphsStore.currentGraph,
-                    edgesToDelete
-                  );
-                  graph?.setData(data.value);
-                  graph?.render();
-                }
-              }
-              break;
-            case "node:delete-next-edge":
-              // 删除当前节点的所有后续节点（实际上是删除边）
-              if (current) {
-                const currentNode = graphsStore.currentGraph?.nodes[current.id];
-                // 创建要删除的边列表
-                const edgesToDelete =
-                  currentNode?.nexts.map((id) => ({
-                    from: current.id,
-                    to: id,
-                  })) || [];
+                                // 将当前节点的所有前驱节点转移到新节点前面
+                                currentNode?.prevs.forEach((id) => {
+                                    graphsStore.addEdge(
+                                        graphsStore.currentGraph,
+                                        id,
+                                        prevNode.id,
+                                    );
+                                    graphsStore.removeEdge(
+                                        graphsStore.currentGraph,
+                                        [{ from: id, to: currentNode?.id }],
+                                    );
+                                });
 
-                if (edgesToDelete.length > 0) {
-                  graphsStore.removeEdge(
-                    graphsStore.currentGraph,
-                    edgesToDelete
-                  );
-                  graph?.setData(data.value);
-                  graph?.render();
-                }
-              }
-              break;
-            case "edge:delete":
-              if (current) {
-                graphsStore.removeEdge(graphsStore.currentGraph, [current.id]);
-                graph?.setData(data.value);
-                graph?.render();
-              }
-              break;
-            case "canvas:add-node":
-              const node = NodeUtil.fakerNode();
-              graphsStore.addNode(graphsStore.currentGraph, node);
-              graph?.setData(data.value);
-              graph?.render();
-              break;
-            default:
-              console.warn(`Unknown action: ${value}`);
-              break;
-          }
+                                graphsStore.addEdge(
+                                    graphsStore.currentGraph,
+                                    prevNode.id,
+                                    current.id,
+                                );
+                                graph?.setData(data.value);
+                                graph?.render();
+                            }
+                            break;
+                        case "node:delete-prev-edge":
+                            // 删除当前节点的所有前置节点（实际上是删除边）
+                            if (current) {
+                                const currentNode =
+                                    graphsStore.currentGraph?.nodes[current.id];
+                                // 创建要删除的边列表
+                                const edgesToDelete =
+                                    currentNode?.prevs.map((id) => ({
+                                        from: id,
+                                        to: current.id,
+                                    })) || [];
+
+                                if (edgesToDelete.length > 0) {
+                                    graphsStore.removeEdge(
+                                        graphsStore.currentGraph,
+                                        edgesToDelete,
+                                    );
+                                    graph?.setData(data.value);
+                                    graph?.render();
+                                }
+                            }
+                            break;
+                        case "node:delete-next-edge":
+                            // 删除当前节点的所有后续节点（实际上是删除边）
+                            if (current) {
+                                const currentNode =
+                                    graphsStore.currentGraph?.nodes[current.id];
+                                // 创建要删除的边列表
+                                const edgesToDelete =
+                                    currentNode?.nexts.map((id) => ({
+                                        from: current.id,
+                                        to: id,
+                                    })) || [];
+
+                                if (edgesToDelete.length > 0) {
+                                    graphsStore.removeEdge(
+                                        graphsStore.currentGraph,
+                                        edgesToDelete,
+                                    );
+                                    graph?.setData(data.value);
+                                    graph?.render();
+                                }
+                            }
+                            break;
+                        case "edge:delete":
+                            if (current) {
+                                graphsStore.removeEdge(
+                                    graphsStore.currentGraph,
+                                    [current.id],
+                                );
+                                graph?.setData(data.value);
+                                graph?.render();
+                            }
+                            break;
+                        case "canvas:add-node":
+                            const node = NodeUtil.fakerNode();
+                            graphsStore.addNode(graphsStore.currentGraph, node);
+                            graph?.setData(data.value);
+                            graph?.render();
+                            break;
+                        default:
+                            console.warn(`Unknown action: ${value}`);
+                            break;
+                    }
+                },
+            },
+            {
+                type: "grid-line",
+                size: 20,
+            },
+        ],
+
+        // 节点配置
+        node: {
+            type: (value) => value.type ?? "rect",
+            style: {
+                fill: "#e6f7ff",
+                stroke: "#91d5ff",
+                lineWidth: 1,
+                radius: 4,
+                labelText: (d: any) => d.data.name,
+                labelBackground: true,
+                labelBackgroundOpacity: 0.7,
+                labelBackgroundRadius: 2,
+            },
         },
-      },
-      {
-        type: "grid-line",
-        size: 20,
-      },
-      {
-        type: "tooltip",
-        trigger: "hover",
-      },
-    ],
 
-    // 节点配置
-    node: {
-      type: (value) => value.type ?? "rect",
-      style: {
-        fill: "#e6f7ff",
-        stroke: "#91d5ff",
-        lineWidth: 1,
-        radius: 4,
-        labelText: (d: any) => d.data.name,
-        labelBackground: true,
-        labelBackgroundOpacity: 0.7,
-        labelBackgroundRadius: 2,
-      },
-    },
+        // combo配置
+        combo: {
+            type: "rect",
+            style: {
+                fill: "rgba(24, 144, 255, 0.1)",
+                stroke: "#1890ff",
+                lineWidth: 1,
+                radius: 4,
+                labelFill: "#1890ff",
+                labelFontSize: 14,
+                labelFontWeight: "bold",
+            },
+        },
 
-    // combo配置
-    combo: {
-      type: "rect",
-      style: {
-        fill: "rgba(24, 144, 255, 0.1)",
-        stroke: "#1890ff",
-        lineWidth: 1,
-        radius: 4,
-        labelFill: "#1890ff",
-        labelFontSize: 14,
-        labelFontWeight: "bold",
-      },
-    },
+        // 边配置
+        edge: {
+            type: "line",
+            style: {
+                endArrow: true,
+            },
+        },
 
-    // 边配置
-    edge: {
-      type: "line",
-      style: {
-        endArrow: true,
-      },
-    },
+        // 交互行为
+        behaviors: [
+            "zoom-canvas",
+            {
+                type: "drag-canvas",
+                key: "drag-canvas",
+                sensitivity: 1, // 设置拖拽灵敏度
+            },
+        ],
 
-    // 交互行为
-    behaviors: [
-      "zoom-canvas",
-      {
-        type: "drag-canvas",
-        key: "drag-canvas",
-        sensitivity: 1, // 设置拖拽灵敏度
-      },
-    ],
-
-    // 布局配置 - 使用内置的力导向布局
-    layout: {
-      type: "antv-dagre",
-      rankdir: "LR",
-      sortByCombo: true,
-    },
-  });
-  graph.on(NodeEvent.CLICK, (evt: IElementEvent & { target: Element }) => {
-    const nodeId = evt.target.id;
-    const node = graphsStore.currentGraph?.nodes[nodeId];
-    if (node) {
-      Object.keys(drawerNode).forEach(
-        (key) => delete drawerNode[key as keyof PNode]
-      );
-      Object.assign(drawerNode, node);
-      drawer.value = true;
-    }
-  });
-  graph.render();
+        // 布局配置 - 使用内置的力导向布局
+        layout: {
+            type: "antv-dagre",
+            rankdir: "LR",
+            sortByCombo: true,
+        },
+    });
+    graph.on(NodeEvent.CLICK, (evt: IElementEvent & { target: Element }) => {
+        const nodeId = evt.target.id;
+        const node = graphsStore.currentGraph?.nodes[nodeId];
+        if (node) {
+            Object.keys(drawerNode).forEach(
+                (key) => delete drawerNode[key as keyof PNode],
+            );
+            Object.assign(drawerNode, node);
+            drawer.value = true;
+        }
+    });
+    graph.render();
 });
 
 function saveNode() {
-  if (!graph) return;
-  if (drawerNode.id) {
-    graphsStore.updateNode(graphsStore.currentGraph, drawerNode);
-    // 更新图数据
-    if (graph) {
-      graph.setData(data.value);
-      graph.render();
+    if (!graph) return;
+    if (drawerNode.id) {
+        graphsStore.updateNode(graphsStore.currentGraph, drawerNode);
+        // 更新图数据
+        if (graph) {
+            graph.setData(data.value);
+            graph.render();
+        }
+        drawer.value = false;
     }
-    drawer.value = false;
-  }
 }
 </script>
 
 <style scoped>
 .node-drawer {
-  padding: 20px;
-  height: 100%;
-  overflow-y: auto;
+    padding: 20px;
+    height: 100%;
+    overflow-y: auto;
 }
 
 .node-form {
-  max-width: 100%;
+    max-width: 100%;
 }
 
 .node-form :deep(.el-form-item) {
-  margin-bottom: 20px;
+    margin-bottom: 20px;
 }
 
 .node-form :deep(.el-form-item__label) {
-  color: var(--vscode-secondary-foreground);
-  font-size: 13px;
-  font-weight: 500;
-  padding-right: 12px;
+    color: var(--vscode-secondary-foreground);
+    font-size: 13px;
+    font-weight: 500;
+    padding-right: 12px;
 }
 
 .node-form :deep(.el-input__wrapper),
 .node-form :deep(.el-textarea__inner) {
-  background-color: var(--vscode-input-background);
-  border: 1px solid var(--vscode-border);
-  border-radius: 4px;
-  box-shadow: none;
-  padding: 8px 12px;
+    background-color: var(--vscode-input-background);
+    border: 1px solid var(--vscode-border);
+    border-radius: 4px;
+    box-shadow: none;
+    padding: 8px 12px;
 }
 
 .node-form :deep(.el-input__wrapper:hover),
 .node-form :deep(.el-textarea__inner:hover) {
-  border-color: var(--vscode-focus-border);
-  background-color: var(--vscode-background);
+    border-color: var(--vscode-focus-border);
+    background-color: var(--vscode-background);
 }
 
 .node-form :deep(.el-input__wrapper.is-focus),
 .node-form :deep(.el-textarea__inner:focus) {
-  border-color: var(--vscode-focus-border);
-  box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.1);
+    border-color: var(--vscode-focus-border);
+    box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.1);
 }
 
 .node-form :deep(.el-input__inner),
 .node-form :deep(.el-textarea__inner) {
-  color: var(--vscode-input-foreground);
-  font-size: 13px;
-  background: transparent;
-  border: none;
+    color: var(--vscode-input-foreground);
+    font-size: 13px;
+    background: transparent;
+    border: none;
 }
 
 .node-form :deep(.el-input__inner::placeholder),
 .node-form :deep(.el-textarea__inner::placeholder) {
-  color: var(--vscode-secondary-foreground);
+    color: var(--vscode-secondary-foreground);
 }
 
 .node-form :deep(.el-date-editor) {
-  width: 100%;
+    width: 100%;
 }
 
 .node-form :deep(.el-switch) {
-  --el-switch-on-color: var(--vscode-button-background);
-  --el-switch-off-color: var(--vscode-border);
+    --el-switch-on-color: var(--vscode-button-background);
+    --el-switch-off-color: var(--vscode-border);
 }
 
 .form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  margin-top: 20px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 20px;
 }
 
 .form-actions :deep(.el-button) {
-  min-width: 80px;
+    min-width: 80px;
 }
 </style>
