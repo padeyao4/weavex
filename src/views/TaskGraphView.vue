@@ -1,6 +1,6 @@
 <template>
     <div>
-        <div style="height: 56px">header {{ taskId }}</div>
+        <div style="height: 56px"> {{ graphsStore.currentGraph?.name }}</div>
         <div
             style="height: calc(100% - 56px)"
             id="container"
@@ -245,7 +245,7 @@ onMounted(() => {
                             break;
                         case "node:add-next":
                             if (current) {
-                                const nextNode = NodeUtil.fakerNode();
+                                const nextNode = NodeUtil.createNode();
 
                                 nextNode.parent =
                                     graphsStore.currentGraph?.nodes[
@@ -267,7 +267,7 @@ onMounted(() => {
                             break;
                         case "node:insert-next":
                             if (current) {
-                                const nextNode = NodeUtil.fakerNode();
+                                const nextNode = NodeUtil.createNode();
                                 const currentNode =
                                     graphsStore.currentGraph?.nodes[current.id];
                                 nextNode.parent = currentNode?.parent;
@@ -300,7 +300,7 @@ onMounted(() => {
                         case "node:add-prev":
                             // 添加前置节点
                             if (current) {
-                                const prevNode = NodeUtil.fakerNode();
+                                const prevNode = NodeUtil.createNode();
                                 const currentNode =
                                     graphsStore.currentGraph?.nodes[current.id];
                                 prevNode.parent = currentNode?.parent;
@@ -321,7 +321,7 @@ onMounted(() => {
                         case "node:insert-prev":
                             // 插入前置节点
                             if (current) {
-                                const prevNode = NodeUtil.fakerNode();
+                                const prevNode = NodeUtil.createNode();
                                 const currentNode =
                                     graphsStore.currentGraph?.nodes[current.id];
                                 prevNode.parent = currentNode?.parent;
@@ -408,7 +408,7 @@ onMounted(() => {
                             }
                             break;
                         case "canvas:add-node":
-                            const node = NodeUtil.fakerNode();
+                            const node = NodeUtil.createNode({name:"untitled"});
                             graphsStore.addNode(graphsStore.currentGraph, node);
                             graph?.setData(data.value);
                             graph?.render();
@@ -429,7 +429,7 @@ onMounted(() => {
         node: {
             type: (value) => value.type ?? "rect",
             style: {
-                fill: "#e6f7ff",
+                fill: (d:any)=>d.data.completed?"#00000050":"#fff",
                 stroke: "#91d5ff",
                 lineWidth: 1,
                 radius: 4,

@@ -43,7 +43,6 @@ export class LocalFs {
     const json = await readTextFile(path, {
       baseDir: BaseDirectory.Document,
     });
-    console.debug("Graph file read: " + json);
     return JSON.parse(json);
   }
 
