@@ -150,6 +150,16 @@ export const useGraphsStore = defineStore("graph-storage", () => {
     allGraphs[graph.id] = graph;
   }
 
+  function updateGraph(graphId: string, updates: Partial<PGraph>) {
+    if (allGraphs[graphId]) {
+      allGraphs[graphId] = {
+        ...allGraphs[graphId],
+        ...updates,
+        updatedAt: Date.now(),
+      };
+    }
+  }
+
   function removeGraph(graphId: string) {
     if (allGraphs[graphId]) {
       delete allGraphs[graphId];
@@ -179,6 +189,7 @@ export const useGraphsStore = defineStore("graph-storage", () => {
     removeNode,
     removeEdge,
     updateNode,
+    updateGraph,
     addGraph,
     removeGraph,
     loadGraphs,
