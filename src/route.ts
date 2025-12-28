@@ -1,27 +1,27 @@
 import { createRouter, createWebHistory } from "vue-router";
-import IndexView from "./views/IndexView/index.vue";
-import TasksView from "./views/TasksView/index.vue";
-import NotesView from "./views/NotesView.vue";
-import TasksSummeryView from "./views/TasksSummeryView.vue";
+import HomeView from "./views/HomeView.vue";
+import SettingsView from "./views/SettingsView.vue";
+import TaskSummaryView from "./views/TaskSummaryView.vue";
+import TaskView from "./views/TaskView.vue";
+import NoteView from "./views/NoteView.vue";
 import TaskGraphView from "./views/TaskGraphView.vue";
-import SettingsView from "./views/SettingsView/index.vue";
-import TestView from "./views/TestView.vue";
 
 export const router = createRouter({
   history: createWebHistory(),
   routes: [
     {
-      path: "/a",
-      component: IndexView,
+      path: "/home",
+      name: "home",
+      component: HomeView,
       children: [
         {
-          path: "tasks",
-          component: TasksView,
+          path: "task",
+          component: TaskView,
           children: [
             {
-              path: "summery",
-              name: "tasksSummery",
-              component: TasksSummeryView,
+              path: "summary",
+              name: "taskSummary",
+              component: TaskSummaryView,
             },
             {
               path: "graph/:taskId",
@@ -31,14 +31,9 @@ export const router = createRouter({
           ],
         },
         {
-          path: "notes",
-          name: "notes",
-          component: NotesView,
-        },
-        {
-          path: "test",
-          name: "test",
-          component: TestView,
+          path: "note",
+          name: "note",
+          component: NoteView,
         },
       ],
     },
@@ -49,7 +44,7 @@ export const router = createRouter({
     },
     {
       path: "/:pathMatch(.*)*",
-      redirect: "/a/tasks/summery",
+      redirect: "/home/task/summary",
     },
   ],
 });

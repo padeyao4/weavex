@@ -1,4 +1,4 @@
-import { join } from "@tauri-apps/api/path";
+import { join, resolve, documentDir } from "@tauri-apps/api/path";
 import {
   exists,
   BaseDirectory,
@@ -8,12 +8,17 @@ import {
 } from "@tauri-apps/plugin-fs";
 
 export class LocalFs {
-  static DATA_PATH = import.meta.env.VITE_APP_ENV === 'dev' ? 'PossibleDataDev' : 'PossibleData';
+  static DATA_PATH =
+    import.meta.env.VITE_APP_ENV === "dev" ? "PossibleDataDev" : "PossibleData";
   static GRAPH_FILE_NAME = "graphs.json";
   static DEFAULT_GRAPHS = "{}";
 
   static async exists(path: string): Promise<boolean> {
     return await exists(path, { baseDir: BaseDirectory.Document });
+  }
+
+  static async getLocalStoragePath(): Promise<string> {
+    return await resolve(await documentDir(), this.DATA_PATH);
   }
 
   static async readGraphsWithInit(): Promise<any> {

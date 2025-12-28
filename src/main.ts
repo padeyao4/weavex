@@ -9,9 +9,8 @@ import * as ElementPlusIconsVue from "@element-plus/icons-vue";
 import piniaPluginPersistedstate from "pinia-plugin-persistedstate";
 import { warn, debug, trace, info, error } from "@tauri-apps/plugin-log";
 import { forwardConsole } from "./lib";
-
-// 监听窗口关闭
-// todo
+import { install } from "@icon-park/vue-next/es/all";
+import "@icon-park/vue-next/styles/index.css";
 
 // 页面中的日志转发到控制台
 forwardConsole("log", trace);
@@ -21,6 +20,9 @@ forwardConsole("warn", warn);
 forwardConsole("error", error);
 
 const app = createApp(App);
+
+install(app); // use default prefix 'icon', eg: icon is People, name is icon-people.
+
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
   app.component(key, component);
 }

@@ -1,13 +1,9 @@
 <template>
-    <div>
-        <div style="height: 56px">
+    <div class="w-full h-screen flex flex-col p-4">
+        <div class="h-14 flex items-center text-xl font-sans font-medium">
             {{ currentGraphStore.graph?.name }}
         </div>
-        <div
-            style="height: calc(100% - 56px)"
-            id="container"
-            @contextmenu.prevent
-        />
+        <div id="container" @contextmenu.prevent class="flex-1" />
         <el-drawer
             v-model="drawer"
             title="节点详情"
@@ -94,7 +90,7 @@ import { useRoute } from "vue-router";
 import { PNode } from "@/types";
 
 const route = useRoute();
-const taskId = route.params.taskId;
+const taskId = route.params.taskId as string;
 const currentGraphStore = useCurrentGraphStore();
 currentGraphStore.setGraph({ id: taskId as string });
 
@@ -443,80 +439,3 @@ function saveNode() {
     drawer.value = false;
 }
 </script>
-
-<style scoped>
-.node-drawer {
-    padding: 20px;
-    height: 100%;
-    overflow-y: auto;
-}
-
-.node-form {
-    max-width: 100%;
-}
-
-.node-form :deep(.el-form-item) {
-    margin-bottom: 20px;
-}
-
-.node-form :deep(.el-form-item__label) {
-    color: var(--vscode-secondary-foreground);
-    font-size: 13px;
-    font-weight: 500;
-    padding-right: 12px;
-}
-
-.node-form :deep(.el-input__wrapper),
-.node-form :deep(.el-textarea__inner) {
-    background-color: var(--vscode-input-background);
-    border: 1px solid var(--vscode-border);
-    border-radius: 4px;
-    box-shadow: none;
-    padding: 8px 12px;
-}
-
-.node-form :deep(.el-input__wrapper:hover),
-.node-form :deep(.el-textarea__inner:hover) {
-    border-color: var(--vscode-focus-border);
-    background-color: var(--vscode-background);
-}
-
-.node-form :deep(.el-input__wrapper.is-focus),
-.node-form :deep(.el-textarea__inner:focus) {
-    border-color: var(--vscode-focus-border);
-    box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.1);
-}
-
-.node-form :deep(.el-input__inner),
-.node-form :deep(.el-textarea__inner) {
-    color: var(--vscode-input-foreground);
-    font-size: 13px;
-    background: transparent;
-    border: none;
-}
-
-.node-form :deep(.el-input__inner::placeholder),
-.node-form :deep(.el-textarea__inner::placeholder) {
-    color: var(--vscode-secondary-foreground);
-}
-
-.node-form :deep(.el-date-editor) {
-    width: 100%;
-}
-
-.node-form :deep(.el-switch) {
-    --el-switch-on-color: var(--vscode-button-background);
-    --el-switch-off-color: var(--vscode-border);
-}
-
-.form-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 12px;
-    margin-top: 20px;
-}
-
-.form-actions :deep(.el-button) {
-    min-width: 80px;
-}
-</style>
