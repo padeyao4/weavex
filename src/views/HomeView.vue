@@ -1,5 +1,5 @@
 <template>
-    <div class="h-screen w-screen flex flex-row bg-white">
+    <div class="h-screen w-screen flex flex-row bg-white overflow-hidden">
         <aside
             class="w-16 bg-gray-100 h-screen flex flex-col shrink-0 items-center gap-4 pt-4 border-gray-300 border-r"
         >

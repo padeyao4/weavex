@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { faker } from "@faker-js/faker";
-const mockList = [];
+const mockList: any[] = [];
 
 for (let i = 0; i < 20; i++) {
     mockList.push({
