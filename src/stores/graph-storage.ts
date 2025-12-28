@@ -8,19 +8,57 @@ import { LocalFs } from "@/lib";
  * 用于管理当前正在查看或编辑的图谱ID
  */
 export const useCurrentGraphStore = defineStore("graph-detail", () => {
-  const currentGraphId = ref<string | undefined>();
+  const graphId = ref<string | undefined>();
+  const graphsStore = useGraphsStore();
+
+  const graph = computed(() => {
+    if (graphId.value) {
+      return graphsStore.allGraphs[graphId.value];
+    }
+  });
+
+  const graphData = computed(() => {
+    return GraphUtils.toGraphData(graph.value ?? {});
+  });
 
   /**
    * 设置当前图谱
    * @param graph - 图谱对象（可选），如果提供则使用其ID，否则清空当前选中
    */
   function setGraph(graph?: Partial<PGraph>) {
-    currentGraphId.value = graph?.id;
+    graphId.value = graph?.id;
+  }
+
+  function addEdge(prevId?: string, nextId?: string) {
+    graphsStore.addEdge(graph.value, prevId, nextId);
+  }
+
+  function removeNode(ids?: string[]) {
+    graphsStore.removeNode(graph.value, ids);
+  }
+
+  function addNode(node?: PNode) {
+    graphsStore.addNode(graph.value, node);
+  }
+
+  function removeEdge(ids?: string[] | { from: string; to: string }[]) {
+    graphsStore.removeEdge(graph.value, ids);
+  }
+
+  function updateNode(node?: Partial<PNode>) {
+    graphsStore.updateNode(graph.value, node);
   }
 
   return {
-    currentGraphId,
+    graphId,
+    graph,
     setGraph,
+    graphData,
+    addEdge,
+    removeNode,
+    addNode,
+    removeEdge,
+    updateNode,
   };
 });
 
@@ -62,7 +100,7 @@ export const useContextStore = defineStore("status", () => {
 export const useGraphsStore = defineStore("graph-storage", () => {
   const allGraphs = reactive<Record<string, PGraph>>({});
 
-  const currentGraphStore = useCurrentGraphStore();
+  // const currentGraphStore = useCurrentGraphStore();
 
   async function loadGraphs(obj: Record<string, PGraph>) {
     Object.keys(obj).forEach((key) => {
@@ -70,10 +108,10 @@ export const useGraphsStore = defineStore("graph-storage", () => {
     });
   }
 
-  const currentGraph = computed(() => {
-    if (!currentGraphStore.currentGraphId) return undefined;
-    return allGraphs[currentGraphStore.currentGraphId];
-  });
+  // const currentGraph = computed(() => {
+  //   if (!currentGraphStore.currentGraphId) return undefined;
+  //   return allGraphs[currentGraphStore.currentGraphId];
+  // });
 
   /**
    * Generates random graphs and adds them to the allGraphs store.
@@ -132,8 +170,8 @@ export const useGraphsStore = defineStore("graph-storage", () => {
     }
   }
 
-  function updateNode(partialGraph?: Partial<PGraph>, node?: PNode) {
-    if (partialGraph?.id && node) {
+  function updateNode(partialGraph?: Partial<PGraph>, node?: Partial<PNode>) {
+    if (partialGraph?.id && node?.id) {
       const graph = allGraphs[partialGraph.id];
       if (graph.nodes[node.id]) {
         graph.nodes[node.id] = {
@@ -164,9 +202,9 @@ export const useGraphsStore = defineStore("graph-storage", () => {
     if (allGraphs[graphId]) {
       delete allGraphs[graphId];
       // 如果删除的是当前选中的graph，清空当前选中
-      if (currentGraphStore.currentGraphId === graphId) {
-        currentGraphStore.setGraph();
-      }
+      // if (currentGraphStore.currentGraphId === graphId) {
+      //   currentGraphStore.setGraph();
+      // }
     }
   }
 
@@ -183,7 +221,7 @@ export const useGraphsStore = defineStore("graph-storage", () => {
     allGraphs,
     generateRandomGraph,
     graphsMeta,
-    currentGraph,
+    // currentGraph,
     addNode,
     addEdge,
     removeNode,

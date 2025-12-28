@@ -9,17 +9,30 @@
             </div>
         </button>
 
-        <el-dialog v-model="showTaskForm" title="创建项目" width="400px" class="task-dialog">
+        <el-dialog
+            v-model="showTaskForm"
+            title="创建项目"
+            width="400px"
+            class="task-dialog"
+        >
             <div class="dialog-content">
                 <div class="dialog-header">
                     <CreateProjectIcon :active="true" />
                     <h3 class="dialog-title">创建新项目</h3>
                 </div>
 
-                <el-form :model="newTaskForm" label-width="auto" class="task-form">
+                <el-form
+                    :model="newTaskForm"
+                    label-width="auto"
+                    class="task-form"
+                >
                     <el-form-item label="项目名称" required>
-                        <el-input v-model="newTaskForm.name" placeholder="请输入项目名称" class="task-input"
-                            @keyup.enter="createTask" />
+                        <el-input
+                            v-model="newTaskForm.name"
+                            placeholder="请输入项目名称"
+                            class="task-input"
+                            @keyup.enter="createTask"
+                        />
                     </el-form-item>
                     <div class="form-hint">
                         输入一个描述性的名称来标识这个项目
@@ -29,10 +42,17 @@
 
             <template #footer>
                 <div class="dialog-footer">
-                    <button class="dialog-button secondary" @click="showTaskForm = false">
+                    <button
+                        class="dialog-button secondary"
+                        @click="showTaskForm = false"
+                    >
                         取消
                     </button>
-                    <button class="dialog-button primary" @click="createTask" :disabled="!newTaskForm.name?.trim()">
+                    <button
+                        class="dialog-button primary"
+                        @click="createTask"
+                        :disabled="!newTaskForm.name?.trim()"
+                    >
                         创建
                     </button>
                 </div>
@@ -86,7 +106,6 @@ const createTask = () => {
 
 .create-task-button:hover {
     background-color: var(--vscode-hover-background);
-    /*border-color: var(--vscode-focus-border);*/
 }
 
 .create-task-button:active {

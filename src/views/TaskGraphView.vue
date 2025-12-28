@@ -1,6 +1,8 @@
 <template>
     <div>
-        <div style="height: 56px"> {{ graphsStore.currentGraph?.name }}</div>
+        <div style="height: 56px">
+            {{ currentGraphStore.graph?.name }}
+        </div>
         <div
             style="height: calc(100% - 56px)"
             id="container"
@@ -84,10 +86,10 @@
     </div>
 </template>
 <script setup lang="ts">
-import { useCurrentGraphStore, useGraphsStore } from "@/stores";
-import { GraphUtils, NodeUtil } from "@/utils";
+import { useCurrentGraphStore } from "@/stores";
+import { NodeUtil } from "@/utils";
 import { Element, Graph, IElementEvent, NodeEvent } from "@antv/g6";
-import { computed, onMounted, ref, reactive } from "vue";
+import { onMounted, ref, reactive } from "vue";
 import { useRoute } from "vue-router";
 import { PNode } from "@/types";
 
@@ -95,11 +97,6 @@ const route = useRoute();
 const taskId = route.params.taskId;
 const currentGraphStore = useCurrentGraphStore();
 currentGraphStore.setGraph({ id: taskId as string });
-const graphsStore = useGraphsStore();
-
-const data = computed(() => {
-    return GraphUtils.toGraphData(graphsStore.currentGraph);
-});
 
 const drawer = ref(false);
 const drawerNode = reactive<PNode>(NodeUtil.createNode());
@@ -111,7 +108,7 @@ onMounted(() => {
         container: "container",
         autoResize: true,
         autoFit: "center",
-        data: data.value,
+        data: currentGraphStore.graphData,
         plugins: [
             {
                 type: "contextmenu",
@@ -123,6 +120,10 @@ onMounted(() => {
                                 {
                                     name: "添加后续节点",
                                     value: "node:add-next",
+                                },
+                                {
+                                    name: "添加子节点",
+                                    value: "node:add-child",
                                 },
                                 {
                                     name: "添加前置节点",
@@ -186,7 +187,7 @@ onMounted(() => {
                         case "combo:delete-keep-edge":
                             if (current) {
                                 const currentNode =
-                                    graphsStore.currentGraph?.nodes[current.id];
+                                    currentGraphStore.graph?.nodes[current.id];
                                 // 删除当前节点但保留当前节点的关系，比如 a->b->c ,当删除b的时候，变成a->c
                                 // 如果有 a->c b->c  c->d ,当删除c的时候，变成a->d b->d
                                 // 如果有 a->c b->c  c->d c->e ,删除c的时候，变成 a->d b->d a->e b->e
@@ -200,11 +201,11 @@ onMounted(() => {
                                         for (const nextId of nexts) {
                                             // 避免创建重复的边
                                             const prevNode =
-                                                graphsStore.currentGraph?.nodes[
+                                                currentGraphStore.graph?.nodes[
                                                     prevId
                                                 ];
                                             const nextNode =
-                                                graphsStore.currentGraph?.nodes[
+                                                currentGraphStore.graph?.nodes[
                                                     nextId
                                                 ];
                                             if (
@@ -212,8 +213,7 @@ onMounted(() => {
                                                 nextNode &&
                                                 !prevNode.nexts.includes(nextId)
                                             ) {
-                                                graphsStore.addEdge(
-                                                    graphsStore.currentGraph,
+                                                currentGraphStore.addEdge(
                                                     prevId,
                                                     nextId,
                                                 );
@@ -222,46 +222,32 @@ onMounted(() => {
                                     }
 
                                     // 删除当前节点
-                                    graphsStore.removeNode(
-                                        graphsStore.currentGraph,
-                                        [current.id],
-                                    );
+                                    currentGraphStore.removeNode([current.id]);
                                 }
 
-                                graph?.setData(data.value);
+                                graph?.setData(currentGraphStore.graphData);
                                 graph?.render();
                             }
                             break;
                         case "node:delete":
                         case "combo:delete":
-                            if (current) {
-                                graphsStore.removeNode(
-                                    graphsStore.currentGraph,
-                                    [current.id],
-                                );
-                                graph?.setData(data.value);
-                                graph?.render();
-                            }
+                            currentGraphStore.removeNode([current.id]);
+                            graph?.setData(currentGraphStore.graphData);
+                            graph?.render();
                             break;
                         case "node:add-next":
                             if (current) {
                                 const nextNode = NodeUtil.createNode();
-
                                 nextNode.parent =
-                                    graphsStore.currentGraph?.nodes[
+                                    currentGraphStore.graph?.nodes[
                                         current.id
                                     ].parent;
-
-                                graphsStore.addNode(
-                                    graphsStore.currentGraph,
-                                    nextNode,
-                                );
-                                graphsStore.addEdge(
-                                    graphsStore.currentGraph,
+                                currentGraphStore.addNode(nextNode);
+                                currentGraphStore.addEdge(
                                     current.id,
                                     nextNode.id,
                                 );
-                                graph?.setData(data.value);
+                                graph?.setData(currentGraphStore.graphData);
                                 graph?.render();
                             }
                             break;
@@ -269,31 +255,22 @@ onMounted(() => {
                             if (current) {
                                 const nextNode = NodeUtil.createNode();
                                 const currentNode =
-                                    graphsStore.currentGraph?.nodes[current.id];
+                                    currentGraphStore.graph?.nodes[current.id];
                                 nextNode.parent = currentNode?.parent;
-                                graphsStore.addNode(
-                                    graphsStore.currentGraph,
-                                    nextNode,
-                                );
+                                currentGraphStore.addNode(nextNode);
                                 currentNode?.nexts.forEach((id) => {
-                                    graphsStore.addEdge(
-                                        graphsStore.currentGraph,
-                                        nextNode.id,
-                                        id,
-                                    );
-                                    graphsStore.removeEdge(
-                                        graphsStore.currentGraph,
-                                        [{ from: currentNode?.id, to: id }],
-                                    );
+                                    currentGraphStore.addEdge(nextNode.id, id);
+                                    currentGraphStore.removeEdge([
+                                        { from: currentNode?.id, to: id },
+                                    ]);
                                 });
 
-                                graphsStore.addEdge(
-                                    graphsStore.currentGraph,
+                                currentGraphStore.addEdge(
                                     currentNode?.id,
                                     nextNode.id,
                                 );
                                 // 添加边
-                                graph?.setData(data.value);
+                                graph?.setData(currentGraphStore.graphData);
                                 graph?.render();
                             }
                             break;
@@ -302,19 +279,14 @@ onMounted(() => {
                             if (current) {
                                 const prevNode = NodeUtil.createNode();
                                 const currentNode =
-                                    graphsStore.currentGraph?.nodes[current.id];
+                                    currentGraphStore.graph?.nodes[current.id];
                                 prevNode.parent = currentNode?.parent;
-
-                                graphsStore.addNode(
-                                    graphsStore.currentGraph,
-                                    prevNode,
-                                );
-                                graphsStore.addEdge(
-                                    graphsStore.currentGraph,
+                                currentGraphStore.addNode(prevNode);
+                                currentGraphStore.addEdge(
                                     prevNode.id,
                                     current.id,
                                 );
-                                graph?.setData(data.value);
+                                graph?.setData(currentGraphStore.graphData);
                                 graph?.render();
                             }
                             break;
@@ -323,33 +295,24 @@ onMounted(() => {
                             if (current) {
                                 const prevNode = NodeUtil.createNode();
                                 const currentNode =
-                                    graphsStore.currentGraph?.nodes[current.id];
+                                    currentGraphStore.graph?.nodes[current.id];
                                 prevNode.parent = currentNode?.parent;
 
-                                graphsStore.addNode(
-                                    graphsStore.currentGraph,
-                                    prevNode,
-                                );
+                                currentGraphStore.addNode(prevNode);
 
                                 // 将当前节点的所有前驱节点转移到新节点前面
                                 currentNode?.prevs.forEach((id) => {
-                                    graphsStore.addEdge(
-                                        graphsStore.currentGraph,
-                                        id,
-                                        prevNode.id,
-                                    );
-                                    graphsStore.removeEdge(
-                                        graphsStore.currentGraph,
-                                        [{ from: id, to: currentNode?.id }],
-                                    );
+                                    currentGraphStore.addEdge(id, prevNode.id);
+                                    currentGraphStore.removeEdge([
+                                        { from: id, to: currentNode?.id },
+                                    ]);
                                 });
 
-                                graphsStore.addEdge(
-                                    graphsStore.currentGraph,
+                                currentGraphStore.addEdge(
                                     prevNode.id,
                                     current.id,
                                 );
-                                graph?.setData(data.value);
+                                graph?.setData(currentGraphStore.graphData);
                                 graph?.render();
                             }
                             break;
@@ -357,7 +320,7 @@ onMounted(() => {
                             // 删除当前节点的所有前置节点（实际上是删除边）
                             if (current) {
                                 const currentNode =
-                                    graphsStore.currentGraph?.nodes[current.id];
+                                    currentGraphStore.graph?.nodes[current.id];
                                 // 创建要删除的边列表
                                 const edgesToDelete =
                                     currentNode?.prevs.map((id) => ({
@@ -366,11 +329,8 @@ onMounted(() => {
                                     })) || [];
 
                                 if (edgesToDelete.length > 0) {
-                                    graphsStore.removeEdge(
-                                        graphsStore.currentGraph,
-                                        edgesToDelete,
-                                    );
-                                    graph?.setData(data.value);
+                                    currentGraphStore.removeEdge(edgesToDelete);
+                                    graph?.setData(currentGraphStore.graphData);
                                     graph?.render();
                                 }
                             }
@@ -379,7 +339,7 @@ onMounted(() => {
                             // 删除当前节点的所有后续节点（实际上是删除边）
                             if (current) {
                                 const currentNode =
-                                    graphsStore.currentGraph?.nodes[current.id];
+                                    currentGraphStore.graph?.nodes[current.id];
                                 // 创建要删除的边列表
                                 const edgesToDelete =
                                     currentNode?.nexts.map((id) => ({
@@ -388,30 +348,29 @@ onMounted(() => {
                                     })) || [];
 
                                 if (edgesToDelete.length > 0) {
-                                    graphsStore.removeEdge(
-                                        graphsStore.currentGraph,
-                                        edgesToDelete,
-                                    );
-                                    graph?.setData(data.value);
+                                    currentGraphStore.removeEdge(edgesToDelete);
+                                    graph?.setData(currentGraphStore.graphData);
                                     graph?.render();
                                 }
                             }
                             break;
                         case "edge:delete":
                             if (current) {
-                                graphsStore.removeEdge(
-                                    graphsStore.currentGraph,
-                                    [current.id],
-                                );
-                                graph?.setData(data.value);
+                                currentGraphStore.removeEdge([current.id]);
+                                graph?.setData(currentGraphStore.graphData);
                                 graph?.render();
                             }
                             break;
                         case "canvas:add-node":
-                            const node = NodeUtil.createNode({name:"untitled"});
-                            graphsStore.addNode(graphsStore.currentGraph, node);
-                            graph?.setData(data.value);
+                            const node = NodeUtil.createNode();
+                            currentGraphStore.addNode(node);
+                            graph?.setData(currentGraphStore.graphData);
                             graph?.render();
+                            break;
+                        case "node:add-child":
+                            // todo
+                            const currentNode =
+                                currentGraphStore.graph?.nodes[current.id];
                             break;
                         default:
                             console.warn(`Unknown action: ${value}`);
@@ -429,7 +388,7 @@ onMounted(() => {
         node: {
             type: (value) => value.type ?? "rect",
             style: {
-                fill: (d:any)=>d.data.completed?"#00000050":"#fff",
+                fill: (d: any) => (d.data.completed ? "#00000050" : "#fff"),
                 stroke: "#91d5ff",
                 lineWidth: 1,
                 radius: 4,
@@ -481,29 +440,21 @@ onMounted(() => {
     });
     graph.on(NodeEvent.CLICK, (evt: IElementEvent & { target: Element }) => {
         const nodeId = evt.target.id;
-        const node = graphsStore.currentGraph?.nodes[nodeId];
-        if (node) {
-            Object.keys(drawerNode).forEach(
-                (key) => delete drawerNode[key as keyof PNode],
-            );
-            Object.assign(drawerNode, node);
-            drawer.value = true;
-        }
+        const node = currentGraphStore.graph?.nodes[nodeId];
+        Object.keys(drawerNode).forEach(
+            (key) => delete drawerNode[key as keyof PNode],
+        );
+        Object.assign(drawerNode, node ?? {});
+        drawer.value = true;
     });
     graph.render();
 });
 
 function saveNode() {
-    if (!graph) return;
-    if (drawerNode.id) {
-        graphsStore.updateNode(graphsStore.currentGraph, drawerNode);
-        // 更新图数据
-        if (graph) {
-            graph.setData(data.value);
-            graph.render();
-        }
-        drawer.value = false;
-    }
+    currentGraphStore.updateNode(drawerNode);
+    graph?.setData(currentGraphStore.graphData);
+    graph?.render();
+    drawer.value = false;
 }
 </script>
 
