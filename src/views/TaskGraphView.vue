@@ -357,8 +357,7 @@ onMounted(() => {
                             console.warn(`Unknown action: ${value}`);
                             break;
                     }
-                    graph?.setData(currentGraphStore.graphData);
-                    graph?.render();
+                    renderGraph();
                 },
             },
             {
@@ -433,10 +432,14 @@ onMounted(() => {
     graph.render();
 });
 
+function renderGraph() {
+    graph?.setData(() => currentGraphStore.graphData);
+    graph?.render();
+}
+
 function saveNode() {
     currentGraphStore.updateNode(drawerNode);
-    graph?.setData(currentGraphStore.graphData);
-    graph?.render();
+    renderGraph();
     drawer.value = false;
 }
 </script>
