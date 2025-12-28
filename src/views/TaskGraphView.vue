@@ -101,7 +101,7 @@ currentGraphStore.setGraph({ id: taskId as string });
 const drawer = ref(false);
 const drawerNode = reactive<PNode>(NodeUtil.createNode());
 
-let graph: Graph | null = null;
+let graph: Graph | undefined;
 
 onMounted(() => {
     graph = new Graph({
@@ -185,58 +185,49 @@ onMounted(() => {
                     switch (value) {
                         case "node:delete-keep-edge":
                         case "combo:delete-keep-edge":
-                            if (current) {
-                                const currentNode =
-                                    currentGraphStore.graph?.nodes[current.id];
+                            {
                                 // 删除当前节点但保留当前节点的关系，比如 a->b->c ,当删除b的时候，变成a->c
                                 // 如果有 a->c b->c  c->d ,当删除c的时候，变成a->d b->d
                                 // 如果有 a->c b->c  c->d c->e ,删除c的时候，变成 a->d b->d a->e b->e
+                                const currentNode =
+                                    currentGraphStore.graph?.nodes[current.id];
+                                const prevs = [...(currentNode?.prevs ?? [])];
+                                const nexts = [...(currentNode?.nexts ?? [])];
 
-                                if (currentNode) {
-                                    const prevs = [...currentNode.prevs];
-                                    const nexts = [...currentNode.nexts];
-
-                                    // 为每一对（前驱，后继）建立新的边
-                                    for (const prevId of prevs) {
-                                        for (const nextId of nexts) {
-                                            // 避免创建重复的边
-                                            const prevNode =
-                                                currentGraphStore.graph?.nodes[
-                                                    prevId
-                                                ];
-                                            const nextNode =
-                                                currentGraphStore.graph?.nodes[
-                                                    nextId
-                                                ];
-                                            if (
-                                                prevNode &&
-                                                nextNode &&
-                                                !prevNode.nexts.includes(nextId)
-                                            ) {
-                                                currentGraphStore.addEdge(
-                                                    prevId,
-                                                    nextId,
-                                                );
-                                            }
+                                // 为每一对（前驱，后继）建立新的边
+                                for (const prevId of prevs) {
+                                    for (const nextId of nexts) {
+                                        // 避免创建重复的边
+                                        const prevNode =
+                                            currentGraphStore.graph?.nodes[
+                                                prevId
+                                            ];
+                                        const nextNode =
+                                            currentGraphStore.graph?.nodes[
+                                                nextId
+                                            ];
+                                        if (
+                                            prevNode &&
+                                            nextNode &&
+                                            !prevNode.nexts.includes(nextId)
+                                        ) {
+                                            currentGraphStore.addEdge(
+                                                prevId,
+                                                nextId,
+                                            );
                                         }
                                     }
-
-                                    // 删除当前节点
-                                    currentGraphStore.removeNode([current.id]);
                                 }
-
-                                graph?.setData(currentGraphStore.graphData);
-                                graph?.render();
+                                // 删除当前节点
+                                currentGraphStore.removeNode([current.id]);
                             }
                             break;
                         case "node:delete":
                         case "combo:delete":
                             currentGraphStore.removeNode([current.id]);
-                            graph?.setData(currentGraphStore.graphData);
-                            graph?.render();
                             break;
                         case "node:add-next":
-                            if (current) {
+                            {
                                 const nextNode = NodeUtil.createNode();
                                 nextNode.parent =
                                     currentGraphStore.graph?.nodes[
@@ -252,7 +243,7 @@ onMounted(() => {
                             }
                             break;
                         case "node:insert-next":
-                            if (current) {
+                            {
                                 const nextNode = NodeUtil.createNode();
                                 const currentNode =
                                     currentGraphStore.graph?.nodes[current.id];
@@ -269,14 +260,11 @@ onMounted(() => {
                                     currentNode?.id,
                                     nextNode.id,
                                 );
-                                // 添加边
-                                graph?.setData(currentGraphStore.graphData);
-                                graph?.render();
                             }
                             break;
                         case "node:add-prev":
-                            // 添加前置节点
-                            if (current) {
+                            {
+                                // 添加前置节点
                                 const prevNode = NodeUtil.createNode();
                                 const currentNode =
                                     currentGraphStore.graph?.nodes[current.id];
@@ -286,13 +274,10 @@ onMounted(() => {
                                     prevNode.id,
                                     current.id,
                                 );
-                                graph?.setData(currentGraphStore.graphData);
-                                graph?.render();
                             }
                             break;
-                        case "node:insert-prev":
-                            // 插入前置节点
-                            if (current) {
+                        case "node:insert-prev": // 插入前置节点
+                            {
                                 const prevNode = NodeUtil.createNode();
                                 const currentNode =
                                     currentGraphStore.graph?.nodes[current.id];
@@ -312,13 +297,10 @@ onMounted(() => {
                                     prevNode.id,
                                     current.id,
                                 );
-                                graph?.setData(currentGraphStore.graphData);
-                                graph?.render();
                             }
                             break;
-                        case "node:delete-prev-edge":
-                            // 删除当前节点的所有前置节点（实际上是删除边）
-                            if (current) {
+                        case "node:delete-prev-edge": // 删除当前节点的所有前置节点（实际上是删除边）
+                            {
                                 const currentNode =
                                     currentGraphStore.graph?.nodes[current.id];
                                 // 创建要删除的边列表
@@ -330,14 +312,12 @@ onMounted(() => {
 
                                 if (edgesToDelete.length > 0) {
                                     currentGraphStore.removeEdge(edgesToDelete);
-                                    graph?.setData(currentGraphStore.graphData);
-                                    graph?.render();
                                 }
                             }
                             break;
                         case "node:delete-next-edge":
-                            // 删除当前节点的所有后续节点（实际上是删除边）
-                            if (current) {
+                            {
+                                // 删除当前节点的所有后续节点（实际上是删除边）
                                 const currentNode =
                                     currentGraphStore.graph?.nodes[current.id];
                                 // 创建要删除的边列表
@@ -346,36 +326,33 @@ onMounted(() => {
                                         from: current.id,
                                         to: id,
                                     })) || [];
-
                                 if (edgesToDelete.length > 0) {
                                     currentGraphStore.removeEdge(edgesToDelete);
-                                    graph?.setData(currentGraphStore.graphData);
-                                    graph?.render();
                                 }
                             }
                             break;
                         case "edge:delete":
-                            if (current) {
-                                currentGraphStore.removeEdge([current.id]);
-                                graph?.setData(currentGraphStore.graphData);
-                                graph?.render();
-                            }
+                            currentGraphStore.removeEdge([current.id]);
                             break;
                         case "canvas:add-node":
-                            const node = NodeUtil.createNode();
-                            currentGraphStore.addNode(node);
-                            graph?.setData(currentGraphStore.graphData);
-                            graph?.render();
+                            {
+                                const node = NodeUtil.createNode();
+                                currentGraphStore.addNode(node);
+                            }
                             break;
                         case "node:add-child":
-                            // todo
-                            const currentNode =
-                                currentGraphStore.graph?.nodes[current.id];
+                            {
+                                // todo 添加子节点
+                                const currentNode =
+                                    currentGraphStore.graph?.nodes[current.id];
+                            }
                             break;
                         default:
                             console.warn(`Unknown action: ${value}`);
                             break;
                     }
+                    graph?.setData(currentGraphStore.graphData);
+                    graph?.render();
                 },
             },
             {
