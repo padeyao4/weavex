@@ -3,7 +3,11 @@
         <div class="h-14 flex items-center text-xl font-sans font-medium">
             {{ currentGraphStore.graph?.name }}
         </div>
-        <div id="container" @contextmenu.prevent class="flex-1" />
+        <div
+            id="container"
+            @contextmenu.prevent
+            class="flex-1 min-h-0 min-w-0"
+        />
         <el-drawer
             v-model="drawer"
             title="节点详情"
@@ -38,7 +42,7 @@
                             placeholder="请输入节点详细记录"
                         />
                     </el-form-item>
-                    <el-form-item label="开始时间">
+                    <!-- <el-form-item label="开始时间">
                         <el-date-picker
                             v-model="drawerNode.startAt"
                             type="datetime"
@@ -55,7 +59,7 @@
                             :default-value="new Date()"
                             value-format="timestamp"
                         />
-                    </el-form-item>
+                    </el-form-item> -->
                     <el-form-item label="完成状态">
                         <el-switch v-model="drawerNode.completed" />
                         <span
