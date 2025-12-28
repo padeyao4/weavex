@@ -49,7 +49,7 @@ const createTaskGraph = () => {
             </div>
         </router-link>
         <div class="bg-gray-200 border-b border-gray-200" />
-        <div class="flex-1 flex-col gap-1 mt-1 overflow-y-auto">
+        <div class="flex-1 flex flex-col gap-1 mt-1 overflow-y-auto">
             <router-link
                 :to="{ name: 'taskGraph', params: { taskId: item.id } }"
                 custom
@@ -102,19 +102,6 @@ const createTaskGraph = () => {
         </div>
     </menu>
     <router-view :key="$route.fullPath" />
-    <!-- <el-dialog title="创建项目" v-model="formData.visible" width="30%">
-         <el-form :model="formData">
-            <el-form-item label="项目名称">
-                <el-input v-model="formData.name"></el-input>
-            </el-form-item>
-        </el-form>
-        <span slot="footer" class="dialog-footer">
-            <el-button @click="formData.visible = false">取 消</el-button>
-            <el-button type="primary" @click="createTaskGraph()"
-                >确 定</el-button
-            >
-        </span>
-    </el-dialog> -->
     <div
         class="h-screen w-screen bg-black/50 absolute left-0 right-0 top-0 transition-opacity duration-300"
         :class="{
