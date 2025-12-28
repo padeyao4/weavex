@@ -42,24 +42,6 @@
                             placeholder="请输入节点详细记录"
                         />
                     </el-form-item>
-                    <!-- <el-form-item label="开始时间">
-                        <el-date-picker
-                            v-model="drawerNode.startAt"
-                            type="datetime"
-                            placeholder="选择开始时间"
-                            :default-value="new Date()"
-                            value-format="timestamp"
-                        />
-                    </el-form-item>
-                    <el-form-item label="结束时间">
-                        <el-date-picker
-                            v-model="drawerNode.endAt"
-                            type="datetime"
-                            placeholder="选择结束时间"
-                            :default-value="new Date()"
-                            value-format="timestamp"
-                        />
-                    </el-form-item> -->
                     <el-form-item label="完成状态">
                         <el-switch v-model="drawerNode.completed" />
                         <span
