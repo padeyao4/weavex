@@ -342,9 +342,15 @@ onMounted(() => {
                             break;
                         case "node:add-child":
                             {
-                                // todo 添加子节点
                                 const currentNode =
                                     currentGraphStore.graph?.nodes[current.id];
+                                const newNode = NodeUtil.createNode();
+                                currentGraphStore.addNode(newNode);
+                                currentGraphStore.setChildWithTravel(
+                                    currentNode,
+                                    newNode,
+                                );
+                                graph?.clear();
                             }
                             break;
                         default:

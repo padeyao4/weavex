@@ -44,6 +44,14 @@ export class GraphUtils {
     }
   }
 
+  /**
+   * 将子节点添加到父节点中，并更新子节点的父节点信息。
+   * 会递归处理子节点的前置节点和后置节点
+   * @param graph
+   * @param parent
+   * @param child
+   * @returns
+   */
   static addChildWidthTravel(
     graph: PGraph,
     parent: PNode | string,

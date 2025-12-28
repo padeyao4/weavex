@@ -66,7 +66,8 @@ export class NodeUtil {
     travel(child);
   }
 
-  static addChild(parent: PNode, child: PNode) {
+  static addChild(parent?: PNode, child?: PNode) {
+    if (!parent || !child) return;
     parent.children.push(child.id);
     child.parent = parent.id;
   }

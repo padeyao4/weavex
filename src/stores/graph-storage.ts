@@ -1,7 +1,7 @@
 import { PGraph, PNode } from "@/types";
 import { defineStore } from "pinia";
 import { computed, reactive, ref } from "vue";
-import { debounce, GraphUtils, Mock } from "@/utils";
+import { debounce, GraphUtils } from "@/utils";
 import { LocalFs } from "@/lib";
 /**
  * 当前选中的图谱存储
@@ -49,6 +49,13 @@ export const useCurrentGraphStore = defineStore("graph-detail", () => {
     graphsStore.updateNode(graph.value, node);
   }
 
+  function setChildWithTravel(
+    partialParent?: Partial<PNode>,
+    partialChild?: Partial<PNode>,
+  ) {
+    graphsStore.setChildWithTravel(graph.value, partialParent, partialChild);
+  }
+
   return {
     graphId,
     graph,
@@ -59,6 +66,7 @@ export const useCurrentGraphStore = defineStore("graph-detail", () => {
     addNode,
     removeEdge,
     updateNode,
+    setChildWithTravel,
   };
 });
 
@@ -100,27 +108,10 @@ export const useContextStore = defineStore("status", () => {
 export const useGraphsStore = defineStore("graph-storage", () => {
   const allGraphs = reactive<Record<string, PGraph>>({});
 
-  // const currentGraphStore = useCurrentGraphStore();
-
   async function loadGraphs(obj: Record<string, PGraph>) {
     Object.keys(obj).forEach((key) => {
       allGraphs[key] = obj[key];
     });
-  }
-
-  // const currentGraph = computed(() => {
-  //   if (!currentGraphStore.currentGraphId) return undefined;
-  //   return allGraphs[currentGraphStore.currentGraphId];
-  // });
-
-  /**
-   * Generates random graphs and adds them to the allGraphs store.
-   */
-  function generateRandomGraph() {
-    for (let i = 0; i < 1; i++) {
-      const graph = Mock.data01();
-      allGraphs[graph.id] = graph;
-    }
   }
 
   async function saveGraphs() {
@@ -134,6 +125,22 @@ export const useGraphsStore = defineStore("graph-storage", () => {
     if (partialGraph?.id && from && to) {
       const graph = allGraphs[partialGraph.id];
       GraphUtils.addEdge(graph, from, to);
+    }
+  }
+
+  function setChildWithTravel(
+    partialGraph?: Partial<PGraph>,
+    partialParent?: Partial<PNode>,
+    partialChild?: Partial<PNode>,
+  ) {
+    if (partialGraph?.id && partialParent?.id && partialChild?.id) {
+      const graph = allGraphs[partialGraph.id];
+      graph.rootNodeIds = graph.rootNodeIds.filter(
+        (id) => id !== partialChild.id,
+      );
+      const parent = graph.nodes[partialParent.id];
+      const child = graph.nodes[partialChild.id];
+      GraphUtils.addChildWidthTravel(graph, parent, child);
     }
   }
 
@@ -201,10 +208,6 @@ export const useGraphsStore = defineStore("graph-storage", () => {
   function removeGraph(graphId: string) {
     if (allGraphs[graphId]) {
       delete allGraphs[graphId];
-      // 如果删除的是当前选中的graph，清空当前选中
-      // if (currentGraphStore.currentGraphId === graphId) {
-      //   currentGraphStore.setGraph();
-      // }
     }
   }
 
@@ -219,9 +222,7 @@ export const useGraphsStore = defineStore("graph-storage", () => {
 
   return {
     allGraphs,
-    generateRandomGraph,
     graphsMeta,
-    // currentGraph,
     addNode,
     addEdge,
     removeNode,
@@ -232,5 +233,6 @@ export const useGraphsStore = defineStore("graph-storage", () => {
     removeGraph,
     loadGraphs,
     debouncedSave,
+    setChildWithTravel,
   };
 });
