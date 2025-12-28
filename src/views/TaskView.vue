@@ -1,6 +1,26 @@
 <script setup lang="ts">
 import { useGraphsStore } from "@/stores";
+import { GraphUtils } from "@/utils";
+import { reactive } from "vue";
+import { ElMessage } from "element-plus";
 const graphsStore = useGraphsStore();
+
+const formData = reactive({
+    visible: false,
+    name: "",
+});
+
+const createTaskGraph = () => {
+    if (!formData.name.trim()) {
+        ElMessage.warning("请输入项目名称");
+        return;
+    }
+    const newGraph = GraphUtils.createGraph({ name: formData.name.trim() });
+    graphsStore.addGraph(newGraph);
+    formData.name = "";
+    formData.visible = false;
+    ElMessage.success("项目创建成功");
+};
 </script>
 
 <template>
@@ -67,6 +87,7 @@ const graphsStore = useGraphsStore();
         <div class="bg-gray-200 border-b border-gray-200" />
         <div class="h-14 flex p-1 justify-center items-center">
             <div
+                @click="formData.visible = true"
                 class="h-full w-full p-1 hover:bg-amber-100 hover:rounded-md flex flex-row items-center pl-2"
             >
                 <icon-plus
@@ -81,4 +102,58 @@ const graphsStore = useGraphsStore();
         </div>
     </menu>
     <router-view :key="$route.fullPath" />
+    <!-- <el-dialog title="创建项目" v-model="formData.visible" width="30%">
+         <el-form :model="formData">
+            <el-form-item label="项目名称">
+                <el-input v-model="formData.name"></el-input>
+            </el-form-item>
+        </el-form>
+        <span slot="footer" class="dialog-footer">
+            <el-button @click="formData.visible = false">取 消</el-button>
+            <el-button type="primary" @click="createTaskGraph()"
+                >确 定</el-button
+            >
+        </span>
+    </el-dialog> -->
+    <div
+        class="h-screen w-screen bg-black/50 absolute left-0 right-0 top-0 transition-opacity duration-300"
+        :class="{
+            hidden: !formData.visible,
+            'opacity-0': !formData.visible,
+            'opacity-100': formData.visible,
+        }"
+        @click.self="formData.visible = false"
+        style="z-index: 9999"
+    >
+        <div
+            class="absolute w-1/3 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 border border-gray-300 bg-white rounded-md shadow-lg transition-all duration-300"
+            :class="{
+                'scale-95 opacity-0': !formData.visible,
+                'scale-100 opacity-100': formData.visible,
+            }"
+        >
+            <div class="flex flex-col m-4 py-2 justify-center items-center">
+                <h3 class="text-lg font-semibold mb-4">创建新项目</h3>
+                <el-form :model="formData" class="w-full">
+                    <el-form-item label="项目名称:" required>
+                        <el-input
+                            v-model="formData.name"
+                            placeholder="请输入项目名称"
+                            @keyup.enter="createTaskGraph"
+                            :maxlength="50"
+                            show-word-limit
+                        ></el-input>
+                    </el-form-item>
+                </el-form>
+                <div class="flex gap-2 mt-4">
+                    <el-button @click="formData.visible = false"
+                        >取 消</el-button
+                    >
+                    <el-button type="primary" @click="createTaskGraph()"
+                        >确 定</el-button
+                    >
+                </div>
+            </div>
+        </div>
+    </div>
 </template>
