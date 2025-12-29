@@ -20,7 +20,6 @@ forwardConsole("warn", warn);
 forwardConsole("error", error);
 
 const app = createApp(App);
-
 install(app); // use default prefix 'icon', eg: icon is People, name is icon-people.
 
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {

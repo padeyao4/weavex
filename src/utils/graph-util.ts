@@ -3,6 +3,7 @@ import { v4 } from "uuid";
 import { ComboData, EdgeData, GraphData, NodeData } from "@antv/g6";
 import { NodeUtil } from "./node-util";
 import { faker } from "@faker-js/faker";
+import cloneDeep from "lodash-es/cloneDeep";
 
 export class GraphUtils {
   static createGraph(graph?: Partial<PGraph>): PGraph {
@@ -129,6 +130,71 @@ export class GraphUtils {
     graph.rootNodeIds = [...new Set([...graph.rootNodeIds, target.id])];
   }
 
+  static reBuildRootIds(nodes?: PNode[]): string[] {
+    if (!nodes) return [];
+    const nodeMap = new Map<string | undefined, PNode>();
+    const visited = new Set<string>();
+    nodes.forEach((node) => {
+      nodeMap.set(node.id, node);
+    });
+    function travel(node?: PNode) {
+      if (!node) return;
+      if (visited.has(node.id)) return;
+      visited.add(node.id);
+      let ans = node.id;
+      for (const childId of node.children) {
+        ans = travel(nodeMap.get(childId)) ?? ans;
+      }
+      for (const nextId of node.nexts) {
+        ans = travel(nodeMap.get(nextId)) ?? ans;
+      }
+      ans = travel(nodeMap.get(node.parent)) ?? ans;
+      for (const prevId of node.prevs) {
+        ans = travel(nodeMap.get(prevId)) ?? ans;
+      }
+      return ans;
+    }
+    const rootIds = nodes
+      .map((node) => travel(nodeMap.get(node.id)))
+      .filter((id) => id !== undefined);
+    return rootIds;
+  }
+
+  static transform(graph?: PGraph): GraphData {
+    if (!graph) return {};
+    if (graph.hideCompleted) {
+      const clone = cloneDeep(graph);
+      const nodeArray = this.traverseGraph(clone, (n, g) => {
+        if (!n.completed) {
+          return true;
+        }
+        const prevsComplated = n.prevs
+          .map((id) => g.nodes[id])
+          .every((prev) => prev.completed);
+        if (!prevsComplated) {
+          return true;
+        }
+        const childComplated = n.children
+          .map((id) => g.nodes[id])
+          .every((child) => child.completed);
+        if (!childComplated) {
+          return true;
+        }
+        return false;
+      });
+      const rootIds = this.reBuildRootIds(nodeArray);
+      clone.rootNodeIds = rootIds;
+      const nodes: Record<string, PNode> = {};
+      nodeArray.forEach((node) => {
+        nodes[node.id] = node;
+      });
+      clone.nodes = nodes;
+      return this.toGraphData(clone);
+    } else {
+      return this.toGraphData(graph);
+    }
+  }
+
   /**
    * 将graph中的nodes数据转为GraphData数据
    * @returns
@@ -143,7 +209,7 @@ export class GraphUtils {
     const visited = new Set<string>();
 
     function travel(node: PNode) {
-      if (visited.has(node.id)) return;
+      if (!node || visited.has(node.id)) return;
       visited.add(node.id);
 
       if (NodeUtil.isCombo(node)) {

@@ -21,5 +21,6 @@ export interface PGraph {
   createdAt: number; // 创建时间
   updatedAt: number; // 更新时间
   rootNodeIds: string[]; // 多根支持（DAG 可能有多个入口）
+  hideCompleted?: boolean; // 是否显示已完成节点
   nodes: Record<string, PNode>; // 扁平化节点映射
 }

@@ -18,7 +18,7 @@ export const useCurrentGraphStore = defineStore("graph-detail", () => {
   });
 
   const graphData = computed(() => {
-    return GraphUtils.toGraphData(graph.value ?? {});
+    return GraphUtils.transform(graph.value);
   });
 
   /**
@@ -49,6 +49,10 @@ export const useCurrentGraphStore = defineStore("graph-detail", () => {
     graphStore.updateNode(graph.value, node);
   }
 
+  function updateGraph(partialGraph?: Partial<PGraph>) {
+    graphStore.updateGraph(graph.value?.id, partialGraph);
+  }
+
   function setChildWithTravel(
     partialParent?: Partial<PNode>,
     partialChild?: Partial<PNode>,
@@ -67,6 +71,7 @@ export const useCurrentGraphStore = defineStore("graph-detail", () => {
     removeEdge,
     updateNode,
     setChildWithTravel,
+    updateGraph,
   };
 });
 
@@ -195,13 +200,15 @@ export const useGraphStore = defineStore("graph-storage", () => {
     allGraph[graph.id] = graph;
   }
 
-  function updateGraph(graphId: string, updates: Partial<PGraph>) {
-    if (allGraph[graphId]) {
-      allGraph[graphId] = {
-        ...allGraph[graphId],
-        ...updates,
-        updatedAt: Date.now(),
-      };
+  function updateGraph(graphId?: string, updates?: Partial<PGraph>) {
+    if (graphId && updates) {
+      if (allGraph[graphId]) {
+        allGraph[graphId] = {
+          ...allGraph[graphId],
+          ...updates,
+          updatedAt: Date.now(),
+        };
+      }
     }
   }
 

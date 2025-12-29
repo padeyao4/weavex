@@ -117,28 +117,31 @@ const handleClickOutside = () => {
         <menu
             class="w-64 bg-gray-100 border-r border-gray-200 flex flex-col shrink-0 h-screen"
         >
-            <router-link
-                :to="{ name: 'taskSummary' }"
-                custom
-                replace
-                v-slot="{ navigate, isActive }"
-            >
-                <div
-                    class="flex flex-row items-center h-12 hover:bg-amber-100 mt-3 pl-2 pr-2 m-1 hover:rounded-md no-underline"
-                    @click="navigate"
-                    :class="isActive ? 'bg-amber-100' : ''"
+            <div class="border-b border-gray-200">
+                <router-link
+                    :to="{ name: 'taskSummary' }"
+                    custom
+                    replace
+                    v-slot="{ navigate, isActive }"
                 >
-                    <icon-sun-one
-                        theme="outline"
-                        size="24"
-                        fill="#333"
-                        :strokeWidth="2"
-                        strokeLinecap="square"
-                    />
-                    <div class="ml-2 no-underline">我的一天</div>
-                </div>
-            </router-link>
-            <div class="bg-gray-200 border-b border-gray-200" />
+                    <div
+                        class="flex flex-row items-center h-12 hover:bg-amber-100 mt-3 pl-2 pr-2 m-1 hover:rounded-md"
+                        @click="navigate"
+                        :class="isActive ? 'bg-amber-100' : ''"
+                    >
+                        <icon-sun-one
+                            theme="outline"
+                            size="24"
+                            fill="#333"
+                            :strokeWidth="2"
+                            strokeLinecap="square"
+                        />
+                        <div class="ml-2">我的一天</div>
+                    </div>
+                </router-link>
+            </div>
+
+            <!-- <div class="bg-gray-200 border-b border-gray-200" /> -->
             <div class="flex-1 flex flex-col gap-1 mt-1 overflow-y-auto">
                 <router-link
                     :to="{ name: 'taskGraph', params: { taskId: item.id } }"
@@ -173,8 +176,9 @@ const handleClickOutside = () => {
                     </div>
                 </router-link>
             </div>
-            <div class="bg-gray-200 border-b border-gray-200" />
-            <div class="h-14 flex p-1 justify-center items-center">
+            <div
+                class="h-14 flex p-1 justify-center items-center border-t border-gray-200"
+            >
                 <div
                     @click="formData.visible = true"
                     class="h-full w-full p-1 hover:bg-amber-100 hover:rounded-md flex flex-row items-center pl-2"

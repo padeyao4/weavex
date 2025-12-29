@@ -1,13 +1,45 @@
 <template>
-    <div class="w-full h-screen flex flex-col p-4">
-        <div class="h-14 flex items-center text-xl font-sans font-medium">
+    <div class="w-full h-screen flex flex-col">
+        <div
+            class="h-14 flex items-center text-xl font-sans font-medium mt-2 pl-4"
+        >
             {{ currentGraphStore.graph?.name }}
         </div>
         <div
             id="container"
             @contextmenu.prevent
-            class="flex-1 min-h-0 min-w-0"
+            class="flex-1 min-h-0 min-w-0 border-t border-gray-200"
         />
+        <footer
+            class="h-14 border-t border-gray-200 flex flex-row justify-center items-center gap-2"
+        >
+            <div
+                class="w-10 h-10 hover:bg-blue-50 rounded-md flex justify-center items-center"
+                @click="toggleGraphView"
+            >
+                <div class="relative w-6 h-6">
+                    <icon-switch-button
+                        theme="outline"
+                        size="24"
+                        fill="#333"
+                        :strokeWidth="2"
+                        strokeLinecap="square"
+                        class="absolute"
+                    />
+                    <icon-switch-button
+                        theme="two-tone"
+                        size="24"
+                        :fill="['#333', '#2F88FF']"
+                        :strokeWidth="2"
+                        strokeLinecap="square"
+                        class="absolute"
+                        :class="{
+                            hidden: !currentGraphStore.graph?.hideCompleted,
+                        }"
+                    />
+                </div>
+            </div>
+        </footer>
         <el-drawer
             v-model="drawer"
             title="节点详情"
@@ -342,10 +374,6 @@ onMounted(() => {
                     renderGraph();
                 },
             },
-            {
-                type: "grid-line",
-                size: 20,
-            },
         ],
 
         // 节点配置
@@ -423,5 +451,12 @@ function saveNode() {
     currentGraphStore.updateNode(drawerNode);
     renderGraph();
     drawer.value = false;
+}
+
+function toggleGraphView() {
+    currentGraphStore.updateGraph({
+        hideCompleted: !currentGraphStore.graph?.hideCompleted,
+    });
+    renderGraph();
 }
 </script>

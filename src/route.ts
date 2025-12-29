@@ -2,9 +2,9 @@ import { createRouter, createWebHistory } from "vue-router";
 import HomeView from "./views/HomeView.vue";
 import SettingsView from "./views/SettingsView.vue";
 import TaskSummaryView from "./views/TaskSummaryView.vue";
-import TaskView from "./views/TaskView.vue";
 import NoteView from "./views/NoteView.vue";
 import TaskGraphView from "./views/TaskGraphView.vue";
+import TaskMenuView from "./views/TaskMenuView.vue";
 
 export const router = createRouter({
   history: createWebHistory(),
@@ -16,7 +16,7 @@ export const router = createRouter({
       children: [
         {
           path: "task",
-          component: TaskView,
+          component: TaskMenuView,
           children: [
             {
               path: "summary",
