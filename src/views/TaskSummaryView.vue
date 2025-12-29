@@ -1,15 +1,27 @@
 <script setup lang="ts">
-import { faker } from "@faker-js/faker";
-const mockList: any[] = [];
+import { useGraphStore } from "@/stores";
+import { PNode } from "@/types";
+import { GraphUtils } from "@/utils";
+import { computed } from "vue";
+const graphStore = useGraphStore();
 
-for (let i = 0; i < 20; i++) {
-    mockList.push({
-        id: i,
-        title: faker.book.author(),
-        description: `Description for Todo ${i + 1}`,
-        completed: false,
+const taskList = computed(() => {
+    return Object.values(graphStore.allGraph).flatMap((graph) => {
+        return GraphUtils.traverseGraph(graph, (n, g) => {
+            const prevsCompleted = n.prevs
+                .map((pre) => g.nodes[pre].completed)
+                .every((completed) => completed);
+            const childrenCompleted = n.children
+                .map((childId) => g.nodes[childId].completed)
+                .every((completed) => completed);
+            return prevsCompleted && childrenCompleted && !n.completed;
+        });
     });
-}
+});
+
+const toggleTask = (task: PNode) => {
+    task.completed = !task.completed;
+};
 </script>
 
 <template>
@@ -20,10 +32,13 @@ for (let i = 0; i < 20; i++) {
             </div>
             <div class="flex-1 flex flex-col gap-2 overflow-y-auto mt-2">
                 <div
-                    v-for="item in mockList"
+                    v-for="item in taskList"
                     class="px-2 h-16 bg-amber-100 shrink-0 flex items-center rounded-lg border"
                 >
-                    <div class="items-center relative flex w-6 h-6 group">
+                    <div
+                        class="items-center relative flex w-6 h-6 group"
+                        @click="toggleTask(item)"
+                    >
                         <icon-round
                             theme="outline"
                             size="24"
@@ -42,7 +57,7 @@ for (let i = 0; i < 20; i++) {
                         />
                     </div>
                     <div class="ml-2">
-                        {{ item.title }}
+                        {{ item.name }}
                     </div>
                 </div>
             </div>

@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { useGraphsStore } from "@/stores";
+import { useGraphStore } from "@/stores";
 import { GraphUtils } from "@/utils";
 import { reactive } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { More, Delete, Edit } from "@element-plus/icons-vue";
 
-const graphsStore = useGraphsStore();
+const graphsStore = useGraphStore();
 
 const formData = reactive({
     visible: false,

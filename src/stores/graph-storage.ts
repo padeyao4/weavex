@@ -9,11 +9,11 @@ import { LocalFs } from "@/lib";
  */
 export const useCurrentGraphStore = defineStore("graph-detail", () => {
   const graphId = ref<string | undefined>();
-  const graphsStore = useGraphsStore();
+  const graphStore = useGraphStore();
 
   const graph = computed(() => {
     if (graphId.value) {
-      return graphsStore.allGraphs[graphId.value];
+      return graphStore.allGraph[graphId.value];
     }
   });
 
@@ -30,30 +30,30 @@ export const useCurrentGraphStore = defineStore("graph-detail", () => {
   }
 
   function addEdge(prevId?: string, nextId?: string) {
-    graphsStore.addEdge(graph.value, prevId, nextId);
+    graphStore.addEdge(graph.value, prevId, nextId);
   }
 
   function removeNode(ids?: string[]) {
-    graphsStore.removeNode(graph.value, ids);
+    graphStore.removeNode(graph.value, ids);
   }
 
   function addNode(node?: PNode) {
-    graphsStore.addNode(graph.value, node);
+    graphStore.addNode(graph.value, node);
   }
 
   function removeEdge(ids?: string[] | { from: string; to: string }[]) {
-    graphsStore.removeEdge(graph.value, ids);
+    graphStore.removeEdge(graph.value, ids);
   }
 
   function updateNode(node?: Partial<PNode>) {
-    graphsStore.updateNode(graph.value, node);
+    graphStore.updateNode(graph.value, node);
   }
 
   function setChildWithTravel(
     partialParent?: Partial<PNode>,
     partialChild?: Partial<PNode>,
   ) {
-    graphsStore.setChildWithTravel(graph.value, partialParent, partialChild);
+    graphStore.setChildWithTravel(graph.value, partialParent, partialChild);
   }
 
   return {
@@ -78,7 +78,7 @@ type AppStatus = "pending" | "initializing" | "initialized" | "error";
 
 export const useContextStore = defineStore("status", () => {
   const status = ref<AppStatus>("pending");
-  const graphsStore = useGraphsStore();
+  const graphStore = useGraphStore();
 
   function setStatus(st: AppStatus) {
     status.value = st;
@@ -92,7 +92,7 @@ export const useContextStore = defineStore("status", () => {
       const obj = await LocalFs.readGraphsWithInit();
       console.log(obj);
       // 加载graphsStore
-      await graphsStore.loadGraphs(obj);
+      await graphStore.loadGraphs(obj);
       status.value = "initialized";
       console.log("Initialized");
     }
@@ -105,17 +105,17 @@ export const useContextStore = defineStore("status", () => {
   };
 });
 
-export const useGraphsStore = defineStore("graph-storage", () => {
-  const allGraphs = reactive<Record<string, PGraph>>({});
+export const useGraphStore = defineStore("graph-storage", () => {
+  const allGraph = reactive<Record<string, PGraph>>({});
 
   async function loadGraphs(obj: Record<string, PGraph>) {
     Object.keys(obj).forEach((key) => {
-      allGraphs[key] = obj[key];
+      allGraph[key] = obj[key];
     });
   }
 
   async function saveGraphs() {
-    const data = JSON.stringify(allGraphs);
+    const data = JSON.stringify(allGraph);
     await LocalFs.save(data);
   }
 
@@ -123,7 +123,7 @@ export const useGraphsStore = defineStore("graph-storage", () => {
 
   function addEdge(partialGraph?: Partial<PGraph>, from?: string, to?: string) {
     if (partialGraph?.id && from && to) {
-      const graph = allGraphs[partialGraph.id];
+      const graph = allGraph[partialGraph.id];
       GraphUtils.addEdge(graph, from, to);
     }
   }
@@ -134,7 +134,7 @@ export const useGraphsStore = defineStore("graph-storage", () => {
     partialChild?: Partial<PNode>,
   ) {
     if (partialGraph?.id && partialParent?.id && partialChild?.id) {
-      const graph = allGraphs[partialGraph.id];
+      const graph = allGraph[partialGraph.id];
       graph.rootNodeIds = graph.rootNodeIds.filter(
         (id) => id !== partialChild.id,
       );
@@ -146,7 +146,7 @@ export const useGraphsStore = defineStore("graph-storage", () => {
 
   function addNode(partialGraph?: Partial<PGraph>, node?: PNode) {
     if (partialGraph?.id && node) {
-      const graph = allGraphs[partialGraph.id];
+      const graph = allGraph[partialGraph.id];
       graph.nodes[node.id] = node;
       if (!graph.rootNodeIds.includes(node.id)) {
         graph.rootNodeIds.push(node.id);
@@ -156,7 +156,7 @@ export const useGraphsStore = defineStore("graph-storage", () => {
 
   function removeNode(partialGraph?: Partial<PGraph>, ids?: string[]) {
     if (partialGraph?.id && ids?.length) {
-      const graph = allGraphs[partialGraph.id];
+      const graph = allGraph[partialGraph.id];
       ids?.forEach((id) => {
         GraphUtils.removeNode(graph, id);
       });
@@ -168,7 +168,7 @@ export const useGraphsStore = defineStore("graph-storage", () => {
     ids?: string[] | { from: string; to: string }[],
   ) {
     if (partialGraph?.id && ids?.length) {
-      const graph = allGraphs[partialGraph.id];
+      const graph = allGraph[partialGraph.id];
       ids?.forEach((id) => {
         const [from, to] =
           typeof id === "string" ? id.split("_", 2) : [id.from, id.to];
@@ -179,7 +179,7 @@ export const useGraphsStore = defineStore("graph-storage", () => {
 
   function updateNode(partialGraph?: Partial<PGraph>, node?: Partial<PNode>) {
     if (partialGraph?.id && node?.id) {
-      const graph = allGraphs[partialGraph.id];
+      const graph = allGraph[partialGraph.id];
       if (graph.nodes[node.id]) {
         graph.nodes[node.id] = {
           ...graph.nodes[node.id],
@@ -192,13 +192,13 @@ export const useGraphsStore = defineStore("graph-storage", () => {
   }
 
   function addGraph(graph: PGraph) {
-    allGraphs[graph.id] = graph;
+    allGraph[graph.id] = graph;
   }
 
   function updateGraph(graphId: string, updates: Partial<PGraph>) {
-    if (allGraphs[graphId]) {
-      allGraphs[graphId] = {
-        ...allGraphs[graphId],
+    if (allGraph[graphId]) {
+      allGraph[graphId] = {
+        ...allGraph[graphId],
         ...updates,
         updatedAt: Date.now(),
       };
@@ -206,13 +206,13 @@ export const useGraphsStore = defineStore("graph-storage", () => {
   }
 
   function removeGraph(graphId: string) {
-    if (allGraphs[graphId]) {
-      delete allGraphs[graphId];
+    if (allGraph[graphId]) {
+      delete allGraph[graphId];
     }
   }
 
   const graphsMeta = computed(() => {
-    return Object.values(allGraphs).map((graph) => ({
+    return Object.values(allGraph).map((graph) => ({
       id: graph.id,
       name: graph.name,
       createdAt: graph.createdAt,
@@ -221,7 +221,7 @@ export const useGraphsStore = defineStore("graph-storage", () => {
   });
 
   return {
-    allGraphs,
+    allGraph,
     graphsMeta,
     addNode,
     addEdge,
