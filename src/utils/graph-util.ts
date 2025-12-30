@@ -229,7 +229,7 @@ export class GraphUtils {
         nodes.push({
           id: `${node.id}-tail`,
           data: { ...node },
-          type: "triangle",
+          type: "circle",
           combo: node.id,
         });
       } else {

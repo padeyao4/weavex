@@ -102,7 +102,7 @@
 <script setup lang="ts">
 import { useCurrentGraphStore } from "@/stores";
 import { NodeUtil } from "@/utils";
-import { Element, Graph, IElementEvent, NodeEvent } from "@antv/g6";
+import { Element, Graph, IElementEvent, NodeData, NodeEvent } from "@antv/g6";
 import { onMounted, ref, reactive } from "vue";
 import { useRoute } from "vue-router";
 import { PNode } from "@/types";
@@ -384,10 +384,11 @@ onMounted(() => {
                 stroke: "#91d5ff",
                 lineWidth: 1,
                 radius: 4,
-                labelText: (d: any) => d.data.name,
+                labelText: (d: any) => (d.type ? "" : d.data.name),
                 labelBackground: true,
                 labelBackgroundOpacity: 0.7,
                 labelBackgroundRadius: 2,
+                size: (d: NodeData) => (d.type ? 6 : [120, 60]),
             },
         },
 
@@ -402,6 +403,7 @@ onMounted(() => {
                 labelFill: "#1890ff",
                 labelFontSize: 14,
                 labelFontWeight: "bold",
+                padding: [10, -3, 10, -3],
             },
         },
 

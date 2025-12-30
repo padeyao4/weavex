@@ -2,7 +2,7 @@ import { createRouter, createWebHistory } from "vue-router";
 import HomeView from "./views/HomeView.vue";
 import SettingsView from "./views/SettingsView.vue";
 import NoteView from "./views/NoteView.vue";
-import TaskGraphView from "./views/TaskGraphView.vue";
+import TaskGraphView from "./views/TaskGraphView/index.vue";
 import TaskMenuView from "./views/TaskMenuView.vue";
 import TaskSummaryView from "./views/TaskSummaryView/index.vue";
 
