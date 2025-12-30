@@ -1,1 +1,1 @@
-export * from "./graph-storage";
+export * from "./storage";

@@ -2,7 +2,7 @@ import { PGraph, PNode } from "@/types";
 import { defineStore } from "pinia";
 import { computed, reactive, ref } from "vue";
 import { debounce, GraphUtils } from "@/utils";
-import { LocalFs } from "@/lib";
+import { FsUtil } from "@/lib";
 /**
  * 当前选中的图谱存储
  * 用于管理当前正在查看或编辑的图谱ID
@@ -94,8 +94,7 @@ export const useContextStore = defineStore("status", () => {
       status.value = "initializing";
       console.log("Initializing...");
       // 读取graph json文件
-      const obj = await LocalFs.readGraphsWithInit();
-      console.log(obj);
+      const obj = await FsUtil.readGraphsWithInit();
       // 加载graphsStore
       await graphStore.loadGraphs(obj);
       status.value = "initialized";
@@ -121,7 +120,7 @@ export const useGraphStore = defineStore("graph-storage", () => {
 
   async function saveGraphs() {
     const data = JSON.stringify(allGraph);
-    await LocalFs.save(data);
+    await FsUtil.save(data);
   }
 
   const debouncedSave = debounce(saveGraphs, 1000);

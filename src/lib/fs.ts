@@ -7,7 +7,7 @@ import {
   mkdir,
 } from "@tauri-apps/plugin-fs";
 
-export class LocalFs {
+export class FsUtil {
   static DATA_PATH =
     import.meta.env.VITE_APP_ENV === "dev" ? "PossibleDataDev" : "PossibleData";
   static GRAPH_FILE_NAME = "graphs.json";

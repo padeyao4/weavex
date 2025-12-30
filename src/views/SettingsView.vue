@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useRouter } from "vue-router";
 import { version } from "@/../package.json";
-import { LocalFs } from "@/lib";
+import { FsUtil } from "@/lib";
 import { onMounted, ref } from "vue";
 
 const router = useRouter();
@@ -9,7 +9,7 @@ const dev = import.meta.env.VITE_APP_ENV === "dev";
 const localPath = ref<string>();
 
 onMounted(async () => {
-    localPath.value = await LocalFs.getLocalStoragePath();
+    localPath.value = await FsUtil.getLocalStoragePath();
 });
 
 const back = () => {
