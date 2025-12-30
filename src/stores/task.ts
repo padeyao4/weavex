@@ -1,13 +1,20 @@
 import { defineStore } from "pinia";
 import { computed, reactive } from "vue";
 import { useGraphStore } from "./storage";
-import { GraphUtils } from "@/utils";
+import { GraphUtils, debounce } from "@/utils";
 import { PNode } from "@/types";
+import { FsUtil } from "@/lib";
 
 export const useTaskStore = defineStore("task", () => {
   const importantTaskIds = reactive<string[]>([]);
 
   const graphStore = useGraphStore();
+
+  async function loadTasks(taskIds: string[]) {
+    taskIds.forEach((id) => {
+      importantTaskIds.push(id);
+    });
+  }
 
   /**
    * 任务ID到任务对象的映射表
@@ -50,10 +57,42 @@ export const useTaskStore = defineStore("task", () => {
     });
   });
 
+  function toggleImportant(taskId: string) {
+    console.log("toggle");
+    if (importantTaskIds.includes(taskId)) {
+      importantTaskIds.splice(importantTaskIds.indexOf(taskId), 1);
+    } else {
+      importantTaskIds.push(taskId);
+    }
+    debouncedSave();
+  }
+
+  function clearInvalidTasks() {
+    // 当importantTaskIds不在allTasks中时，清除无效任务
+    const allTaskIds = new Set(allList.value.map((task) => task.id));
+    for (let i = importantTaskIds.length - 1; i >= 0; i--) {
+      if (!allTaskIds.has(importantTaskIds[i])) {
+        importantTaskIds.splice(i, 1);
+      }
+    }
+    debouncedSave();
+  }
+
+  async function saveTasks() {
+    await FsUtil.saveTask(importantTaskIds);
+  }
+
+  const debouncedSave = debounce(saveTasks, 1000);
+
   return {
     importantTaskIds,
     importantTasks,
     otherTasks,
-    taskList: allList,
+    allList,
+    toggleImportant,
+    clearInvalidTasks,
+    loadTasks,
+    saveTasks,
+    debouncedSave,
   };
 });

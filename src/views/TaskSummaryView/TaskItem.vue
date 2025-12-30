@@ -29,8 +29,18 @@
             </div>
             <div
                 class="m-2 ml-auto w-6 h-6 opacity-0 task-item:hover:opacity-100 transition-opacity duration-200"
+                @click="taskStore.toggleImportant(item.id)"
             >
                 <icon-star
+                    v-if="importantTaskIds.includes(item.id)"
+                    theme="filled"
+                    size="24"
+                    fill="#4a90e2"
+                    :strokeWidth="2"
+                    strokeLinecap="square"
+                />
+                <icon-star
+                    v-else
                     theme="outline"
                     size="24"
                     fill="#333"
@@ -43,6 +53,7 @@
 </template>
 
 <script setup lang="ts">
+import { useTaskStore } from "@/stores";
 import { PNode } from "@/types";
 
 interface Props {
@@ -51,6 +62,9 @@ interface Props {
 }
 
 defineProps<Props>();
+
+const taskStore = useTaskStore();
+const importantTaskIds = taskStore.importantTaskIds;
 </script>
 
 <style scoped>

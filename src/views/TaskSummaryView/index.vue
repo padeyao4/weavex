@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { useTaskStore } from "@/stores/task";
+import { useTaskStore } from "@/stores";
 import { PNode } from "@/types";
 import TaskItem from "./TaskItem.vue";
 
 const taskStore = useTaskStore();
+// 每次打开这个页面启动清理无效的任务
+taskStore.clearInvalidTasks();
 
 const toggleTask = (task: PNode) => {
     task.completed = !task.completed;
