@@ -443,6 +443,8 @@ onMounted(() => {
             type: "antv-dagre",
             rankdir: "LR",
             sortByCombo: true,
+            ranksep: 50,
+            nodesep: 10,
         },
     });
     graph.on(NodeEvent.CLICK, (evt: IElementEvent & { target: Element }) => {
