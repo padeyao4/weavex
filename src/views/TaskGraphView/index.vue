@@ -382,7 +382,8 @@ onMounted(() => {
         node: {
             type: (value) => value.type ?? "rect",
             style: {
-                fill: (d: any) => (d.data.completed ? "#00000050" : "#fff"),
+                fill: (d: NodeData) =>
+                    d.data?.completed ? "#00000050" : "#fff",
                 stroke: "#91d5ff",
                 lineWidth: 1,
                 radius: 4,
@@ -398,6 +399,11 @@ onMounted(() => {
                 labelMaxLines: 3,
                 labelTextOverflow: "ellipsis",
                 pointerEvents: (d: any) => (d.type ? "none" : "all"),
+                port: false,
+                ports: [
+                    { key: "in", placement: "left", fill: "#7E92B5" },
+                    { key: "out", placement: "right", fill: "#D580FF" },
+                ],
             },
         },
 
@@ -418,10 +424,7 @@ onMounted(() => {
 
         // 边配置
         edge: {
-            type: "line",
-            style: {
-                endArrow: true,
-            },
+            type: "cubic-horizontal",
         },
 
         // 交互行为
