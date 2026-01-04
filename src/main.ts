@@ -8,10 +8,9 @@ import { router } from "./route";
 import * as ElementPlusIconsVue from "@element-plus/icons-vue";
 import piniaPluginPersistedstate from "pinia-plugin-persistedstate";
 import { warn, debug, trace, info, error } from "@tauri-apps/plugin-log";
-import { CustomCombo, forwardConsole } from "./lib";
+import { forwardConsole } from "./lib";
 import { install } from "@icon-park/vue-next/es/all";
 import "@icon-park/vue-next/styles/index.css";
-import { register, ExtensionCategory } from "@antv/g6";
 
 // 页面中的日志转发到控制台
 forwardConsole("log", trace);
@@ -19,9 +18,6 @@ forwardConsole("debug", debug);
 forwardConsole("info", info);
 forwardConsole("warn", warn);
 forwardConsole("error", error);
-
-// 注册自定义 Combo
-register(ExtensionCategory.COMBO, "custom-combo", CustomCombo);
 
 const app = createApp(App);
 install(app); // use default prefix 'icon', eg: icon is People, name is icon-people.

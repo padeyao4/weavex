@@ -30,19 +30,6 @@
                 />
             </router-link>
             <router-link
-                :to="{ name: 'test' }"
-                class="hover:bg-amber-100 hover:rounded-md flex items-center justify-center h-10 w-10"
-                active-class="bg-amber-100 rounded-md"
-            >
-                <icon-test-tube
-                    theme="filled"
-                    size="24"
-                    fill="#4a90e2"
-                    :strokeWidth="2"
-                    strokeLinecap="square"
-                />
-            </router-link>
-            <router-link
                 :to="{ name: 'settings' }"
                 active-class="bg-amber-100 rounded-md"
                 class="mt-auto mb-2 hover:bg-amber-100 hover:rounded-md p-2 h-10 w-10 flex justify-center align-center"

@@ -117,6 +117,8 @@ const drawerNode = reactive<PNode>(NodeUtil.createNode());
 
 let graph: Graph | undefined;
 
+const colors = ["#5C6F2B", "#DE802B", "#D8C9A7", "#EEEEEE", "#0F2854"];
+
 onMounted(() => {
     graph = new Graph({
         container: "container",
@@ -389,6 +391,13 @@ onMounted(() => {
                 labelBackgroundOpacity: 0.7,
                 labelBackgroundRadius: 2,
                 size: (d: NodeData) => (d.type ? 6 : [120, 60]),
+                labelPlacement: "center",
+                labelWordWrap: true,
+                labelMaxWidth: "90%",
+                labelPadding: 4,
+                labelMaxLines: 3,
+                labelTextOverflow: "ellipsis",
+                pointerEvents: (d: any) => (d.type ? "none" : "all"),
             },
         },
 
@@ -396,9 +405,9 @@ onMounted(() => {
         combo: {
             type: "rect",
             style: {
-                fill: "rgba(24, 144, 255, 0.1)",
-                stroke: "#1890ff",
-                lineWidth: 1,
+                fill: colors[Math.floor(Math.random() * colors.length)],
+                lineDash: [5, 5],
+                lineWidth: 0.5,
                 radius: 4,
                 labelFill: "#1890ff",
                 labelFontSize: 14,
