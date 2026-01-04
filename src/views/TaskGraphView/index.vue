@@ -356,6 +356,7 @@ onMounted(() => {
                                 currentGraphStore.addNode(node);
                             }
                             break;
+                        case "combo:add-child":
                         case "node:add-child":
                             {
                                 const currentNode =
