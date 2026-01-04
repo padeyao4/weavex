@@ -123,7 +123,6 @@ onMounted(() => {
     graph = new Graph({
         container: "container",
         autoResize: true,
-        autoFit: "center",
         data: currentGraphStore.graphData,
         plugins: [
             {
