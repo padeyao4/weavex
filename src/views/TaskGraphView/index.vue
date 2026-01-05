@@ -124,6 +124,7 @@ onMounted(() => {
         container: "container",
         autoResize: true,
         data: currentGraphStore.graphData,
+        transforms: ["custom-transform"],
         plugins: [
             {
                 type: "contextmenu",

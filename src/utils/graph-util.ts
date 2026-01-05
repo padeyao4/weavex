@@ -168,16 +168,21 @@ export class GraphUtils {
         if (!n.completed) {
           return true;
         }
+
+        if (NodeUtil.isChild(n)) {
+          return true;
+        }
+
         const prevsComplated = n.prevs
           .map((id) => g.nodes[id])
           .every((prev) => prev.completed);
         if (!prevsComplated) {
           return true;
         }
-        const childComplated = n.children
+        const childrenComplated = n.children
           .map((id) => g.nodes[id])
           .every((child) => child.completed);
-        if (!childComplated) {
+        if (!childrenComplated) {
           return true;
         }
         return false;
