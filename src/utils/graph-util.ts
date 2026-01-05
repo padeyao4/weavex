@@ -4,6 +4,7 @@ import { ComboData, EdgeData, GraphData, NodeData } from "@antv/g6";
 import { NodeUtil } from "./node-util";
 import { faker } from "@faker-js/faker";
 import cloneDeep from "lodash-es/cloneDeep";
+import { debug } from "@tauri-apps/plugin-log";
 
 export class GraphUtils {
   static createGraph(graph?: Partial<PGraph>): PGraph {
@@ -40,9 +41,7 @@ export class GraphUtils {
   static addNode(graph: PGraph, node: PNode) {
     graph.updatedAt = Date.now();
     graph.nodes[node.id] = node;
-    if (!graph.rootNodeIds.includes(node.id)) {
-      graph.rootNodeIds.push(node.id);
-    }
+    graph.rootNodeIds = GraphUtils.buildRootIds(graph.nodes);
   }
 
   /**
@@ -79,13 +78,10 @@ export class GraphUtils {
   }
 
   static removeNode(graph: PGraph, id: string) {
+    debug("remove node");
     graph.updatedAt = Date.now();
     // 查找当前节点，
     const node: PNode | undefined = graph.nodes[id];
-    // 重建rootIds
-    graph.rootNodeIds = [
-      ...new Set([...graph.rootNodeIds, ...node.nexts]),
-    ].filter((nodeId) => nodeId !== id);
     // 删除节点prevs关系
     node?.prevs.forEach((prevId) => {
       const prevNode = graph.nodes[prevId];
@@ -102,6 +98,7 @@ export class GraphUtils {
       parentNode.children = parentNode.children.filter(
         (childId) => childId !== id,
       );
+      debug("remove node parent: " + JSON.stringify(parentNode.children));
     }
     // 递归删除节点children关系
     node?.children.forEach((childId) => {
@@ -109,6 +106,9 @@ export class GraphUtils {
     });
     // 从graph中删除
     delete graph.nodes[id];
+    debug("remove node: " + JSON.stringify(graph.nodes));
+    // 重建root ids
+    graph.rootNodeIds = GraphUtils.buildRootIds(graph.nodes);
   }
 
   static addEdge(graph: PGraph, from: PNode | string, to: PNode | string) {
@@ -116,9 +116,7 @@ export class GraphUtils {
     const target: PNode = typeof to === "string" ? graph.nodes[to] : to;
     source.nexts.push(target.id);
     target.prevs.push(source.id);
-    graph.rootNodeIds = graph.rootNodeIds.filter(
-      (nodeId) => nodeId !== target.id,
-    );
+    graph.rootNodeIds = GraphUtils.buildRootIds(graph.nodes);
   }
 
   static removeEdge(graph: PGraph, from: PNode | string, to: PNode | string) {
@@ -127,13 +125,16 @@ export class GraphUtils {
     const target: PNode = typeof to === "string" ? graph.nodes[to] : to;
     source.nexts = source.nexts.filter((id) => id !== target.id);
     target.prevs = target.prevs.filter((id) => id !== source.id);
-    graph.rootNodeIds = [...new Set([...graph.rootNodeIds, target.id])];
+    graph.rootNodeIds = GraphUtils.buildRootIds(graph.nodes);
   }
 
-  private static buildRootIds(nodes?: PNode[]): string[] {
+  private static buildRootIds(
+    nodes?: PNode[] | Record<string, PNode>,
+  ): string[] {
     if (!nodes) return [];
     const nodeMap = new Map<string | undefined, PNode>();
     const rootIds = new Set<string>();
+    nodes = Array.isArray(nodes) ? nodes : Object.values(nodes);
     nodes.forEach((node) => {
       nodeMap.set(node.id, node);
       rootIds.add(node.id);
@@ -159,7 +160,6 @@ export class GraphUtils {
       const nodeArray = this.traverseGraph(clone, (n, g) =>
         GraphUtils.fillerNode(n, g),
       );
-      clone.rootNodeIds = this.buildRootIds(nodeArray);
       clone.nodes = nodeArray.reduce(
         (acc, node) => {
           acc[node.id] = node;
@@ -167,6 +167,7 @@ export class GraphUtils {
         },
         {} as Record<string, PNode>,
       );
+      clone.rootNodeIds = this.buildRootIds(clone.nodes);
       return this.toGraphData(clone);
     } else {
       return this.toGraphData(graph);
@@ -204,29 +205,29 @@ export class GraphUtils {
 
       if (NodeUtil.isCombo(node)) {
         combos.push({
-          id: node.id,
+          id: `${node.id}-combo`,
           data: { ...node },
-          combo: node.parent,
+          combo: node.parent && `${node.parent}-combo`,
         });
 
         nodes.push({
           id: `${node.id}-head`,
           data: { ...node },
           type: "circle",
-          combo: node.id,
+          combo: `${node.id}-combo`,
         });
 
         nodes.push({
           id: `${node.id}-tail`,
           data: { ...node },
           type: "circle",
-          combo: node.id,
+          combo: `${node.id}-combo`,
         });
       } else {
         nodes.push({
           id: node.id,
           data: { ...node },
-          combo: node.parent,
+          combo: node.parent && `${node.parent}-combo`,
         });
       }
 

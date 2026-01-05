@@ -106,6 +106,7 @@ import { Element, Graph, IElementEvent, NodeData, NodeEvent } from "@antv/g6";
 import { onMounted, ref, reactive } from "vue";
 import { useRoute } from "vue-router";
 import { PNode } from "@/types";
+import { debug } from "@tauri-apps/plugin-log";
 
 const route = useRoute();
 const taskId = route.params.taskId as string;
@@ -206,7 +207,9 @@ onMounted(() => {
                                 // 如果有 a->c b->c  c->d ,当删除c的时候，变成a->d b->d
                                 // 如果有 a->c b->c  c->d c->e ,删除c的时候，变成 a->d b->d a->e b->e
                                 const currentNode =
-                                    currentGraphStore.graph?.nodes[current.id];
+                                    currentGraphStore.graph?.nodes[
+                                        current.id.replace(/-combo$/, "")
+                                    ];
                                 const prevs = [...(currentNode?.prevs ?? [])];
                                 const nexts = [...(currentNode?.nexts ?? [])];
 
@@ -240,7 +243,9 @@ onMounted(() => {
                             break;
                         case "node:delete":
                         case "combo:delete":
-                            currentGraphStore.removeNode([current.id]);
+                            currentGraphStore.removeNode([
+                                current.id.replace(/-combo$/, ""),
+                            ]);
                             break;
                         case "node:add-next":
                             {
@@ -262,7 +267,9 @@ onMounted(() => {
                             {
                                 const nextNode = NodeUtil.createNode();
                                 const currentNode =
-                                    currentGraphStore.graph?.nodes[current.id];
+                                    currentGraphStore.graph?.nodes[
+                                        current.id.replace(/-combo$/, "")
+                                    ];
                                 nextNode.parent = currentNode?.parent;
                                 currentGraphStore.addNode(nextNode);
                                 currentNode?.nexts.forEach((id) => {
@@ -359,15 +366,17 @@ onMounted(() => {
                         case "combo:add-child":
                         case "node:add-child":
                             {
+                                debug("node id : " + current.id);
                                 const currentNode =
-                                    currentGraphStore.graph?.nodes[current.id];
+                                    currentGraphStore.graph?.nodes[
+                                        current.id.replace(/-combo$/, "")
+                                    ];
                                 const newNode = NodeUtil.createNode();
                                 currentGraphStore.addNode(newNode);
                                 currentGraphStore.setChildWithTravel(
                                     currentNode,
                                     newNode,
                                 );
-                                graph?.clear();
                             }
                             break;
                         default:
