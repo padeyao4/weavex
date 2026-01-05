@@ -4,7 +4,6 @@ import { ComboData, EdgeData, GraphData, NodeData } from "@antv/g6";
 import { NodeUtil } from "./node-util";
 import { faker } from "@faker-js/faker";
 import cloneDeep from "lodash-es/cloneDeep";
-import { debug } from "@tauri-apps/plugin-log";
 
 export class GraphUtils {
   static createGraph(graph?: Partial<PGraph>): PGraph {
@@ -131,7 +130,7 @@ export class GraphUtils {
     graph.rootNodeIds = [...new Set([...graph.rootNodeIds, target.id])];
   }
 
-  private static reBuildRootIds(nodes?: PNode[]): string[] {
+  private static buildRootIds(nodes?: PNode[]): string[] {
     if (!nodes) return [];
     const nodeMap = new Map<string | undefined, PNode>();
     const rootIds = new Set<string>();
@@ -160,7 +159,7 @@ export class GraphUtils {
       const nodeArray = this.traverseGraph(clone, (n, g) =>
         GraphUtils.fillerNode(n, g),
       );
-      clone.rootNodeIds = this.reBuildRootIds(nodeArray);
+      clone.rootNodeIds = this.buildRootIds(nodeArray);
       clone.nodes = nodeArray.reduce(
         (acc, node) => {
           acc[node.id] = node;
@@ -170,7 +169,6 @@ export class GraphUtils {
       );
       return this.toGraphData(clone);
     } else {
-      debug("origin root ids: " + graph.rootNodeIds);
       return this.toGraphData(graph);
     }
   }
