@@ -58,7 +58,6 @@ export const useTaskStore = defineStore("task", () => {
   });
 
   function toggleImportant(taskId: string) {
-    console.log("toggle");
     if (importantTaskIds.includes(taskId)) {
       importantTaskIds.splice(importantTaskIds.indexOf(taskId), 1);
     } else {
@@ -75,7 +74,6 @@ export const useTaskStore = defineStore("task", () => {
         importantTaskIds.splice(i, 1);
       }
     }
-    debouncedSave();
   }
 
   async function saveTasks() {
