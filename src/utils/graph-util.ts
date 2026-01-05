@@ -4,7 +4,6 @@ import { ComboData, EdgeData, GraphData, NodeData } from "@antv/g6";
 import { NodeUtil } from "./node-util";
 import { faker } from "@faker-js/faker";
 import cloneDeep from "lodash-es/cloneDeep";
-import { debug } from "@tauri-apps/plugin-log";
 
 export class GraphUtils {
   static createGraph(graph?: Partial<PGraph>): PGraph {
@@ -44,6 +43,19 @@ export class GraphUtils {
     graph.rootNodeIds = GraphUtils.buildRootIds(graph.nodes);
   }
 
+  static addChild(
+    graph: PGraph,
+    parent: PNode | string,
+    child: PNode | string,
+  ) {
+    const parentNode =
+      typeof parent === "string" ? graph.nodes[parent] : parent;
+    const childNode = typeof child === "string" ? graph.nodes[child] : child;
+    if (!parentNode || !childNode) return;
+    parentNode.children = [...new Set([...parentNode.children, childNode.id])];
+    childNode.parent = parentNode.id;
+  }
+
   /**
    * 将子节点添加到父节点中，并更新子节点的父节点信息。
    * 会递归处理子节点的前置节点和后置节点
@@ -78,7 +90,6 @@ export class GraphUtils {
   }
 
   static removeNode(graph: PGraph, id: string) {
-    debug("remove node");
     graph.updatedAt = Date.now();
     // 查找当前节点，
     const node: PNode | undefined = graph.nodes[id];
@@ -98,7 +109,6 @@ export class GraphUtils {
       parentNode.children = parentNode.children.filter(
         (childId) => childId !== id,
       );
-      debug("remove node parent: " + JSON.stringify(parentNode.children));
     }
     // 递归删除节点children关系
     node?.children.forEach((childId) => {
@@ -106,7 +116,6 @@ export class GraphUtils {
     });
     // 从graph中删除
     delete graph.nodes[id];
-    debug("remove node: " + JSON.stringify(graph.nodes));
     // 重建root ids
     graph.rootNodeIds = GraphUtils.buildRootIds(graph.nodes);
   }
@@ -192,7 +201,6 @@ export class GraphUtils {
    */
   static toGraphData(graph?: Partial<PGraph>): GraphData {
     const mapper = graph?.nodes ?? {};
-    const rootNodeIds = graph?.rootNodeIds ?? [];
 
     const nodes: NodeData[] = [];
     const edges: EdgeData[] = [];
@@ -234,18 +242,28 @@ export class GraphUtils {
       if (NodeUtil.isChild(node)) {
         // 如果是子节点，并且没有前驱节点
         if (NodeUtil.noPrev(node)) {
+          const parentNode = mapper[node.parent!];
+          const sourceId = NodeUtil.isCombo(parentNode)
+            ? `${node.parent}-head`
+            : node.parent!;
+          const targetId = NodeUtil.isCombo(node) ? `${node.id}-head` : node.id;
           edges.push({
-            id: `${node.parent}-head_${node.id}`,
-            source: `${node.parent}-head`,
-            target: node.id,
+            id: `${sourceId}_${targetId}`,
+            source: sourceId,
+            target: targetId,
           });
         }
         // 如果是子节点，并且没有后继节点
         if (NodeUtil.noNext(node)) {
+          const parentNode = mapper[node.parent!];
+          const sourceId = NodeUtil.isCombo(node) ? `${node.id}-tail` : node.id;
+          const targetId = NodeUtil.isCombo(parentNode)
+            ? `${node.parent}-tail`
+            : node.parent!;
           edges.push({
-            id: `${node.id}_${node.parent}-tail`,
-            source: node.id,
-            target: `${node.parent}-tail`,
+            id: `${sourceId}_${targetId}`,
+            source: sourceId,
+            target: targetId,
           });
         }
       }
@@ -260,15 +278,13 @@ export class GraphUtils {
         });
       }
 
-      const nodeIds = [...node.children, ...node.prevs, ...node.nexts];
-      for (const nodeId of nodeIds) {
+      for (const nodeId of [...node.children, ...node.prevs, ...node.nexts]) {
         travel(mapper[nodeId]);
       }
     }
 
-    for (const rootId of rootNodeIds) {
-      const root = mapper[rootId];
-      travel(root);
+    for (const rootId of graph?.rootNodeIds ?? []) {
+      travel(mapper[rootId]);
     }
 
     return {
