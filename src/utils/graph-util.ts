@@ -4,6 +4,7 @@ import { ComboData, EdgeData, GraphData, NodeData } from "@antv/g6";
 import { NodeUtil } from "./node-util";
 import { faker } from "@faker-js/faker";
 import cloneDeep from "lodash-es/cloneDeep";
+import { debug } from "@tauri-apps/plugin-log";
 
 export class GraphUtils {
   static createGraph(graph?: Partial<PGraph>): PGraph {
@@ -130,74 +131,60 @@ export class GraphUtils {
     graph.rootNodeIds = [...new Set([...graph.rootNodeIds, target.id])];
   }
 
-  static reBuildRootIds(nodes?: PNode[]): string[] {
+  private static reBuildRootIds(nodes?: PNode[]): string[] {
     if (!nodes) return [];
     const nodeMap = new Map<string | undefined, PNode>();
-    const visited = new Set<string>();
+    const rootIds = new Set<string>();
     nodes.forEach((node) => {
       nodeMap.set(node.id, node);
+      rootIds.add(node.id);
     });
-    function travel(node?: PNode) {
-      if (!node) return;
-      if (visited.has(node.id)) return;
-      visited.add(node.id);
-      let ans = node.id;
-      for (const childId of node.children) {
-        ans = travel(nodeMap.get(childId)) ?? ans;
+
+    nodes.forEach((node) => {
+      if (node.parent && nodeMap.has(node.parent)) {
+        rootIds.delete(node.id);
+        return;
       }
-      for (const nextId of node.nexts) {
-        ans = travel(nodeMap.get(nextId)) ?? ans;
+      if (node.prevs.find((prevId) => nodeMap.has(prevId))) {
+        rootIds.delete(node.id);
       }
-      ans = travel(nodeMap.get(node.parent)) ?? ans;
-      for (const prevId of node.prevs) {
-        ans = travel(nodeMap.get(prevId)) ?? ans;
-      }
-      return ans;
-    }
-    const rootIds = nodes
-      .map((node) => travel(nodeMap.get(node.id)))
-      .filter((id) => id !== undefined);
-    return rootIds;
+    });
+
+    return Array.from(rootIds);
   }
 
   static transform(graph?: PGraph): GraphData {
     if (!graph) return {};
     if (graph.hideCompleted) {
       const clone = cloneDeep(graph);
-      const nodeArray = this.traverseGraph(clone, (n, g) => {
-        if (!n.completed) {
-          return true;
-        }
-
-        if (NodeUtil.isChild(n)) {
-          return true;
-        }
-
-        const prevsComplated = n.prevs
-          .map((id) => g.nodes[id])
-          .every((prev) => prev.completed);
-        if (!prevsComplated) {
-          return true;
-        }
-        const childrenComplated = n.children
-          .map((id) => g.nodes[id])
-          .every((child) => child.completed);
-        if (!childrenComplated) {
-          return true;
-        }
-        return false;
-      });
-      const rootIds = this.reBuildRootIds(nodeArray);
-      clone.rootNodeIds = rootIds;
-      const nodes: Record<string, PNode> = {};
-      nodeArray.forEach((node) => {
-        nodes[node.id] = node;
-      });
-      clone.nodes = nodes;
+      const nodeArray = this.traverseGraph(clone, (n, g) =>
+        GraphUtils.fillerNode(n, g),
+      );
+      clone.rootNodeIds = this.reBuildRootIds(nodeArray);
+      clone.nodes = nodeArray.reduce(
+        (acc, node) => {
+          acc[node.id] = node;
+          return acc;
+        },
+        {} as Record<string, PNode>,
+      );
       return this.toGraphData(clone);
     } else {
+      debug("origin root ids: " + graph.rootNodeIds);
       return this.toGraphData(graph);
     }
+  }
+
+  private static fillerNode(node: PNode, graph: PGraph): boolean {
+    if (node.completed && node.children.length === 0 && !node.parent) {
+      const prevsComplated = node.prevs
+        .map((id) => graph.nodes[id])
+        .every((prev) => prev.completed);
+      if (prevsComplated) {
+        return false;
+      }
+    }
+    return true;
   }
 
   /**

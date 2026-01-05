@@ -6,6 +6,7 @@ import {
   writeTextFile,
   mkdir,
 } from "@tauri-apps/plugin-fs";
+import { debug, error, info } from "@tauri-apps/plugin-log";
 
 export class FsUtil {
   static DATA_PATH =
@@ -25,12 +26,12 @@ export class FsUtil {
 
   private static async ensureDataDirectory(): Promise<void> {
     if (!(await this.exists(this.DATA_PATH))) {
-      console.debug("Data directory does not exist");
+      debug("Data directory does not exist");
       await mkdir(this.DATA_PATH, {
         baseDir: BaseDirectory.Document,
         recursive: true,
       });
-      console.debug("Data directory created");
+      debug("Data directory created");
     }
   }
 
@@ -52,9 +53,9 @@ export class FsUtil {
           baseDir: BaseDirectory.Document,
         });
       } catch (e) {
-        console.error(e);
+        error(JSON.stringify(e));
       }
-      console.debug(`${fileName} created`);
+      debug(`${fileName} created`);
     }
     return await readTextFile(path, {
       baseDir: BaseDirectory.Document,
@@ -66,18 +67,18 @@ export class FsUtil {
 
     const path = await this.getFilePath(fileName);
     try {
-      console.info(`Saving ${fileName}...`);
+      info(`Saving ${fileName}...`);
       await writeTextFile(path, data, {
         baseDir: BaseDirectory.Document,
       });
-      console.info(`Success,${fileName} saved.`);
+      info(`Success,${fileName} saved.`);
     } catch (e) {
-      console.error(e);
+      error(JSON.stringify(e));
     }
   }
 
   static async readTaskWithInit(): Promise<string[]> {
-    console.info("Reading task file");
+    info("Reading task file");
     const json = await this.readFileWithInit(
       this.TASK_FILE_NAME,
       this.DEFAULT_TASKS,
@@ -90,7 +91,7 @@ export class FsUtil {
   }
 
   static async readGraphsWithInit(): Promise<any> {
-    console.info("Reading graph file");
+    info("Reading graph file");
     const json = await this.readFileWithInit(
       this.GRAPH_FILE_NAME,
       this.DEFAULT_GRAPHS,
