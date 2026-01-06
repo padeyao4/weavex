@@ -548,6 +548,6 @@ function toggleGraphView() {
 }
 
 #container {
-    width: calc(100vh - 64px - 256px);
+    width: calc(100vw - 64px - 256px);
 }
 </style>
