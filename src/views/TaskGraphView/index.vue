@@ -39,6 +39,21 @@
                     />
                 </div>
             </div>
+            <div
+                class="w-10 h-10 hover:bg-blue-50 rounded-md flex justify-center items-center"
+                @click="fitCenter()"
+            >
+                <div class="relative w-6 h-6">
+                    <icon-horizontally-centered
+                        theme="outline"
+                        size="24"
+                        fill="#333"
+                        :strokeWidth="2"
+                        strokeLinecap="square"
+                        class="absolute"
+                    />
+                </div>
+            </div>
         </footer>
         <el-drawer
             v-model="drawer"
@@ -119,6 +134,10 @@ const drawerNode = reactive<PNode>(NodeUtil.createNode());
 let graph: Graph | undefined;
 
 const colors = ["#5C6F2B", "#DE802B", "#D8C9A7", "#EEEEEE", "#0F2854"];
+
+const fitCenter = () => {
+    graph?.fitView();
+};
 
 onMounted(() => {
     graph = new Graph({
