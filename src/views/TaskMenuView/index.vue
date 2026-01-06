@@ -1,5 +1,5 @@
 <template>
-    <div @click="handleClickOutside" class="flex flex-row h-full">
+    <div @click="handleClickOutside" class="flex flex-row h-screen">
         <menu
             class="w-64 bg-white border-r border-gray-100 flex flex-col shrink-0 h-full pt-8"
         >
@@ -30,42 +30,53 @@
                 </router-link>
             </div>
 
-            <div class="flex-1 flex flex-col gap-1 mt-1 overflow-y-auto">
-                <router-link
-                    :to="{ name: 'taskGraph', params: { taskId: item.id } }"
-                    custom
-                    v-slot="{ navigate, isActive }"
-                    v-for="item in graphsStore.graphsMeta"
-                    :key="item.id"
-                >
-                    <div
-                        @click="navigate"
-                        :class="{ 'bg-gray-100 rounded-md': isActive }"
-                        class="flex flex-row h-9 hover:bg-gray-100 items-center ml-1 mr-1 pl-3 hover:rounded-md group cursor-default transition-colors duration-200"
-                    >
-                        <icon-chart-graph
-                            theme="outline"
-                            size="18"
-                            fill="#6b7280"
-                            :strokeWidth="2"
-                        />
-                        <div
-                            class="pl-3 mr-auto select-none text-gray-700 text-sm font-normal"
+            <div class="flex-1 flex flex-col min-h-0">
+                <div class="flex-1 overflow-y-auto mt-1">
+                    <div class="flex flex-col gap-1">
+                        <router-link
+                            :to="{
+                                name: 'taskGraph',
+                                params: { taskId: item.id },
+                            }"
+                            custom
+                            v-slot="{ navigate, isActive }"
+                            v-for="item in graphsStore.graphsMeta"
+                            :key="item.id"
                         >
-                            {{ item.name }}
-                        </div>
-                        <div
-                            class="flex justify-center items-center w-6 h-6 m-2 rounded-sm group-hover:opacity-100 opacity-0 hover:bg-gray-300 cursor-pointer transition-opacity duration-200"
-                            @click.stop="
-                                showContextMenu($event, item.id, item.name)
-                            "
-                        >
-                            <el-icon :size="14">
-                                <icon-more />
-                            </el-icon>
-                        </div>
+                            <div
+                                @click="navigate"
+                                :class="{ 'bg-gray-100 rounded-md': isActive }"
+                                class="flex flex-row h-9 hover:bg-gray-100 items-center ml-1 mr-1 pl-3 hover:rounded-md group cursor-default transition-colors duration-200"
+                            >
+                                <icon-chart-graph
+                                    theme="outline"
+                                    size="18"
+                                    fill="#6b7280"
+                                    :strokeWidth="2"
+                                />
+                                <div
+                                    class="pl-3 mr-auto select-none text-gray-700 text-sm font-normal"
+                                >
+                                    {{ item.name }}
+                                </div>
+                                <div
+                                    class="flex justify-center items-center w-6 h-6 m-2 rounded-sm group-hover:opacity-100 opacity-0 hover:bg-gray-300 cursor-pointer transition-opacity duration-200"
+                                    @click.stop="
+                                        showContextMenu(
+                                            $event,
+                                            item.id,
+                                            item.name,
+                                        )
+                                    "
+                                >
+                                    <el-icon :size="14">
+                                        <icon-more />
+                                    </el-icon>
+                                </div>
+                            </div>
+                        </router-link>
                     </div>
-                </router-link>
+                </div>
             </div>
             <div
                 class="h-12 flex p-1 justify-center items-center border-t border-gray-200"
