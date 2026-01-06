@@ -1,7 +1,7 @@
 <template>
-    <div @click="handleClickOutside" class="flex flex-row">
+    <div @click="handleClickOutside" class="flex flex-row h-full">
         <menu
-            class="w-64 bg-gray-100 border-r border-gray-200 flex flex-col shrink-0 h-screen pt-8"
+            class="w-64 bg-white border-r border-gray-100 flex flex-col shrink-0 h-full pt-8"
         >
             <div class="border-b border-gray-200">
                 <router-link
@@ -11,23 +11,25 @@
                     v-slot="{ navigate, isActive }"
                 >
                     <div
-                        class="flex flex-row items-center h-12 hover:bg-amber-100 pl-2 pr-2 m-1 hover:rounded-md"
+                        class="flex flex-row items-center h-10 hover:bg-gray-100 pl-3 pr-3 m-1 rounded-md transition-colors duration-200"
                         @click="navigate"
-                        :class="isActive ? 'bg-amber-100' : ''"
+                        :class="isActive ? 'bg-gray-100 rounded-md' : ''"
                     >
                         <icon-sun-one
                             theme="outline"
-                            size="24"
-                            fill="#333"
+                            size="18"
+                            fill="#6b7280"
                             :strokeWidth="2"
-                            strokeLinecap="square"
                         />
-                        <div class="ml-2 select-none">我的一天</div>
+                        <div
+                            class="ml-3 select-none text-gray-700 text-sm font-normal"
+                        >
+                            我的一天
+                        </div>
                     </div>
                 </router-link>
             </div>
 
-            <!-- <div class="bg-gray-200 border-b border-gray-200" /> -->
             <div class="flex-1 flex flex-col gap-1 mt-1 overflow-y-auto">
                 <router-link
                     :to="{ name: 'taskGraph', params: { taskId: item.id } }"
@@ -38,26 +40,27 @@
                 >
                     <div
                         @click="navigate"
-                        :class="{ 'bg-amber-100': isActive }"
-                        class="flex flex-row h-10 hover:bg-amber-100 items-center ml-1 mr-1 pl-2 hover:rounded-md group cursor-default"
+                        :class="{ 'bg-gray-100 rounded-md': isActive }"
+                        class="flex flex-row h-9 hover:bg-gray-100 items-center ml-1 mr-1 pl-3 hover:rounded-md group cursor-default transition-colors duration-200"
                     >
                         <icon-chart-graph
                             theme="outline"
-                            size="24"
-                            fill="#333"
+                            size="18"
+                            fill="#6b7280"
                             :strokeWidth="2"
-                            strokeLinecap="square"
                         />
-                        <div class="pl-2 mr-auto select-none">
+                        <div
+                            class="pl-3 mr-auto select-none text-gray-700 text-sm font-normal"
+                        >
                             {{ item.name }}
                         </div>
                         <div
-                            class="flex justify-center items-center w-6 h-6 m-2 rounded-sm group-hover:opacity-100 opacity-0 hover:bg-amber-300 cursor-pointer"
+                            class="flex justify-center items-center w-6 h-6 m-2 rounded-sm group-hover:opacity-100 opacity-0 hover:bg-gray-300 cursor-pointer transition-opacity duration-200"
                             @click.stop="
                                 showContextMenu($event, item.id, item.name)
                             "
                         >
-                            <el-icon :size="16">
+                            <el-icon :size="14">
                                 <icon-more />
                             </el-icon>
                         </div>
@@ -65,28 +68,27 @@
                 </router-link>
             </div>
             <div
-                class="h-14 flex p-1 justify-center items-center border-t border-gray-200"
+                class="h-12 flex p-1 justify-center items-center border-t border-gray-200"
             >
                 <div
                     @click="formData.visible = true"
-                    class="h-full w-full p-1 hover:bg-amber-100 hover:rounded-md flex flex-row items-center pl-2"
+                    class="h-full w-full p-1 hover:bg-gray-100 hover:rounded-md flex flex-row items-center pl-3 transition-colors duration-200 rounded-md"
                 >
                     <icon-plus
                         theme="outline"
-                        size="24"
-                        fill="#333"
-                        :strokeWidth="3"
-                        strokeLinecap="square"
+                        size="18"
+                        fill="#6b7280"
+                        :strokeWidth="2"
                     />
-                    <div class="ml-2 select-none">创建项目</div>
+                    <div
+                        class="ml-3 select-none text-gray-700 text-sm font-normal"
+                    >
+                        创建项目
+                    </div>
                 </div>
             </div>
         </menu>
-        <router-view
-            :key="$route.fullPath"
-            class="h-screen"
-            :style="{ width: 'calc(100vw - 64px - 256px)' }"
-        />
+        <router-view :key="$route.fullPath" class="h-full flex-1 bg-white" />
 
         <!-- 创建项目对话框 -->
         <div
