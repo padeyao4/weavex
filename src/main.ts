@@ -4,7 +4,7 @@ import { createPinia } from "pinia";
 import "./assets/css/main.css";
 import "element-plus/dist/index.css";
 import ElementPlus from "element-plus";
-import { router } from "./route";
+import { router } from "./router";
 import * as ElementPlusIconsVue from "@element-plus/icons-vue";
 import piniaPluginPersistedstate from "pinia-plugin-persistedstate";
 import { install } from "@icon-park/vue-next/es/all";

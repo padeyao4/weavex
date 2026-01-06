@@ -3,7 +3,7 @@ import { useGraphStore } from "@/stores";
 import { GraphUtils } from "@/utils";
 import { reactive } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { More, Delete, Edit } from "@element-plus/icons-vue";
+import { router } from "@/router";
 
 const graphsStore = useGraphStore();
 
@@ -37,7 +37,7 @@ const createTaskGraph = () => {
     graphsStore.addGraph(newGraph);
     formData.name = "";
     formData.visible = false;
-    ElMessage.success("项目创建成功");
+    router.push({ name: "taskGraph", params: { taskId: newGraph.id } });
 };
 
 // 显示右键菜单
@@ -136,7 +136,7 @@ const handleClickOutside = () => {
                             :strokeWidth="2"
                             strokeLinecap="square"
                         />
-                        <div class="ml-2">我的一天</div>
+                        <div class="ml-2 select-none">我的一天</div>
                     </div>
                 </router-link>
             </div>
@@ -162,7 +162,9 @@ const handleClickOutside = () => {
                             :strokeWidth="2"
                             strokeLinecap="square"
                         />
-                        <div class="pl-2 mr-auto">{{ item.name }}</div>
+                        <div class="pl-2 mr-auto select-none">
+                            {{ item.name }}
+                        </div>
                         <div
                             class="flex justify-center items-center w-6 h-6 m-2 rounded-sm group-hover:opacity-100 opacity-0 hover:bg-amber-300 cursor-pointer"
                             @click.stop="
@@ -170,7 +172,7 @@ const handleClickOutside = () => {
                             "
                         >
                             <el-icon :size="16">
-                                <More />
+                                <icon-more />
                             </el-icon>
                         </div>
                     </div>
@@ -190,7 +192,7 @@ const handleClickOutside = () => {
                         :strokeWidth="3"
                         strokeLinecap="square"
                     />
-                    <div class="ml-2">创建项目</div>
+                    <div class="ml-2 select-none">创建项目</div>
                 </div>
             </div>
         </menu>
@@ -261,14 +263,14 @@ const handleClickOutside = () => {
                     openRenameDialog(contextMenu.graphId, contextMenu.graphName)
                 "
             >
-                <el-icon :size="14"><Edit /></el-icon>
+                <el-icon :size="14"><icon-edit /></el-icon>
                 <span>重命名</span>
             </div>
             <div
                 class="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center gap-2 text-red-500"
                 @click="deleteGraph(contextMenu.graphId)"
             >
-                <el-icon :size="14"><Delete /></el-icon>
+                <el-icon :size="14"><icon-delete /></el-icon>
                 <span>删除</span>
             </div>
         </div>
