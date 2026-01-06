@@ -57,72 +57,11 @@
                 </div>
             </div>
         </footer>
-        <el-drawer
+        <NodeDetailDrawer
             v-model="drawer"
-            :with-header="false"
-            size="380px"
-            class="minimalist-drawer"
-        >
-            <div class="p-4">
-                <h3 class="text-lg font-medium mb-4">节点详情</h3>
-                <el-form
-                    :model="drawerNode"
-                    label-position="top"
-                    class="node-form space-y-4"
-                >
-                    <el-form-item label="节点名称" required class="mb-3">
-                        <el-input
-                            v-model="drawerNode.name"
-                            placeholder="输入节点名称"
-                            class="minimalist-input"
-                        />
-                    </el-form-item>
-                    <el-form-item label="描述" class="mb-3">
-                        <el-input
-                            v-model="drawerNode.description"
-                            type="textarea"
-                            :rows="3"
-                            placeholder="输入节点描述"
-                            class="minimalist-textarea"
-                        />
-                    </el-form-item>
-                    <el-form-item label="详细记录" class="mb-3">
-                        <el-input
-                            v-model="drawerNode.record"
-                            type="textarea"
-                            :rows="4"
-                            placeholder="输入详细记录"
-                            class="minimalist-textarea"
-                        />
-                    </el-form-item>
-                    <el-form-item label="完成状态" class="mb-3">
-                        <div class="flex items-center">
-                            <el-switch
-                                v-model="drawerNode.completed"
-                                class="mr-2"
-                            />
-                            <span class="text-sm text-gray-500">
-                                {{ drawerNode.completed ? "已完成" : "未完成" }}
-                            </span>
-                        </div>
-                    </el-form-item>
-                    <el-form-item class="mb-0 pt-2">
-                        <div class="flex space-x-2">
-                            <el-button
-                                type="primary"
-                                @click="saveNode()"
-                                class="flex-1"
-                            >
-                                保存
-                            </el-button>
-                            <el-button @click="drawer = false" class="flex-1">
-                                取消
-                            </el-button>
-                        </div>
-                    </el-form-item>
-                </el-form>
-            </div>
-        </el-drawer>
+            :node="drawerNode"
+            @save="saveNode"
+        />
     </div>
 </template>
 <script setup lang="ts">
@@ -133,6 +72,7 @@ import { onMounted, ref, reactive } from "vue";
 import { useRoute } from "vue-router";
 import { PNode } from "@/types";
 import { debug } from "@tauri-apps/plugin-log";
+import NodeDetailDrawer from "./components/NodeDetailDrawer.vue";
 
 const route = useRoute();
 const taskId = route.params.taskId as string;
@@ -503,10 +443,9 @@ function renderGraph() {
     graph?.render();
 }
 
-function saveNode() {
-    currentGraphStore.updateNode(drawerNode);
+function saveNode(node: PNode) {
+    currentGraphStore.updateNode(node);
     renderGraph();
-    drawer.value = false;
 }
 
 function toggleGraphView() {
@@ -518,35 +457,6 @@ function toggleGraphView() {
 </script>
 
 <style scoped>
-.minimalist-drawer :deep(.el-drawer__body) {
-    padding: 0;
-}
-
-.minimalist-input :deep(.el-input__wrapper),
-.minimalist-textarea :deep(.el-textarea__inner) {
-    border-radius: 6px;
-    border: 1px solid #e5e7eb;
-    transition: all 0.2s;
-}
-
-.minimalist-input :deep(.el-input__wrapper):hover,
-.minimalist-textarea :deep(.el-textarea__inner):hover {
-    border-color: #d1d5db;
-    box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.1);
-}
-
-.minimalist-input :deep(.el-input__wrapper:focus-within),
-.minimalist-textarea :deep(.el-textarea__inner:focus) {
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
-}
-
-:deep(.el-form-item__label) {
-    padding-bottom: 4px;
-    font-weight: 500;
-    color: #374151;
-}
-
 #container {
     width: calc(100vw - 64px - 256px);
 }
