@@ -12,7 +12,7 @@
                     v-slot="{ navigate, isActive }"
                 >
                     <div
-                        class="flex flex-row items-center h-10 hover:bg-gray-100 pl-3 pr-3 m-1 rounded-md transition-colors duration-200"
+                        class="flex flex-row items-center h-10 hover:bg-gray-100 pl-3 pr-2 m-1 rounded-md transition-colors duration-200"
                         @click="navigate"
                         :class="isActive ? 'bg-gray-100 rounded-md' : ''"
                     >
@@ -26,6 +26,11 @@
                             class="ml-3 select-none text-gray-700 text-sm font-normal"
                         >
                             我的一天
+                        </div>
+                        <div
+                            class="ml-auto rounded-full bg-[#00000020] text-xs font-light w-6 h-6 flex justify-center items-center"
+                        >
+                            {{ taskStore.importantTaskIds.length }}
                         </div>
                     </div>
                 </router-link>
@@ -175,7 +180,7 @@
 </template>
 
 <script setup lang="ts">
-import { useGraphStore } from "@/stores";
+import { useGraphStore, useTaskStore } from "@/stores";
 import { GraphUtils } from "@/utils";
 import { reactive, onMounted } from "vue";
 import { ElMessage } from "element-plus";
@@ -184,6 +189,7 @@ import ContextMenu from "./ContextMenu.vue";
 import RenameDialog from "./RenameDialog.vue";
 
 const graphsStore = useGraphStore();
+const taskStore = useTaskStore();
 
 const formData = reactive({
     visible: false,
