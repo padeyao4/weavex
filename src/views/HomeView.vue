@@ -42,7 +42,7 @@
                     />
                 </router-link>
             </aside>
-            <main class="flex-1">
+            <main class="flex-1 bg-white">
                 <router-view />
             </main>
         </div>
