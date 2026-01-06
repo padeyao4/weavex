@@ -13,8 +13,8 @@ const toggleTask = (task: PNode) => {
 </script>
 
 <template>
-    <main class="w-full h-screen bg-gray-50 flex">
-        <div class="m-4 flex flex-col flex-1">
+    <main class="w-full h-screen bg-gray-50 flex pt-8">
+        <div class="ml-4 mr-4 mb-4 flex flex-col flex-1">
             <div class="h-14 flex items-center font-medium font-sans text-xl">
                 任务列表
             </div>

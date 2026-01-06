@@ -3,7 +3,7 @@
         <WindowsTitleBar v-if="true" />
         <div class="flex flex-row flex-1">
             <aside
-                class="w-16 bg-gray-200 h-screen flex flex-col shrink-0 items-center gap-4 pt-4 border-gray-300 border-r"
+                class="w-16 bg-gray-200 h-screen flex flex-col shrink-0 items-center gap-6 pt-10 border-gray-300 border-r"
             >
                 <router-link
                     :to="{ name: 'taskMenu' }"

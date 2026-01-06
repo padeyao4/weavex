@@ -1,7 +1,7 @@
 <template>
     <div @click="handleClickOutside" class="flex flex-row">
         <menu
-            class="w-64 bg-gray-100 border-r border-gray-200 flex flex-col shrink-0 h-screen"
+            class="w-64 bg-gray-100 border-r border-gray-200 flex flex-col shrink-0 h-screen pt-8"
         >
             <div class="border-b border-gray-200">
                 <router-link
@@ -11,7 +11,7 @@
                     v-slot="{ navigate, isActive }"
                 >
                     <div
-                        class="flex flex-row items-center h-12 hover:bg-amber-100 mt-3 pl-2 pr-2 m-1 hover:rounded-md"
+                        class="flex flex-row items-center h-12 hover:bg-amber-100 pl-2 pr-2 m-1 hover:rounded-md"
                         @click="navigate"
                         :class="isActive ? 'bg-amber-100' : ''"
                     >
