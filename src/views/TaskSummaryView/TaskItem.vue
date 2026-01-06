@@ -1,7 +1,7 @@
 <template>
     <template v-for="item in tasks" :key="item.id">
         <div
-            class="px-3 h-12 bg-white shrink-0 flex items-center rounded-md border border-gray-200 task-item hover:border-gray-300 transition-colors duration-200"
+            class="px-3 h-12 bg-white shrink-0 flex items-center rounded-md border border-gray-200 task-item hover:border-gray-300 hover:bg-[#f5f5f5] transition-colors duration-200"
         >
             <div
                 class="items-center relative flex w-5 h-5 checkbox-container-group"

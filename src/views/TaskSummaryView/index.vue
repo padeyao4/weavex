@@ -2,6 +2,7 @@
 import { useTaskStore } from "@/stores";
 import { PNode } from "@/types";
 import TaskItem from "./TaskItem.vue";
+import { ref } from "vue";
 
 const taskStore = useTaskStore();
 // 每次打开这个页面启动清理无效的任务
@@ -10,6 +11,8 @@ taskStore.clearInvalidTasks();
 const toggleTask = (task: PNode) => {
     task.completed = !task.completed;
 };
+
+const showOthers = ref(false);
 </script>
 
 <template>
@@ -27,13 +30,38 @@ const toggleTask = (task: PNode) => {
                     :tasks="taskStore.importantTasks"
                     :toggleTask="toggleTask"
                 />
-                <el-divider
-                    content-position="left"
-                    class="text-gray-400 text-xs"
-                    >我是割线</el-divider
+                <div
+                    class="h-10 border border-gray-200 bg-gray-50 select-none w-fit rounded-md flex justify-center items-center px-2 font-light text-sm hover:bg-gray-200"
+                    @click="showOthers = !showOthers"
                 >
+                    <span
+                        v-if="showOthers"
+                        class="flex items-center justify-center"
+                    >
+                        <icon-down
+                            theme="outline"
+                            size="24"
+                            fill="#333"
+                            :strokeWidth="2"
+                            strokeLinecap="square"
+                        />
+                    </span>
+                    <span v-else class="flex items-center justify-center">
+                        <icon-right
+                            theme="outline"
+                            size="24"
+                            fill="#333"
+                            :strokeWidth="2"
+                            strokeLinecap="square"
+                        />
+                    </span>
+                    次要任务
+                    <span class="text-gray-400"
+                        >（{{ taskStore.otherTasks.length }}）</span
+                    >
+                </div>
                 <TaskItem
-                    :tasks="taskStore.otherTasks"
+                    :tasks="showOthers ? taskStore.otherTasks : []"
                     :toggleTask="toggleTask"
                 />
             </div>
