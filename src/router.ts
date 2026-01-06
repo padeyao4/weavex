@@ -17,6 +17,8 @@ export const router = createRouter({
         {
           path: "task",
           component: TaskMenuView,
+          name: "taskMenu",
+          redirect: { name: "taskSummary" },
           children: [
             {
               path: "summary",

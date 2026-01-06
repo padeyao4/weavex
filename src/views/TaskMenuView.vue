@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useGraphStore } from "@/stores";
 import { GraphUtils } from "@/utils";
-import { reactive } from "vue";
+import { reactive, onMounted } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { router } from "@/router";
 
@@ -10,6 +10,21 @@ const graphsStore = useGraphStore();
 const formData = reactive({
     visible: false,
     name: "",
+});
+
+// 确保有活动的子路由
+onMounted(() => {
+    const currentRoute = router.currentRoute.value;
+    // 如果当前路由是taskMenu本身（没有子路由），则跳转到taskSummary
+    if (
+        currentRoute.name === "taskMenu" ||
+        !currentRoute.matched.some(
+            (route) =>
+                route.name === "taskSummary" || route.name === "taskGraph",
+        )
+    ) {
+        router.replace({ name: "taskSummary" });
+    }
 });
 
 // 右键菜单状态

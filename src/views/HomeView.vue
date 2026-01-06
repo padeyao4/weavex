@@ -4,7 +4,7 @@
             class="w-16 bg-gray-200 h-screen flex flex-col shrink-0 items-center gap-4 pt-4 border-gray-300 border-r"
         >
             <router-link
-                :to="{ name: 'taskSummary' }"
+                :to="{ name: 'taskMenu' }"
                 class="hover:bg-amber-100 hover:rounded-md flex items-center justify-center h-10 w-10"
                 active-class="bg-amber-100 rounded-md"
             >
