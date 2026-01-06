@@ -1,5 +1,5 @@
 <template>
-    <div class="w-full h-screen flex flex-col pt-8">
+    <div class="w-full h-screen flex flex-col pt-6">
         <div
             class="h-14 flex items-center text-xl font-sans font-medium pl-4 select-none"
         >
@@ -11,11 +11,12 @@
             class="flex-1 min-h-0 min-w-0 border-t border-gray-200"
         />
         <footer
-            class="h-14 border-t border-gray-200 flex flex-row justify-center items-center gap-2"
+            class="h-12 flex flex-row justify-center items-center gap-2 border-t border-gray-200"
         >
             <div
-                class="w-10 h-10 hover:bg-blue-50 rounded-md flex justify-center items-center"
+                class="w-10 h-10 hover:bg-gray-100 rounded-full flex justify-center items-center transition-colors duration-200"
                 @click="toggleGraphView"
+                title="切换视图"
             >
                 <div class="relative w-6 h-6">
                     <icon-switch-button
@@ -40,8 +41,9 @@
                 </div>
             </div>
             <div
-                class="w-10 h-10 hover:bg-blue-50 rounded-md flex justify-center items-center"
+                class="w-10 h-10 hover:bg-gray-100 rounded-full flex justify-center items-center transition-colors duration-200"
                 @click="fitCenter()"
+                title="居中显示"
             >
                 <div class="relative w-6 h-6">
                     <icon-horizontally-centered
@@ -57,56 +59,65 @@
         </footer>
         <el-drawer
             v-model="drawer"
-            title="节点详情"
             :with-header="false"
-            size="400px"
+            size="380px"
+            class="minimalist-drawer"
         >
-            <div class="node-drawer">
+            <div class="p-4">
+                <h3 class="text-lg font-medium mb-4">节点详情</h3>
                 <el-form
                     :model="drawerNode"
-                    label-width="80px"
-                    class="node-form"
+                    label-position="top"
+                    class="node-form space-y-4"
                 >
-                    <el-form-item label="节点名称" required>
+                    <el-form-item label="节点名称" required class="mb-3">
                         <el-input
                             v-model="drawerNode.name"
-                            placeholder="请输入节点名称"
+                            placeholder="输入节点名称"
+                            class="minimalist-input"
                         />
                     </el-form-item>
-                    <el-form-item label="描述">
+                    <el-form-item label="描述" class="mb-3">
                         <el-input
                             v-model="drawerNode.description"
                             type="textarea"
                             :rows="3"
-                            placeholder="请输入节点描述"
+                            placeholder="输入节点描述"
+                            class="minimalist-textarea"
                         />
                     </el-form-item>
-                    <el-form-item label="详细记录">
+                    <el-form-item label="详细记录" class="mb-3">
                         <el-input
                             v-model="drawerNode.record"
                             type="textarea"
-                            :rows="5"
-                            placeholder="请输入节点详细记录"
+                            :rows="4"
+                            placeholder="输入详细记录"
+                            class="minimalist-textarea"
                         />
                     </el-form-item>
-                    <el-form-item label="完成状态">
-                        <el-switch v-model="drawerNode.completed" />
-                        <span
-                            style="
-                                margin-left: 8px;
-                                color: #666;
-                                font-size: 12px;
-                            "
-                        >
-                            {{ drawerNode.completed ? "已完成" : "未完成" }}
-                        </span>
+                    <el-form-item label="完成状态" class="mb-3">
+                        <div class="flex items-center">
+                            <el-switch
+                                v-model="drawerNode.completed"
+                                class="mr-2"
+                            />
+                            <span class="text-sm text-gray-500">
+                                {{ drawerNode.completed ? "已完成" : "未完成" }}
+                            </span>
+                        </div>
                     </el-form-item>
-                    <el-form-item>
-                        <div class="form-actions">
-                            <el-button type="primary" @click="saveNode()"
-                                >保存</el-button
+                    <el-form-item class="mb-0 pt-2">
+                        <div class="flex space-x-2">
+                            <el-button
+                                type="primary"
+                                @click="saveNode()"
+                                class="flex-1"
                             >
-                            <el-button @click="drawer = false">取消</el-button>
+                                保存
+                            </el-button>
+                            <el-button @click="drawer = false" class="flex-1">
+                                取消
+                            </el-button>
                         </div>
                     </el-form-item>
                 </el-form>
@@ -505,3 +516,38 @@ function toggleGraphView() {
     renderGraph();
 }
 </script>
+
+<style scoped>
+.minimalist-drawer :deep(.el-drawer__body) {
+    padding: 0;
+}
+
+.minimalist-input :deep(.el-input__wrapper),
+.minimalist-textarea :deep(.el-textarea__inner) {
+    border-radius: 6px;
+    border: 1px solid #e5e7eb;
+    transition: all 0.2s;
+}
+
+.minimalist-input :deep(.el-input__wrapper):hover,
+.minimalist-textarea :deep(.el-textarea__inner):hover {
+    border-color: #d1d5db;
+    box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.1);
+}
+
+.minimalist-input :deep(.el-input__wrapper:focus-within),
+.minimalist-textarea :deep(.el-textarea__inner:focus) {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+:deep(.el-form-item__label) {
+    padding-bottom: 4px;
+    font-weight: 500;
+    color: #374151;
+}
+
+#container {
+    width: calc(100vh - 64px - 256px);
+}
+</style>

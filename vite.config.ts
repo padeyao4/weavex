@@ -17,7 +17,6 @@ export default defineConfig(async () => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  // 2. tauri expects a fixed port, fail if that port is not available
   server: {
     port: 3300,
     strictPort: true,
