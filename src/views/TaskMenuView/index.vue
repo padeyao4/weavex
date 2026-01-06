@@ -242,8 +242,22 @@ const closeContextMenu = () => {
 
 // 删除项目
 const deleteGraph = (graphId: string) => {
+    // 获取当前路由
+    const currentRoute = router.currentRoute.value;
+
+    // 检查当前是否在要删除的项目的页面
+    const isOnDeletedGraphPage =
+        currentRoute.name === "taskGraph" &&
+        String(currentRoute.params.taskId) === graphId;
+
+    // 删除项目
     graphsStore.removeGraph(graphId);
     closeContextMenu();
+
+    // 如果当前在要删除的项目的页面，则跳转到任务概览页
+    if (isOnDeletedGraphPage) {
+        router.replace({ name: "taskSummary" });
+    }
 };
 
 // 打开重命名对话框
