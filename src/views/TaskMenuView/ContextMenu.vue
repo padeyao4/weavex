@@ -1,30 +1,58 @@
 <template>
     <div
         v-if="visible"
-        class="fixed bg-white border border-gray-200 rounded-md shadow-lg py-1 z-50"
+        class="fixed bg-white z-50 min-w-32 shadow-sm rounded-lg m-1"
         :style="{ left: x + 'px', top: y + 'px' }"
         @click.stop
     >
         <div
-            class="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center gap-2"
+            class="px-4 py-2.5 hover:bg-gray-50 cursor-pointer text-sm text-gray-700 border-b border-gray-100"
             @click="handleRename"
         >
-            <el-icon :size="14"><icon-edit /></el-icon>
-            <span>重命名</span>
+            重命名
         </div>
         <div
-            class="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center gap-2 text-red-500"
+            class="px-4 py-2.5 hover:bg-gray-50 cursor-pointer text-sm text-red-400"
             @click="handleDelete"
         >
-            <el-icon :size="14"><icon-delete /></el-icon>
-            <span>删除</span>
+            删除
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Dialog -->
+    <div
+        v-if="isDeleteDialogVisible"
+        class="fixed inset-0 flex bg-[#00000050] items-center justify-center z-50"
+        @click="cancelDelete"
+    >
+        <div
+            class="bg-white rounded-lg shadow-lg p-6 w-80 max-w-xs mx-auto"
+            @click.stop
+        >
+            <div class="text-lg font-medium text-gray-800 mb-2">确认删除</div>
+            <div class="text-gray-600 mb-6 text-sm">
+                确定要删除这个项目吗？删除后无法恢复。
+            </div>
+            <div class="flex justify-end space-x-3">
+                <div
+                    class="px-4 py-2 text-sm rounded cursor-pointer hover:bg-gray-100"
+                    @click="cancelDelete"
+                >
+                    取消
+                </div>
+                <div
+                    class="px-4 py-2 text-sm bg-red-500 text-white rounded cursor-pointer hover:bg-red-600"
+                    @click="confirmDelete"
+                >
+                    确定
+                </div>
+            </div>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
-import { info } from "@tauri-apps/plugin-log";
-import { ElMessageBox } from "element-plus";
+import { ref } from "vue";
 
 interface Props {
     visible: boolean;
@@ -43,26 +71,24 @@ interface Emits {
 const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
 
+const isDeleteDialogVisible = ref(false);
+
 const handleRename = () => {
     emit("rename", props.graphId, props.graphName);
     emit("close");
 };
 
-const handleDelete = async () => {
-    try {
-        emit("close");
-        await ElMessageBox.confirm(
-            "确定要删除这个项目吗？删除后无法恢复。",
-            "确认删除",
-            {
-                confirmButtonText: "确定",
-                cancelButtonText: "取消",
-                type: "warning",
-            },
-        );
-        emit("delete", props.graphId);
-    } catch {
-        info("用户点击了取消");
-    }
+const handleDelete = () => {
+    emit("close");
+    isDeleteDialogVisible.value = true;
+};
+
+const confirmDelete = () => {
+    isDeleteDialogVisible.value = false;
+    emit("delete", props.graphId);
+};
+
+const cancelDelete = () => {
+    isDeleteDialogVisible.value = false;
 };
 </script>

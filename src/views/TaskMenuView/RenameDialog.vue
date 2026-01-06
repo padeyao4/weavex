@@ -1,39 +1,35 @@
 <template>
     <div
-        class="fixed inset-0 z-50 flex items-center justify-center transition-all duration-300 ease-out"
+        class="fixed inset-0 z-50 flex items-center justify-center border border-gray-200"
         :class="{
             'pointer-events-none opacity-0': !visible,
             'opacity-100': visible,
         }"
         @click.self="handleClose"
     >
-        <!-- macOS风格半透明模糊背景 -->
+        <!-- 简洁背景 -->
         <div
-            class="absolute inset-0 bg-black/30 backdrop-blur-sm transition-opacity duration-300"
+            class="absolute inset-0 bg-black/20"
             :class="{
                 'opacity-0': !visible,
                 'opacity-100': visible,
             }"
         ></div>
 
-        <!-- macOS风格对话框 -->
+        <!-- 极简风格对话框 -->
         <div
-            class="relative w-120 max-w-[90vw] bg-white rounded-2xl shadow-2xl transition-all duration-300 ease-out transform-gpu macos-dialog"
+            class="relative w-96 max-w-[90vw] bg-white rounded-lg shadow-sm transition-all duration-300"
             :class="{
-                'scale-95 opacity-0 translate-y-4': !visible,
-                'scale-100 opacity-100 translate-y-0': visible,
+                'scale-95 opacity-0': !visible,
+                'scale-100 opacity-100': visible,
             }"
         >
             <!-- 标题栏 -->
-            <div
-                class="flex items-center justify-between px-6 py-4 border-b border-gray-200/80"
-            >
-                <h3 class="text-lg font-semibold text-gray-900 tracking-tight">
-                    重命名项目
-                </h3>
-                <button
+            <div class="flex items-center justify-between px-4 py-3">
+                <h3 class="text-base font-medium text-gray-900">重命名项目</h3>
+                <div
                     @click="handleClose"
-                    class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 active:bg-gray-200 transition-colors duration-150"
+                    class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
                     aria-label="关闭"
                 >
                     <svg
@@ -49,42 +45,26 @@
                             d="M6 18L18 6M6 6l12 12"
                         />
                     </svg>
-                </button>
+                </div>
             </div>
 
             <!-- 内容区域 -->
-            <div class="px-6 py-5">
+            <div class="px-4 py-3">
                 <div class="space-y-4">
                     <div>
-                        <label
-                            class="block text-sm font-medium text-gray-700 mb-2"
-                        >
-                            项目名称
-                            <span class="text-red-500 ml-1">*</span>
-                        </label>
-                        <div class="relative">
-                            <input
-                                v-model="localName"
-                                @keydown.enter="handleConfirm"
-                                :maxlength="50"
-                                type="text"
-                                placeholder="请输入项目名称"
-                                class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                                :class="{
-                                    'border-red-300 focus:ring-red-500':
-                                        showError && !localName.trim(),
-                                }"
-                                autofocus
-                            />
-                            <!-- 字符计数 -->
-                            <div
-                                class="absolute right-3 top-1/2 transform -translate-y-1/2"
-                            >
-                                <span class="text-xs text-gray-400">
-                                    {{ localName.length }}/50
-                                </span>
-                            </div>
-                        </div>
+                        <input
+                            v-model="localName"
+                            @keydown.enter="handleConfirm"
+                            :maxlength="50"
+                            type="text"
+                            placeholder="请输入项目名称"
+                            class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                            :class="{
+                                'border-red-300 focus:ring-red-500':
+                                    showError && !localName.trim(),
+                            }"
+                            autofocus
+                        />
                         <!-- 错误提示 -->
                         <div
                             v-if="showError && !localName.trim()"
@@ -108,23 +88,21 @@
             </div>
 
             <!-- 底部按钮区域 -->
-            <div
-                class="px-6 py-4 border-t border-gray-200/80 bg-gray-50/50 rounded-b-2xl"
-            >
-                <div class="flex justify-end space-x-3">
-                    <button
+            <div class="px-4 py-3">
+                <div class="flex justify-end space-x-2">
+                    <div
                         @click="handleClose"
-                        class="px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 active:bg-gray-100 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-1"
+                        class="px-4 py-1.5 border border-gray-200 text-sm font-normal select-none text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-100 transition-colors"
                     >
                         取消
-                    </button>
-                    <button
+                    </div>
+                    <div
                         @click="handleConfirmButton"
-                        class="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700 active:bg-blue-800 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                        class="px-4 py-1.5 text-sm font-normal border border-gray-200 select-none rounded-lg hover:bg-blue-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         :disabled="!localName.trim()"
                     >
                         确定
-                    </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -199,7 +177,7 @@ const handleConfirmButton = (e: MouseEvent) => {
 </script>
 
 <style scoped>
-/* macOS风格滚动条 */
+/* 极简风格滚动条 */
 ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
@@ -238,10 +216,15 @@ button:active {
     transform: scale(0.98);
 }
 
-/* macOS对话框字体 */
-.macos-dialog {
+/* 极简字体配置 */
+* {
     font-family:
-        -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
-        "Helvetica Neue", Arial, sans-serif;
+        -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+        Arial, sans-serif;
+    font-weight: 400;
+}
+
+h3 {
+    font-weight: 500;
 }
 </style>

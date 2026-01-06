@@ -2,6 +2,7 @@
     <div @click="handleClickOutside" class="flex flex-1 flex-row h-screen">
         <menu
             class="w-64 bg-white border-r border-gray-100 flex flex-col shrink-0 h-full pt-8"
+            @contextmenu.prevent
         >
             <div class="border-b border-gray-200">
                 <router-link
@@ -99,10 +100,7 @@
                 </div>
             </div>
         </menu>
-        <router-view
-            :key="$route.fullPath"
-            class="h-full flex-1 bg-white"
-        />
+        <router-view :key="$route.fullPath" class="h-full flex-1 bg-white" />
 
         <!-- 创建项目对话框 -->
         <div
