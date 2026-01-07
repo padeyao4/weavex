@@ -424,6 +424,7 @@ onMounted(() => {
         // 交互行为
         behaviors: [
             "zoom-canvas",
+            "collapse-expand",
             {
                 type: "drag-canvas",
                 key: "drag-canvas",
