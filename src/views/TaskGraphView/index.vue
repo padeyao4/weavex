@@ -376,7 +376,6 @@ onMounted(() => {
                 labelBackground: true,
                 labelBackgroundOpacity: 0.7,
                 labelBackgroundRadius: 2,
-                size: (d: NodeData) => (d.type ? 6 : [120, 60]),
                 labelPlacement: "center",
                 labelFontSize: 12,
                 labelFontWeight: "lighter",
@@ -437,17 +436,11 @@ onMounted(() => {
             },
         ],
 
-        // 布局配置 - 使用内置的力导向布局
-        // layout: {
-        //     type: "antv-dagre",
-        //     rankdir: "LR",
-        //     sortByCombo: true,
-        //     ranksep: 50,
-        //     nodesep: 10,
-        // },
         layout: {
             type: "custom-layout",
             rankdir: "LR",
+            marginx: 0,
+            marginy: 0,
         },
     });
     graph.on(NodeEvent.CLICK, (evt: IElementEvent & { target: Element }) => {

@@ -1,5 +1,11 @@
 import { PNode } from "@/types";
-import { BaseLayout, BaseLayoutOptions, GraphData, NodeData } from "@antv/g6";
+import {
+  BaseLayout,
+  BaseLayoutOptions,
+  GraphData,
+  NodeData,
+  Size,
+} from "@antv/g6";
 import { debug } from "@tauri-apps/plugin-log";
 import dagre from "dagre";
 
@@ -9,6 +15,9 @@ export interface DagreLayoutOptions extends BaseLayoutOptions {
   ranksep?: number;
   nodesep?: number;
 }
+
+const defaultSize: Size = [80, 80];
+const margin = 10;
 
 class SubGraph {
   id: string;
@@ -37,7 +46,7 @@ class SubGraph {
       };
     });
     Array.from(this.nodeMap.values()).forEach((node) => {
-      const size = node?.style?.size ?? [120, 80];
+      const size = node?.style?.size ?? defaultSize;
       const [width, height] = typeof size === "number" ? [size, size] : size;
       g.setNode(node.id, {
         width,
@@ -48,17 +57,19 @@ class SubGraph {
       });
     });
     dagre.layout(g);
+    debug("g info:" + JSON.stringify(g.graph()));
 
     Array.from(this.nodeMap.values()).forEach((node) => {
       const data = g.node(node.id);
       node.style = {
+        size: defaultSize,
         ...node?.style,
         x: data.x,
         y: data.y,
       };
     });
     const { width = 0, height = 0 } = g.graph();
-    this.size = [width, height];
+    this.size = [width + margin * 2, height + margin * 2];
   }
 
   setOffset(offsetX: number, offsetY: number) {
@@ -68,12 +79,18 @@ class SubGraph {
         x: (node.style?.x ?? 0) + offsetX,
         y: (node.style?.y ?? 0) + offsetY,
       };
+      debug("node style:" + JSON.stringify(node.style));
     });
     this.dependencies?.forEach((dependency) => {
       const node = this.nodeMap.get(dependency.id);
+      const size = node?.style?.size ?? 0;
+      const [width, height] = typeof size === "number" ? [size, size] : size;
       const nextOffsetX = node?.style?.x ?? 0;
       const nextOffsetY = node?.style?.y ?? 0;
-      dependency.setOffset(nextOffsetX, nextOffsetY);
+      dependency.setOffset(
+        nextOffsetX - width / 2 + margin,
+        nextOffsetY - height / 2 + margin,
+      );
     });
   }
 }
@@ -95,11 +112,18 @@ function executeLayout(model: GraphData, options?: DagreLayoutOptions) {
     }
   });
 
+  for (const key of graphMap.keys()) {
+    if (key === "") continue;
+    Array.from(graphMap.values())
+      .find((value) => value.id !== key && value.nodeMap.has(key))
+      ?.dependencies.push(graphMap.get(key)!);
+  }
+
   const rootGraph = graphMap.get("")!;
   debug("Layouting root graph");
   rootGraph.layout();
   debug("DagreLayout layout completed");
-  rootGraph.setOffset(100, 100);
+  rootGraph.setOffset(0, 0);
   const endTime = performance.now();
   debug(`DagreLayout execution time: ${endTime - startTime} ms`);
 }
