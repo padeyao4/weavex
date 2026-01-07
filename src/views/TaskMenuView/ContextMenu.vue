@@ -1,18 +1,18 @@
 <template>
     <div
         v-if="visible"
-        class="fixed bg-white z-50 min-w-32 shadow-sm rounded-lg m-1"
+        class="fixed bg-white z-50 min-w-32 shadow-sm rounded-lg m-1 border border-gray-200"
         :style="{ left: x + 'px', top: y + 'px' }"
         @click.stop
     >
         <div
-            class="px-4 py-2.5 hover:bg-gray-50 cursor-pointer text-sm text-gray-700 border-b border-gray-100"
+            class="px-4 py-2.5 hover:bg-gray-50 hover:rounded-lg cursor-pointer text-sm text-gray-700 border-b border-gray-100"
             @click="handleRename"
         >
             重命名
         </div>
         <div
-            class="px-4 py-2.5 hover:bg-gray-50 cursor-pointer text-sm text-red-400"
+            class="px-4 py-2.5 hover:bg-gray-50 hover:rounded-lg cursor-pointer text-sm text-red-400"
             @click="handleDelete"
         >
             删除

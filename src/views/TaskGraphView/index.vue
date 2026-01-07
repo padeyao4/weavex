@@ -65,7 +65,14 @@
 <script setup lang="ts">
 import { useCurrentGraphStore } from "@/stores";
 import { NodeUtil } from "@/utils";
-import { Element, Graph, IElementEvent, NodeData, NodeEvent } from "@antv/g6";
+import {
+    Element,
+    Graph,
+    IElementEvent,
+    IPointerEvent,
+    NodeData,
+    NodeEvent,
+} from "@antv/g6";
 import { onMounted, ref, reactive } from "vue";
 import { useRoute } from "vue-router";
 import { PNode } from "@/types";
@@ -362,15 +369,18 @@ onMounted(() => {
             style: {
                 fill: (d: NodeData) =>
                     d.data?.completed ? "#00000050" : "#fff",
-                stroke: "#91d5ff",
-                lineWidth: 1,
-                radius: 4,
+                stroke: "#00000080",
+                lineWidth: 0.5,
+                radius: 8,
                 labelText: (d: any) => (d.type ? "" : d.data.name),
                 labelBackground: true,
                 labelBackgroundOpacity: 0.7,
                 labelBackgroundRadius: 2,
                 size: (d: NodeData) => (d.type ? 6 : [120, 60]),
                 labelPlacement: "center",
+                labelFontSize: 12,
+                labelFontWeight: "lighter",
+                labelBackgroundFillOpacity: 0,
                 labelWordWrap: true,
                 labelMaxWidth: "90%",
                 labelPadding: 4,
@@ -403,6 +413,12 @@ onMounted(() => {
         // 边配置
         edge: {
             type: "cubic-horizontal",
+            style: {
+                stroke: "#00000080",
+                lineWidth: 0.5,
+                increasedLineWidthForHitTesting: 3,
+                cursor: "pointer",
+            },
         },
 
         // 交互行为
@@ -412,6 +428,12 @@ onMounted(() => {
                 type: "drag-canvas",
                 key: "drag-canvas",
                 sensitivity: 1, // 设置拖拽灵敏度
+            },
+            {
+                type: "hover-activate",
+                enable: (e: IPointerEvent) => {
+                    return e.targetType === "edge" || e.targetType === "node";
+                },
             },
         ],
 
