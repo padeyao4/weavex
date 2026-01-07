@@ -1,4 +1,5 @@
 import { BaseLayout, BaseLayoutOptions, GraphData } from "@antv/g6";
+import { debug } from "@tauri-apps/plugin-log";
 import dagre from "dagre";
 
 export interface DagreLayoutOptions extends BaseLayoutOptions {
@@ -15,6 +16,7 @@ export class DagreLayout extends BaseLayout<DagreLayoutOptions> {
     model: GraphData,
     options?: DagreLayoutOptions,
   ): Promise<GraphData> {
+    const startTime = performance.now();
     const g = new dagre.graphlib.Graph();
     g.setGraph({ ...this.options, ...options });
     g.setDefaultEdgeLabel(() => ({}));
@@ -42,6 +44,9 @@ export class DagreLayout extends BaseLayout<DagreLayoutOptions> {
         y: nodeData.y,
       };
     });
+
+    const endTime = performance.now();
+    debug(`execute took ${endTime - startTime} ms`);
 
     return {
       nodes: model.nodes,

@@ -1,9 +1,9 @@
 import { PGraph, PNode } from "@/types";
 import { v4 } from "uuid";
-import { ComboData, EdgeData, GraphData, NodeData } from "@antv/g6";
-import { NodeUtil } from "./node-util";
+import { EdgeData, GraphData, NodeData } from "@antv/g6";
 import { faker } from "@faker-js/faker";
 import cloneDeep from "lodash-es/cloneDeep";
+import { debug } from "@tauri-apps/plugin-log";
 
 export class GraphUtils {
   static createGraph(graph?: Partial<PGraph>): PGraph {
@@ -195,102 +195,43 @@ export class GraphUtils {
     return true;
   }
 
-  /**
-   * 将graph中的nodes数据转为GraphData数据
-   * @returns
-   */
   static toGraphData(graph?: Partial<PGraph>): GraphData {
-    const mapper = graph?.nodes ?? {};
+    const startTime = performance.now();
+    const nodeMap = graph?.nodes ?? {};
 
     const nodes: NodeData[] = [];
     const edges: EdgeData[] = [];
-    const combos: ComboData[] = [];
     const visited = new Set<string>();
 
     function travel(node: PNode) {
       if (!node || visited.has(node.id)) return;
       visited.add(node.id);
-
-      if (NodeUtil.isCombo(node)) {
-        combos.push({
-          id: `${node.id}-combo`,
-          data: { ...node },
-          combo: node.parent && `${node.parent}-combo`,
-        });
-
-        nodes.push({
-          id: `${node.id}-head`,
-          data: { ...node },
-          type: "circle",
-          combo: `${node.id}-combo`,
-        });
-
-        nodes.push({
-          id: `${node.id}-tail`,
-          data: { ...node },
-          type: "circle",
-          combo: `${node.id}-combo`,
-        });
-      } else {
-        nodes.push({
-          id: node.id,
-          data: { ...node },
-          combo: node.parent && `${node.parent}-combo`,
-        });
-      }
-
-      if (NodeUtil.isChild(node)) {
-        // 如果是子节点，并且没有前驱节点
-        if (NodeUtil.noPrev(node)) {
-          const parentNode = mapper[node.parent!];
-          const sourceId = NodeUtil.isCombo(parentNode)
-            ? `${node.parent}-head`
-            : node.parent!;
-          const targetId = NodeUtil.isCombo(node) ? `${node.id}-head` : node.id;
-          edges.push({
-            id: `${sourceId}_${targetId}`,
-            source: sourceId,
-            target: targetId,
-          });
-        }
-        // 如果是子节点，并且没有后继节点
-        if (NodeUtil.noNext(node)) {
-          const parentNode = mapper[node.parent!];
-          const sourceId = NodeUtil.isCombo(node) ? `${node.id}-tail` : node.id;
-          const targetId = NodeUtil.isCombo(parentNode)
-            ? `${node.parent}-tail`
-            : node.parent!;
-          edges.push({
-            id: `${sourceId}_${targetId}`,
-            source: sourceId,
-            target: targetId,
-          });
-        }
-      }
-
-      for (const next of node.nexts) {
-        const sourceId = NodeUtil.isCombo(node) ? `${node.id}-tail` : node.id;
-        const targetId = NodeUtil.isCombo(mapper[next]) ? `${next}-head` : next;
+      nodes.push({
+        id: node.id,
+        data: { ...node },
+        combo: undefined,
+      });
+      node.nexts?.forEach((next) => {
         edges.push({
-          id: `${sourceId}_${targetId}`,
-          source: sourceId,
-          target: targetId,
+          id: `${node.id}_${next}`,
+          source: node.id,
+          target: next,
         });
-      }
-
-      for (const nodeId of [...node.children, ...node.prevs, ...node.nexts]) {
-        travel(mapper[nodeId]);
+      });
+      for (const nodeId of [...node.nexts, ...node.children]) {
+        travel(nodeMap[nodeId]);
       }
     }
 
     for (const rootId of graph?.rootNodeIds ?? []) {
-      travel(mapper[rootId]);
+      travel(nodeMap[rootId]);
     }
+    const endTime = performance.now();
+    debug(`toGraphData took ${endTime - startTime} ms`);
 
     return {
       nodes,
       edges,
-      combos,
     };
   }
 

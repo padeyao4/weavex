@@ -18,7 +18,7 @@ export const useCurrentGraphStore = defineStore("graph-detail", () => {
   });
 
   const graphData = computed(() => {
-    return GraphUtils.transform(graph.value);
+    return GraphUtils.toGraphData(graph.value);
   });
 
   /**

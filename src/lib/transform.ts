@@ -1,5 +1,6 @@
 import { BaseTransform, DrawData } from "@antv/g6";
 import { DrawContext } from "@antv/g6/lib/runtime/element";
+// import { debug } from "@tauri-apps/plugin-log";
 
 export class CustomTransform extends BaseTransform {
   public beforeDraw(data: DrawData, _context: DrawContext): DrawData {
