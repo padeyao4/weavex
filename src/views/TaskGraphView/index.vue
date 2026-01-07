@@ -432,9 +432,8 @@ onMounted(() => {
             },
             {
                 type: "hover-activate",
-                enable: (e: IPointerEvent) => {
-                    return e.targetType === "edge" || e.targetType === "node";
-                },
+                enable: (e: IPointerEvent) =>
+                    e.targetType === "edge" || e.targetType === "node",
             },
         ],
 
