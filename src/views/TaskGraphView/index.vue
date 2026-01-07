@@ -438,12 +438,16 @@ onMounted(() => {
         ],
 
         // 布局配置 - 使用内置的力导向布局
+        // layout: {
+        //     type: "antv-dagre",
+        //     rankdir: "LR",
+        //     sortByCombo: true,
+        //     ranksep: 50,
+        //     nodesep: 10,
+        // },
         layout: {
-            type: "antv-dagre",
+            type: "custom-layout",
             rankdir: "LR",
-            sortByCombo: true,
-            ranksep: 50,
-            nodesep: 10,
         },
     });
     graph.on(NodeEvent.CLICK, (evt: IElementEvent & { target: Element }) => {
