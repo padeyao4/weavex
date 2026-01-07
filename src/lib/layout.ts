@@ -31,17 +31,18 @@ class SubGraph {
     this.options = { ...this.options, ...options };
   }
 
-  layout() {
+  layout(layer: number = 1) {
     const g = new dagre.graphlib.Graph();
     g.setGraph({ ...this.options });
     g.setDefaultEdgeLabel(() => ({}));
     this.dependencies?.forEach((dependency) => {
       if (!dependency.size) {
-        dependency.layout();
+        dependency.layout(layer + 1);
       }
       const node = this.nodeMap.get(dependency.id)!;
       node.style = {
         ...node.style,
+        zIndex: layer + 1,
         size: dependency.size!,
       };
     });
@@ -64,6 +65,7 @@ class SubGraph {
       node.style = {
         size: defaultSize,
         ...node?.style,
+        zIndex: layer,
         x: data.x,
         y: data.y,
       };
@@ -79,7 +81,6 @@ class SubGraph {
         x: (node.style?.x ?? 0) + offsetX,
         y: (node.style?.y ?? 0) + offsetY,
       };
-      debug("node style:" + JSON.stringify(node.style));
     });
     this.dependencies?.forEach((dependency) => {
       const node = this.nodeMap.get(dependency.id);
@@ -119,13 +120,31 @@ function executeLayout(model: GraphData, options?: DagreLayoutOptions) {
       ?.dependencies.push(graphMap.get(key)!);
   }
 
-  const rootGraph = graphMap.get("")!;
+  const rootGraph = graphMap.get("");
   debug("Layouting root graph");
-  rootGraph.layout();
+  rootGraph?.layout();
   debug("DagreLayout layout completed");
-  rootGraph.setOffset(0, 0);
+  rootGraph?.setOffset(0, 0);
   const endTime = performance.now();
   debug(`DagreLayout execution time: ${endTime - startTime} ms`);
+
+  const nodeMap = new Map<string, NodeData>();
+  model.nodes?.forEach((node) => {
+    nodeMap.set(node.id, node);
+  });
+
+  model.edges?.forEach((edge) => {
+    const source = nodeMap.get(edge.source)!;
+    const target = nodeMap.get(edge.target)!;
+    const zIndex = Math.max(
+      source.style?.zIndex ?? 0,
+      target.style?.zIndex ?? 0,
+    );
+    edge.style = {
+      ...edge.style,
+      zIndex,
+    };
+  });
 }
 
 export class DagreLayout extends BaseLayout<DagreLayoutOptions> {

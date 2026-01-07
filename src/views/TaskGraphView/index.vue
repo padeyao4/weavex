@@ -65,14 +65,7 @@
 <script setup lang="ts">
 import { useCurrentGraphStore } from "@/stores";
 import { NodeUtil } from "@/utils";
-import {
-    Element,
-    Graph,
-    IElementEvent,
-    IPointerEvent,
-    NodeData,
-    NodeEvent,
-} from "@antv/g6";
+import { Element, Graph, IElementEvent, NodeData, NodeEvent } from "@antv/g6";
 import { onMounted, ref, reactive } from "vue";
 import { useRoute } from "vue-router";
 import { PNode } from "@/types";
@@ -423,16 +416,10 @@ onMounted(() => {
         // 交互行为
         behaviors: [
             "zoom-canvas",
-            "collapse-expand",
             {
                 type: "drag-canvas",
                 key: "drag-canvas",
                 sensitivity: 1, // 设置拖拽灵敏度
-            },
-            {
-                type: "hover-activate",
-                enable: (e: IPointerEvent) =>
-                    e.targetType === "edge" || e.targetType === "node",
             },
         ],
 
