@@ -11,51 +11,53 @@ export interface DagreLayoutOptions extends BaseLayoutOptions {
 }
 
 class SubGraph {
-  id?: string;
-  nodeMap: Map<string | undefined, NodeData> = new Map();
+  id: string;
+  nodeMap: Map<string, NodeData> = new Map();
   size?: [number, number];
   dependencies: SubGraph[] = [];
-  g: dagre.graphlib.Graph = new dagre.graphlib.Graph();
+  options = {};
 
-  constructor(id?: string, options?: DagreLayoutOptions) {
+  constructor(id: string, options?: DagreLayoutOptions) {
     this.id = id;
-    this.g.setGraph({ ...options });
-    this.g.setDefaultEdgeLabel(() => ({}));
+    this.options = { ...this.options, ...options };
   }
 
   layout() {
+    const g = new dagre.graphlib.Graph();
+    g.setGraph({ ...this.options });
+    g.setDefaultEdgeLabel(() => ({}));
     this.dependencies?.forEach((dependency) => {
       if (!dependency.size) {
         dependency.layout();
       }
-      const node = this.nodeMap.get(dependency.id);
-      if (node) {
-        node.style = {
-          ...node.style,
-          width: dependency.size![0],
-          height: dependency.size![1],
-        };
-      }
+      const node = this.nodeMap.get(dependency.id)!;
+      node.style = {
+        ...node.style,
+        size: dependency.size!,
+      };
     });
     Array.from(this.nodeMap.values()).forEach((node) => {
-      this.g.setNode(node.id, {
-        width: node.style!.width,
-        height: node.style!.height,
+      const size = node?.style?.size ?? [120, 80];
+      const [width, height] = typeof size === "number" ? [size, size] : size;
+      g.setNode(node.id, {
+        width,
+        height,
       });
       (node.data?.nexts as Array<string>).forEach((next) => {
-        this.g.setEdge(node.id, next);
+        g.setEdge(node.id, next);
       });
     });
-    dagre.layout(this.g);
+    dagre.layout(g);
+
     Array.from(this.nodeMap.values()).forEach((node) => {
-      const data = this.g.node(node.id);
+      const data = g.node(node.id);
       node.style = {
         ...node?.style,
         x: data.x,
         y: data.y,
       };
     });
-    const { width = 0, height = 0 } = this.g.graph();
+    const { width = 0, height = 0 } = g.graph();
     this.size = [width, height];
   }
 
@@ -76,6 +78,32 @@ class SubGraph {
   }
 }
 
+function executeLayout(model: GraphData, options?: DagreLayoutOptions) {
+  debug("Executing DagreLayout");
+  const startTime = performance.now();
+  const graphMap = new Map<string, SubGraph>();
+  debug("Creating SubGraphs");
+  model?.nodes?.forEach((node) => {
+    const data = node.data as unknown as PNode;
+    if (graphMap.has(data.parent ?? "")) {
+      const subGraph = graphMap.get(data.parent ?? "");
+      subGraph?.nodeMap.set(node.id, node);
+    } else {
+      const subGraph = new SubGraph(data.parent ?? "", options);
+      subGraph.nodeMap.set(node.id, node);
+      graphMap.set(data.parent ?? "", subGraph);
+    }
+  });
+
+  const rootGraph = graphMap.get("")!;
+  debug("Layouting root graph");
+  rootGraph.layout();
+  debug("DagreLayout layout completed");
+  rootGraph.setOffset(100, 100);
+  const endTime = performance.now();
+  debug(`DagreLayout execution time: ${endTime - startTime} ms`);
+}
+
 export class DagreLayout extends BaseLayout<DagreLayoutOptions> {
   id = "custom-dagre";
 
@@ -83,38 +111,11 @@ export class DagreLayout extends BaseLayout<DagreLayoutOptions> {
     model: GraphData,
     options?: DagreLayoutOptions,
   ): Promise<GraphData> {
-    debug("Executing DagreLayout");
-    const startTime = performance.now();
     const config = {
-      ...this.options,
       ...options,
+      ...this.options,
     };
-    const graphMap = new Map<string | undefined, SubGraph>();
-    debug("Creating SubGraphs");
-    model?.nodes?.forEach((node) => {
-      const data = node.data as unknown as PNode;
-      if (graphMap.has(data.parent)) {
-        const subGraph = graphMap.get(data.parent);
-        subGraph?.nodeMap.set(node.id, node);
-      } else {
-        const subGraph = new SubGraph(data.parent, config);
-        subGraph.nodeMap.set(node.id, node);
-        graphMap.set(data.parent, subGraph);
-      }
-    });
-
-    const rootGraph = graphMap.get(undefined);
-
-    if (!rootGraph) {
-      debug("No root graph found");
-      return model;
-    }
-    debug("Layouting root graph");
-    rootGraph.layout();
-    debug("DagreLayout layout completed");
-    rootGraph.setOffset(0, 0);
-    const endTime = performance.now();
-    debug(`DagreLayout execution time: ${endTime - startTime} ms`);
+    executeLayout(model, config);
     return model;
   }
 }
