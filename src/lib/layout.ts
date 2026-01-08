@@ -48,7 +48,9 @@ class SubGraph {
       };
     });
     Array.from(this.nodeMap.values()).forEach((node) => {
-      const size = node?.style?.size ?? defaultSize;
+      const size = node.data?.expanded
+        ? (node?.style?.size ?? defaultSize)
+        : defaultSize;
       const [width, height] = typeof size === "number" ? [size, size] : size;
       g.setNode(node.id, {
         width,
@@ -62,9 +64,12 @@ class SubGraph {
 
     Array.from(this.nodeMap.values()).forEach((node) => {
       const data = g.node(node.id);
+      const size = node.data?.expanded
+        ? (node?.style?.size ?? defaultSize)
+        : defaultSize;
       node.style = {
-        size: defaultSize,
         ...node?.style,
+        size,
         zIndex: layer,
         x: data.x,
         y: data.y,

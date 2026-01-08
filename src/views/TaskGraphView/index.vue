@@ -358,7 +358,7 @@ onMounted(() => {
 
         // 节点配置
         node: {
-            type: (value) => value.type ?? "rect",
+            type: "custom-node",
             style: {
                 fill: (d: NodeData) =>
                     d.data?.completed ? "#00000050" : "#fff",
@@ -366,7 +366,9 @@ onMounted(() => {
                 lineWidth: 0.5,
                 lineDash: (d: NodeData) => (d.data?.expanded ? [4, 4] : []),
                 radius: 8,
-                labelText: (d: any) => (d.type ? "" : d.data.name),
+                labelText: (d: NodeData) => {
+                    return d.data?.expanded ? "" : (d.data?.name as string);
+                },
                 labelBackground: true,
                 labelBackgroundOpacity: 0.7,
                 labelBackgroundRadius: 2,
@@ -379,7 +381,7 @@ onMounted(() => {
                 labelPadding: 4,
                 labelMaxLines: 3,
                 labelTextOverflow: "ellipsis",
-                pointerEvents: (d: any) => (d.type ? "none" : "all"),
+                pointerEvents: (d: NodeData) => (d.type ? "none" : "all"),
                 port: false,
                 ports: [
                     { key: "in", placement: "left", fill: "#7E92B5" },

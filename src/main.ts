@@ -9,13 +9,8 @@ import * as ElementPlusIconsVue from "@element-plus/icons-vue";
 import piniaPluginPersistedstate from "pinia-plugin-persistedstate";
 import { install } from "@icon-park/vue-next/es/all";
 import "@icon-park/vue-next/styles/index.css";
-
 import { register, ExtensionCategory } from "@antv/g6";
-import { CustomTransform, DagreLayout } from "@/lib";
-
-// 注册自定义数据处理器
-register(ExtensionCategory.TRANSFORM, "custom-transform", CustomTransform);
-register(ExtensionCategory.LAYOUT, "custom-layout", DagreLayout);
+import { CustomTransform, DagreLayout, CustomNode } from "@/lib";
 
 const app = createApp(App);
 install(app); // use default prefix 'icon', eg: icon is People, name is icon-people.
@@ -26,3 +21,8 @@ for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
 const pinia = createPinia();
 pinia.use(piniaPluginPersistedstate);
 app.use(pinia).use(ElementPlus).use(router).mount("#app");
+
+// 注册自定义数据处理器
+register(ExtensionCategory.TRANSFORM, "custom-transform", CustomTransform);
+register(ExtensionCategory.LAYOUT, "custom-layout", DagreLayout);
+register(ExtensionCategory.NODE, "custom-node", CustomNode);
