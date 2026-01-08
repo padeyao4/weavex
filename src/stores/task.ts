@@ -47,7 +47,7 @@ export const useTaskStore = defineStore("task", () => {
     return Object.values(graphStore.allGraph).flatMap((graph) => {
       return GraphUtils.traverseGraph(graph, (n, g) => {
         const prevsCompleted = n.prevs
-          .map((pre) => g.nodes[pre].completed)
+          .map((pre) => g.nodes[pre]?.completed)
           .every((completed) => completed);
         const childrenCompleted = n.children
           .map((childId) => g.nodes[childId].completed)

@@ -256,7 +256,7 @@ export class GraphUtils {
     const result: PNode[] = [];
 
     function dfs(node: PNode) {
-      if (visited.has(node.id)) return;
+      if (!node || visited.has(node.id)) return;
       visited.add(node.id);
       if (func(node, graph)) {
         result.push(node);
