@@ -149,26 +149,34 @@ export class GraphUtils {
     const hideNodes = new Set<string>();
 
     function bfs(node: PNode) {
-      if (!node || !node.completed || visited.has(node.id)) return;
+      if (!node || visited.has(node.id)) return;
       visited.add(node.id);
+
+      // 先递归遍历所有相关节点
       for (const id of [...node.children, ...node.prevs]) {
         bfs(clone.nodes[id]);
       }
-      const allPrevHidden = node.prevs
-        .map((prevId) => {
-          const prevNode = clone.nodes[prevId];
-          return hideNodes.has(prevNode.id);
-        })
-        .every((isHidden) => isHidden);
-      const allChildrenHidden = node.children
-        .map((childId) => {
-          const childNode = clone.nodes[childId];
-          return hideNodes.has(childNode.id);
-        })
-        .every((isHidden) => isHidden);
-      if (allPrevHidden && allChildrenHidden) {
-        hideNodes.add(node.id);
+
+      // 只对已完成的节点检查隐藏条件
+      if (node.completed) {
+        const allPrevHidden = node.prevs
+          .map((prevId) => {
+            const prevNode = clone.nodes[prevId];
+            return !prevNode || hideNodes.has(prevNode.id);
+          })
+          .every((isHidden) => isHidden);
+        const allChildrenHidden = node.children
+          .map((childId) => {
+            const childNode = clone.nodes[childId];
+            return !childNode || hideNodes.has(childNode.id);
+          })
+          .every((isHidden) => isHidden);
+        if (allPrevHidden && allChildrenHidden) {
+          hideNodes.add(node.id);
+        }
       }
+
+      // 继续遍历后续节点
       for (const id of [...node.nexts]) {
         bfs(clone.nodes[id]);
       }
@@ -184,22 +192,9 @@ export class GraphUtils {
         nodes[node.id] = node;
       }
     }
-
     clone.rootNodeIds = this.buildRootIds(nodes);
     clone.nodes = nodes;
   }
-
-  // private static fillerNode(node: PNode, graph: PGraph): boolean {
-  //   if (node.completed && node.children.length === 0 && !node.parent) {
-  //     const prevsComplated = node.prevs
-  //       .map((id) => graph.nodes[id])
-  //       .every((prev) => prev.completed);
-  //     if (prevsComplated) {
-  //       return false;
-  //     }
-  //   }
-  //   return true;
-  // }
 
   /**
    * 将pgraph转为graphData
