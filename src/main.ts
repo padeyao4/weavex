@@ -13,7 +13,9 @@ import { register, ExtensionCategory } from "@antv/g6";
 import { CustomTransform, DagreLayout, CustomNode } from "@/lib";
 
 const app = createApp(App);
-install(app); // use default prefix 'icon', eg: icon is People, name is icon-people.
+
+// use default prefix 'icon', eg: icon is People, name is icon-people.
+install(app);
 
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
   app.component(key, component);
