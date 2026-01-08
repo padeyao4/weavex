@@ -13,6 +13,7 @@ export interface PNode {
   prevs: string[]; // 前驱节点列表
   completedAt: number; // 节点完成时间
   completed: boolean; // 节点是否已完成
+  expanded?: boolean; // 节点是否已展开,默认不展开
 }
 
 export interface PGraph {

@@ -1,6 +1,6 @@
 import { PGraph } from "@/types";
-import { GraphUtils } from "./graph-util";
-import { NodeUtil } from "./node-util";
+import { GraphUtils } from "./graphUtils";
+import { NodeUtil } from "./nodeUtils";
 
 export class Mock {
   static data01(): PGraph {

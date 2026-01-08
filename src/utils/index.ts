@@ -1,4 +1,4 @@
-export * from "./graph-util";
-export * from "./node-util";
+export * from "./graphUtils";
+export * from "./nodeUtils";
 export * from "./mock";
-export * from "./function-util";
+export * from "./functionUtils";

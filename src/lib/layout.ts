@@ -1,4 +1,5 @@
 import { PNode } from "@/types";
+import { measureTime } from "@/utils";
 import {
   BaseLayout,
   BaseLayoutOptions,
@@ -16,7 +17,7 @@ export interface DagreLayoutOptions extends BaseLayoutOptions {
   nodesep?: number;
 }
 
-const defaultSize: Size = [80, 80];
+const defaultSize: Size = [120, 60];
 const margin = 10;
 
 class SubGraph {
@@ -58,7 +59,6 @@ class SubGraph {
       });
     });
     dagre.layout(g);
-    debug("g info:" + JSON.stringify(g.graph()));
 
     Array.from(this.nodeMap.values()).forEach((node) => {
       const data = g.node(node.id);
@@ -97,10 +97,7 @@ class SubGraph {
 }
 
 function executeLayout(model: GraphData, options?: DagreLayoutOptions) {
-  debug("Executing DagreLayout");
-  const startTime = performance.now();
   const graphMap = new Map<string, SubGraph>();
-  debug("Creating SubGraphs");
   model?.nodes?.forEach((node) => {
     const data = node.data as unknown as PNode;
     if (graphMap.has(data.parent ?? "")) {
@@ -121,12 +118,8 @@ function executeLayout(model: GraphData, options?: DagreLayoutOptions) {
   }
 
   const rootGraph = graphMap.get("");
-  debug("Layouting root graph");
   rootGraph?.layout();
-  debug("DagreLayout layout completed");
   rootGraph?.setOffset(0, 0);
-  const endTime = performance.now();
-  debug(`DagreLayout execution time: ${endTime - startTime} ms`);
 
   const nodeMap = new Map<string, NodeData>();
   model.nodes?.forEach((node) => {
@@ -154,11 +147,13 @@ export class DagreLayout extends BaseLayout<DagreLayoutOptions> {
     model: GraphData,
     options?: DagreLayoutOptions,
   ): Promise<GraphData> {
-    const config = {
-      ...options,
-      ...this.options,
-    };
-    executeLayout(model, config);
+    const { duration } = await measureTime(() => {
+      executeLayout(model, {
+        ...options,
+        ...this.options,
+      });
+    });
+    debug(`DagreLayout execution time: ${duration} ms`);
     return model;
   }
 }
