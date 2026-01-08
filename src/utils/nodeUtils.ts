@@ -18,6 +18,7 @@ export class NodeUtil {
       prevs: [],
       completedAt: 0,
       completed: false,
+      expanded: false,
     };
 
     return {

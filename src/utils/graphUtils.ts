@@ -88,6 +88,12 @@ export class GraphUtils {
     });
   }
 
+  /**
+   * 处理删除节点的逻辑,
+   * 删除节点的前置关系,后续关系,子孙节点,父节点关系,并且更新时间
+   * @param graph
+   * @param id
+   */
   static removeNode(graph: PGraph, id: string) {
     graph.updatedAt = Date.now();
     // 查找当前节点，
@@ -136,9 +142,7 @@ export class GraphUtils {
     graph.rootNodeIds = GraphUtils.buildRootIds(graph.nodes);
   }
 
-  private static buildRootIds(
-    nodes?: PNode[] | Record<string, PNode>,
-  ): string[] {
+  static buildRootIds(nodes?: PNode[] | Record<string, PNode>): string[] {
     if (!nodes) return [];
     const nodeMap = new Map<string | undefined, PNode>();
     const rootIds = new Set<string>();

@@ -33,8 +33,9 @@ export const useCurrentGraphStore = defineStore("graph-detail", () => {
     graphStore.addEdge(graph.value, prevId, nextId);
   }
 
-  function removeNode(ids?: string[]) {
-    graphStore.removeNode(graph.value, ids);
+  function removeNode(ids?: string[] | string) {
+    const param = typeof ids === "string" ? [ids] : ids;
+    graphStore.removeNode(graph.value, param ?? []);
   }
 
   function addNode(node?: PNode) {
@@ -105,12 +106,10 @@ export const useGraphStore = defineStore("graph-storage", () => {
   ) {
     if (partialGraph?.id && partialParent?.id && partialChild?.id) {
       const graph = allGraph[partialGraph.id];
-      graph.rootNodeIds = graph.rootNodeIds.filter(
-        (id) => id !== partialChild.id,
-      );
       const parent = graph.nodes[partialParent.id];
       const child = graph.nodes[partialChild.id];
       GraphUtils.addChildWidthTravel(graph, parent, child);
+      graph.rootNodeIds = GraphUtils.buildRootIds(graph.nodes);
     }
   }
 
@@ -118,9 +117,7 @@ export const useGraphStore = defineStore("graph-storage", () => {
     if (partialGraph?.id && node) {
       const graph = allGraph[partialGraph.id];
       graph.nodes[node.id] = node;
-      if (!graph.rootNodeIds.includes(node.id)) {
-        graph.rootNodeIds.push(node.id);
-      }
+      graph.rootNodeIds.push(node.id);
     }
   }
 

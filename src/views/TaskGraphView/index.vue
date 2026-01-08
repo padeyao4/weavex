@@ -138,26 +138,12 @@ onMounted(() => {
                             ];
                         case "edge":
                             return [{ name: "删除边", value: "edge:delete" }];
-                        case "combo":
-                            return [
-                                {
-                                    name: "添加子节点",
-                                    value: "combo:add-child",
-                                },
-                                {
-                                    name: "删除组合",
-                                    value: "combo:delete",
-                                },
-                                {
-                                    name: "删除且保留关系",
-                                    value: "combo:delete-keep-edge",
-                                },
-                            ];
                         case "canvas":
                             return [
                                 { name: "添加节点", value: "canvas:add-node" },
                             ];
                         default:
+                            debug("getItems : " + e.targetType);
                             return [];
                     }
                 },
@@ -169,7 +155,6 @@ onMounted(() => {
                     if (!current) return;
                     switch (value) {
                         case "node:delete-keep-edge":
-                        case "combo:delete-keep-edge":
                             {
                                 // 删除当前节点但保留当前节点的关系，比如 a->b->c ,当删除b的时候，变成a->c
                                 // 如果有 a->c b->c  c->d ,当删除c的时候，变成a->d b->d
@@ -210,10 +195,7 @@ onMounted(() => {
                             }
                             break;
                         case "node:delete":
-                        case "combo:delete":
-                            currentGraphStore.removeNode([
-                                current.id.replace(/-combo$/, ""),
-                            ]);
+                            currentGraphStore.removeNode([current.id]);
                             break;
                         case "node:add-next":
                             {
@@ -331,14 +313,14 @@ onMounted(() => {
                                 currentGraphStore.addNode(node);
                             }
                             break;
-                        case "combo:add-child":
                         case "node:add-child":
                             {
-                                debug("node id : " + current.id);
                                 const currentNode =
-                                    currentGraphStore.graph?.nodes[
-                                        current.id.replace(/-combo$/, "")
-                                    ];
+                                    currentGraphStore.graph?.nodes[current.id]!;
+                                Object.assign(currentNode, {
+                                    expanded: true,
+                                });
+                                currentGraphStore.updateNode(currentNode);
                                 const newNode = NodeUtil.createNode();
                                 currentGraphStore.addNode(newNode);
                                 currentGraphStore.setChildWithTravel(
