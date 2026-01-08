@@ -177,14 +177,22 @@ export class GraphUtils {
     const nodes: NodeData[] = [];
     const edges: EdgeData[] = [];
     const visited = new Set<string>();
-    const collapsed = new Set<string>();
+
+    function ancestorsCollapsed(node: PNode): boolean {
+      let currentNode = node;
+      while (currentNode.parent) {
+        const parentNode = nodeMap[currentNode.parent];
+        if (!parentNode.expanded) {
+          return true;
+        }
+        currentNode = parentNode;
+      }
+      return false;
+    }
 
     function travel(node: PNode) {
-      if (!node || visited.has(node.id) || collapsed.has(node.parent ?? "")) {
+      if (!node || visited.has(node.id) || ancestorsCollapsed(node)) {
         return;
-      }
-      if (!node.expanded) {
-        collapsed.add(node.id);
       }
       visited.add(node.id);
       nodes.push({
