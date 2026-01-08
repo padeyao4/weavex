@@ -1,4 +1,4 @@
-import { useCurrentGraphStore } from "@/stores";
+import { useCurrentGraphStore, useGraphStatusStore } from "@/stores";
 import { PNode } from "@/types";
 import { Group } from "@antv/g";
 import { Rect, RectStyleProps } from "@antv/g6";
@@ -6,6 +6,7 @@ import { Rect, RectStyleProps } from "@antv/g6";
 // 创建自定义节点，继承自 Rect
 export class CustomNode extends Rect {
   currentGraphStore = useCurrentGraphStore();
+  graphStatusStore = useGraphStatusStore();
 
   renderGraph() {
     this.context.graph.setData(this.currentGraphStore.graphData);
@@ -41,6 +42,9 @@ export class CustomNode extends Rect {
     if (!(btn as any).clickBound) {
       btn.addEventListener("click", (e: MouseEvent) => {
         e.stopPropagation();
+        if (this.graphStatusStore.playing) {
+          return;
+        }
         this.currentGraphStore.toggleNodeExpanded(node.id);
         this.renderGraph();
       });

@@ -22,7 +22,7 @@ export const useCurrentGraphStore = defineStore("graph-detail", () => {
   });
 
   const graphData = computed(() => {
-    return GraphUtils.toGraphData(graph.value);
+    return GraphUtils.transform(graph.value);
   });
 
   function buildRoots() {

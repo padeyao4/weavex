@@ -63,10 +63,17 @@
     </div>
 </template>
 <script setup lang="ts">
-import { useCurrentGraphStore } from "@/stores";
+import { useCurrentGraphStore, useGraphStatusStore } from "@/stores";
 import { NodeUtil } from "@/utils";
-import { Element, Graph, IElementEvent, NodeData, NodeEvent } from "@antv/g6";
-import { onMounted, ref, reactive } from "vue";
+import {
+    Element,
+    Graph,
+    GraphEvent,
+    IElementEvent,
+    NodeData,
+    NodeEvent,
+} from "@antv/g6";
+import { onMounted, ref, reactive, onUnmounted } from "vue";
 import { useRoute } from "vue-router";
 import { PNode } from "@/types";
 import { debug } from "@tauri-apps/plugin-log";
@@ -87,6 +94,8 @@ const colors = ["#5C6F2B", "#DE802B", "#D8C9A7", "#EEEEEE", "#0F2854"];
 const fitCenter = () => {
     graph?.fitView();
 };
+
+const graphStatusStore = useGraphStatusStore();
 
 onMounted(() => {
     graph = new Graph({
@@ -152,7 +161,7 @@ onMounted(() => {
                     _target: HTMLElement,
                     current?: Element,
                 ) => {
-                    if (!current) return;
+                    if (!current || graphStatusStore.playing) return;
                     switch (value) {
                         case "node:delete-keep-edge":
                             {
@@ -434,6 +443,12 @@ onMounted(() => {
         Object.assign(drawerNode, node ?? {});
         drawer.value = true;
     });
+    graph.on(GraphEvent.BEFORE_ANIMATE, () => {
+        graphStatusStore.setPlaying(true);
+    });
+    graph.on(GraphEvent.AFTER_ANIMATE, () => {
+        graphStatusStore.setPlaying(false);
+    });
     graph.render();
 });
 
@@ -448,12 +463,17 @@ function saveNode(node: PNode) {
 }
 
 function toggleGraphView() {
+    if (graphStatusStore.playing) return;
     currentGraphStore.updateGraph({
         id: currentGraphStore.graph?.id!,
         hideCompleted: !currentGraphStore.graph?.hideCompleted,
     });
     renderGraph();
 }
+
+onUnmounted(() => {
+    graph?.destroy();
+});
 </script>
 
 <style scoped>

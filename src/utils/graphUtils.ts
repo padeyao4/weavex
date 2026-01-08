@@ -137,34 +137,69 @@ export class GraphUtils {
     if (!graph) return {};
     if (graph.hideCompleted) {
       const clone = cloneDeep(graph);
-      const nodeArray = this.traverseGraph(clone, (n, g) =>
-        GraphUtils.fillerNode(n, g),
-      );
-      clone.nodes = nodeArray.reduce(
-        (acc, node) => {
-          acc[node.id] = node;
-          return acc;
-        },
-        {} as Record<string, PNode>,
-      );
-      clone.rootNodeIds = this.buildRootIds(clone.nodes);
+      GraphUtils.filterByCompleted(clone);
       return this.toGraphData(clone);
     } else {
       return this.toGraphData(graph);
     }
   }
 
-  private static fillerNode(node: PNode, graph: PGraph): boolean {
-    if (node.completed && node.children.length === 0 && !node.parent) {
-      const prevsComplated = node.prevs
-        .map((id) => graph.nodes[id])
-        .every((prev) => prev.completed);
-      if (prevsComplated) {
-        return false;
+  private static filterByCompleted(clone: PGraph) {
+    const visited = new Set<string>();
+    const hideNodes = new Set<string>();
+
+    function bfs(node: PNode) {
+      if (!node || !node.completed || visited.has(node.id)) return;
+      visited.add(node.id);
+      for (const id of [...node.children, ...node.prevs]) {
+        bfs(clone.nodes[id]);
+      }
+      const allPrevHidden = node.prevs
+        .map((prevId) => {
+          const prevNode = clone.nodes[prevId];
+          return hideNodes.has(prevNode.id);
+        })
+        .every((isHidden) => isHidden);
+      const allChildrenHidden = node.children
+        .map((childId) => {
+          const childNode = clone.nodes[childId];
+          return hideNodes.has(childNode.id);
+        })
+        .every((isHidden) => isHidden);
+      if (allPrevHidden && allChildrenHidden) {
+        hideNodes.add(node.id);
+      }
+      for (const id of [...node.nexts]) {
+        bfs(clone.nodes[id]);
       }
     }
-    return true;
+
+    for (const id of clone.rootNodeIds) {
+      bfs(clone.nodes[id]);
+    }
+
+    const nodes: Record<string, PNode> = {};
+    for (const node of Object.values(clone.nodes)) {
+      if (!hideNodes.has(node.id)) {
+        nodes[node.id] = node;
+      }
+    }
+
+    clone.rootNodeIds = this.buildRootIds(nodes);
+    clone.nodes = nodes;
   }
+
+  // private static fillerNode(node: PNode, graph: PGraph): boolean {
+  //   if (node.completed && node.children.length === 0 && !node.parent) {
+  //     const prevsComplated = node.prevs
+  //       .map((id) => graph.nodes[id])
+  //       .every((prev) => prev.completed);
+  //     if (prevsComplated) {
+  //       return false;
+  //     }
+  //   }
+  //   return true;
+  // }
 
   /**
    * 将pgraph转为graphData
