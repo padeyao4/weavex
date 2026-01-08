@@ -3,6 +3,11 @@ import { defineStore } from "pinia";
 import { computed, reactive, ref } from "vue";
 import { debounce, GraphUtils } from "@/utils";
 import { FsUtil } from "@/lib";
+import { debug } from "@tauri-apps/plugin-log";
+
+export type PartialGraph = Partial<PGraph> & { id: string };
+export type PartialNode = Partial<PNode> & { id: string };
+
 /**
  * 当前选中的图谱存储
  * 用于管理当前正在查看或编辑的图谱ID
@@ -46,19 +51,20 @@ export const useCurrentGraphStore = defineStore("graph-detail", () => {
     graphStore.removeEdge(graph.value, ids);
   }
 
-  function updateNode(node?: Partial<PNode>) {
+  function updateNode(node?: PartialNode) {
     graphStore.updateNode(graph.value, node);
   }
 
-  function updateGraph(partialGraph?: Partial<PGraph>) {
+  function updateGraph(partialGraph?: PartialGraph) {
     graphStore.updateGraph(graph.value?.id, partialGraph);
   }
 
-  function setChildWithTravel(
-    partialParent?: Partial<PNode>,
-    partialChild?: Partial<PNode>,
-  ) {
-    graphStore.setChildWithTravel(graph.value, partialParent, partialChild);
+  function addChild(parent?: PartialNode, child?: PartialNode) {
+    graphStore.addChild(graph.value, parent?.id, child?.id);
+  }
+
+  function toggleNodeExpanded(nodeId: string) {
+    graphStore.toggleNodeExpanded(graph.value?.id, nodeId);
   }
 
   return {
@@ -71,8 +77,9 @@ export const useCurrentGraphStore = defineStore("graph-detail", () => {
     addNode,
     removeEdge,
     updateNode,
-    setChildWithTravel,
     updateGraph,
+    addChild,
+    toggleNodeExpanded,
   };
 });
 
@@ -99,17 +106,14 @@ export const useGraphStore = defineStore("graph-storage", () => {
     }
   }
 
-  function setChildWithTravel(
+  function addChild(
     partialGraph?: Partial<PGraph>,
-    partialParent?: Partial<PNode>,
-    partialChild?: Partial<PNode>,
+    parent?: string,
+    child?: string,
   ) {
-    if (partialGraph?.id && partialParent?.id && partialChild?.id) {
+    if (partialGraph?.id && parent && child) {
       const graph = allGraph[partialGraph.id];
-      const parent = graph.nodes[partialParent.id];
-      const child = graph.nodes[partialChild.id];
-      GraphUtils.addChildWidthTravel(graph, parent, child);
-      graph.rootNodeIds = GraphUtils.buildRootIds(graph.nodes);
+      GraphUtils.addChild(graph, parent, child);
     }
   }
 
@@ -144,7 +148,7 @@ export const useGraphStore = defineStore("graph-storage", () => {
     }
   }
 
-  function updateNode(partialGraph?: Partial<PGraph>, node?: Partial<PNode>) {
+  function updateNode(partialGraph?: Partial<PGraph>, node?: PartialNode) {
     if (partialGraph?.id && node?.id) {
       const graph = allGraph[partialGraph.id];
       if (graph.nodes[node.id]) {
@@ -180,6 +184,16 @@ export const useGraphStore = defineStore("graph-storage", () => {
     }
   }
 
+  function toggleNodeExpanded(graphId?: string, nodeId?: string) {
+    if (graphId && nodeId && allGraph[graphId]) {
+      const graph = allGraph[graphId];
+      if (graph.nodes[nodeId]) {
+        graph.nodes[nodeId].expanded = !graph.nodes[nodeId].expanded;
+        graph.updatedAt = Date.now();
+      }
+    }
+  }
+
   const graphsMeta = computed(() => {
     return Object.values(allGraph).map((graph) => ({
       id: graph.id,
@@ -202,6 +216,7 @@ export const useGraphStore = defineStore("graph-storage", () => {
     removeGraph,
     loadGraphs,
     debouncedSave,
-    setChildWithTravel,
+    addChild,
+    toggleNodeExpanded,
   };
 });

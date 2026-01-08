@@ -53,39 +53,7 @@ export class GraphUtils {
     if (!parentNode || !childNode) return;
     parentNode.children = [...new Set([...parentNode.children, childNode.id])];
     childNode.parent = parentNode.id;
-  }
-
-  /**
-   * 将子节点添加到父节点中，并更新子节点的父节点信息。
-   * 会递归处理子节点的前置节点和后置节点
-   * @param graph
-   * @param parent
-   * @param child
-   * @returns
-   */
-  static addChildWidthTravel(
-    graph: PGraph,
-    parent: PNode | string,
-    child: PNode | string,
-  ) {
-    const parentNode =
-      typeof parent === "string" ? graph.nodes[parent] : parent;
-    const childNode = typeof child === "string" ? graph.nodes[child] : child;
-    if (!parentNode || !childNode) return;
-    const set = new Set<string>();
-    function travel(id: string) {
-      if (set.has(id)) return;
-      set.add(id);
-      const node = graph.nodes[id];
-      const nodeIds = [...node.nexts, ...node.prevs];
-      nodeIds.forEach(travel);
-    }
-    travel(childNode.id);
-    set.forEach((id) => {
-      const node = graph.nodes[id];
-      node.parent = parentNode.id;
-      parentNode.children = [...new Set([...parentNode.children, node.id])];
-    });
+    graph.rootNodeIds = GraphUtils.buildRootIds(graph.nodes);
   }
 
   /**
@@ -109,8 +77,8 @@ export class GraphUtils {
       nextNode.prevs = nextNode.prevs.filter((prevId) => prevId !== id);
     });
     // 删除节点parent关系
-    if (node?.parent) {
-      const parentNode = graph.nodes[node.parent];
+    const parentNode = graph.nodes[node.parent ?? ""];
+    if (parentNode) {
       parentNode.children = parentNode.children.filter(
         (childId) => childId !== id,
       );
@@ -152,15 +120,15 @@ export class GraphUtils {
       rootIds.add(node.id);
     });
 
-    nodes.forEach((node) => {
+    for (const node of nodes) {
       if (node.parent && nodeMap.has(node.parent)) {
         rootIds.delete(node.id);
-        return;
+        continue;
       }
       if (node.prevs.find((prevId) => nodeMap.has(prevId))) {
         rootIds.delete(node.id);
       }
-    });
+    }
 
     return Array.from(rootIds);
   }

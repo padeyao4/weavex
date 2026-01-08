@@ -33,9 +33,6 @@ class SubGraph {
   }
 
   layout(layer: number = 1) {
-    const g = new dagre.graphlib.Graph();
-    g.setGraph({ ...this.options });
-    g.setDefaultEdgeLabel(() => ({}));
     this.dependencies?.forEach((dependency) => {
       if (!dependency.size) {
         dependency.layout(layer + 1);
@@ -47,6 +44,10 @@ class SubGraph {
         size: dependency.size!,
       };
     });
+
+    const g = new dagre.graphlib.Graph();
+    g.setGraph({ ...this.options });
+    g.setDefaultEdgeLabel(() => ({}));
     Array.from(this.nodeMap.values()).forEach((node) => {
       const size = node.data?.expanded
         ? (node?.style?.size ?? defaultSize)

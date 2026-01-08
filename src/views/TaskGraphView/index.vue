@@ -323,7 +323,7 @@ onMounted(() => {
                                 currentGraphStore.updateNode(currentNode);
                                 const newNode = NodeUtil.createNode();
                                 currentGraphStore.addNode(newNode);
-                                currentGraphStore.setChildWithTravel(
+                                currentGraphStore.addChild(
                                     currentNode,
                                     newNode,
                                 );
@@ -407,13 +407,13 @@ onMounted(() => {
                 sensitivity: 1, // 设置拖拽灵敏度
             },
         ],
-
         layout: {
             type: "custom-layout",
             rankdir: "LR",
             marginx: 0,
             marginy: 0,
         },
+        animation: false,
     });
     graph.on(NodeEvent.CLICK, (evt: IElementEvent & { target: Element }) => {
         const nodeId = evt.target.id;
@@ -439,6 +439,7 @@ function saveNode(node: PNode) {
 
 function toggleGraphView() {
     currentGraphStore.updateGraph({
+        id: currentGraphStore.graph?.id!,
         hideCompleted: !currentGraphStore.graph?.hideCompleted,
     });
     renderGraph();

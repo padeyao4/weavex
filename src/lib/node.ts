@@ -41,8 +41,7 @@ export class CustomNode extends Rect {
     if (!(btn as any).clickBound) {
       btn.addEventListener("click", (e: MouseEvent) => {
         e.stopPropagation();
-        node.expanded = !node.expanded;
-        this.currentGraphStore.updateNode(node);
+        this.currentGraphStore.toggleNodeExpanded(node.id);
         this.renderGraph();
       });
       (btn as any).clickBound = true;
