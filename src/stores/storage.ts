@@ -3,7 +3,6 @@ import { defineStore } from "pinia";
 import { computed, reactive, ref } from "vue";
 import { debounce, GraphUtils } from "@/utils";
 import { FsUtil } from "@/lib";
-import { debug } from "@tauri-apps/plugin-log";
 
 export type PartialGraph = Partial<PGraph> & { id: string };
 export type PartialNode = Partial<PNode> & { id: string };
@@ -25,6 +24,12 @@ export const useCurrentGraphStore = defineStore("graph-detail", () => {
   const graphData = computed(() => {
     return GraphUtils.toGraphData(graph.value);
   });
+
+  function buildRoots() {
+    if (graph.value) {
+      graph.value.rootNodeIds = GraphUtils.buildRootIds(graph.value?.nodes);
+    }
+  }
 
   /**
    * 设置当前图谱
@@ -59,8 +64,8 @@ export const useCurrentGraphStore = defineStore("graph-detail", () => {
     graphStore.updateGraph(graph.value?.id, partialGraph);
   }
 
-  function addChild(parent?: PartialNode, child?: PartialNode) {
-    graphStore.addChild(graph.value, parent?.id, child?.id);
+  function addChild(parentId?: string, childId?: string) {
+    graphStore.addChild(graph.value, parentId, childId);
   }
 
   function toggleNodeExpanded(nodeId: string) {
@@ -80,6 +85,7 @@ export const useCurrentGraphStore = defineStore("graph-detail", () => {
     updateGraph,
     addChild,
     toggleNodeExpanded,
+    buildRoots,
   };
 });
 

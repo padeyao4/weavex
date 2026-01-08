@@ -200,28 +200,30 @@ onMounted(() => {
                         case "node:add-next":
                             {
                                 const nextNode = NodeUtil.createNode();
-                                nextNode.parent =
-                                    currentGraphStore.graph?.nodes[
-                                        current.id
-                                    ].parent;
+                                const parentId =
+                                    currentGraphStore.graph?.nodes[current.id]
+                                        .parent;
                                 currentGraphStore.addNode(nextNode);
+                                currentGraphStore.addChild(
+                                    parentId,
+                                    nextNode.id,
+                                );
                                 currentGraphStore.addEdge(
                                     current.id,
                                     nextNode.id,
                                 );
-                                graph?.setData(currentGraphStore.graphData);
-                                graph?.render();
                             }
                             break;
                         case "node:insert-next":
                             {
                                 const nextNode = NodeUtil.createNode();
                                 const currentNode =
-                                    currentGraphStore.graph?.nodes[
-                                        current.id.replace(/-combo$/, "")
-                                    ];
-                                nextNode.parent = currentNode?.parent;
+                                    currentGraphStore.graph?.nodes[current.id];
                                 currentGraphStore.addNode(nextNode);
+                                currentGraphStore.addChild(
+                                    currentNode?.parent,
+                                    nextNode.id,
+                                );
                                 currentNode?.nexts.forEach((id) => {
                                     currentGraphStore.addEdge(nextNode.id, id);
                                     currentGraphStore.removeEdge([
@@ -239,14 +241,19 @@ onMounted(() => {
                             {
                                 // 添加前置节点
                                 const prevNode = NodeUtil.createNode();
-                                const currentNode =
-                                    currentGraphStore.graph?.nodes[current.id];
-                                prevNode.parent = currentNode?.parent;
+                                const parentId =
+                                    currentGraphStore.graph?.nodes[current.id]
+                                        ?.parent;
                                 currentGraphStore.addNode(prevNode);
+                                currentGraphStore.addChild(
+                                    parentId,
+                                    prevNode.id,
+                                );
                                 currentGraphStore.addEdge(
                                     prevNode.id,
                                     current.id,
                                 );
+                                currentGraphStore.buildRoots();
                             }
                             break;
                         case "node:insert-prev": // 插入前置节点
@@ -254,9 +261,12 @@ onMounted(() => {
                                 const prevNode = NodeUtil.createNode();
                                 const currentNode =
                                     currentGraphStore.graph?.nodes[current.id];
-                                prevNode.parent = currentNode?.parent;
 
                                 currentGraphStore.addNode(prevNode);
+                                currentGraphStore.addChild(
+                                    currentNode?.parent,
+                                    prevNode.id,
+                                );
 
                                 // 将当前节点的所有前驱节点转移到新节点前面
                                 currentNode?.prevs.forEach((id) => {
@@ -324,8 +334,8 @@ onMounted(() => {
                                 const newNode = NodeUtil.createNode();
                                 currentGraphStore.addNode(newNode);
                                 currentGraphStore.addChild(
-                                    currentNode,
-                                    newNode,
+                                    currentNode.id,
+                                    newNode.id,
                                 );
                             }
                             break;
@@ -413,7 +423,7 @@ onMounted(() => {
             marginx: 0,
             marginy: 0,
         },
-        animation: false,
+        animation: true,
     });
     graph.on(NodeEvent.CLICK, (evt: IElementEvent & { target: Element }) => {
         const nodeId = evt.target.id;
