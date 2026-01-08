@@ -364,6 +364,7 @@ onMounted(() => {
                     d.data?.completed ? "#00000050" : "#fff",
                 stroke: "#00000080",
                 lineWidth: 0.5,
+                lineDash: (d: NodeData) => (d.data?.expanded ? [4, 4] : []),
                 radius: 8,
                 labelText: (d: any) => (d.type ? "" : d.data.name),
                 labelBackground: true,

@@ -3,7 +3,6 @@ import { v4 } from "uuid";
 import { EdgeData, GraphData, NodeData } from "@antv/g6";
 import { faker } from "@faker-js/faker";
 import cloneDeep from "lodash-es/cloneDeep";
-import { debug } from "@tauri-apps/plugin-log";
 
 export class GraphUtils {
   static createGraph(graph?: Partial<PGraph>): PGraph {
@@ -195,16 +194,26 @@ export class GraphUtils {
     return true;
   }
 
+  /**
+   * 将pgraph转为graphData
+   * @param graph
+   * @returns
+   */
   static toGraphData(graph?: Partial<PGraph>): GraphData {
-    const startTime = performance.now();
     const nodeMap = graph?.nodes ?? {};
 
     const nodes: NodeData[] = [];
     const edges: EdgeData[] = [];
     const visited = new Set<string>();
+    const collapsed = new Set<string>();
 
     function travel(node: PNode) {
-      if (!node || visited.has(node.id)) return;
+      if (!node || visited.has(node.id) || collapsed.has(node.parent ?? "")) {
+        return;
+      }
+      if (!node.expanded) {
+        collapsed.add(node.id);
+      }
       visited.add(node.id);
       nodes.push({
         id: node.id,
@@ -226,8 +235,6 @@ export class GraphUtils {
     for (const rootId of graph?.rootNodeIds ?? []) {
       travel(nodeMap[rootId]);
     }
-    const endTime = performance.now();
-    debug(`toGraphData took ${endTime - startTime} ms`);
 
     return {
       nodes,
