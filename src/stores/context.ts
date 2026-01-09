@@ -2,7 +2,6 @@ import { FsUtil } from "@/lib";
 import { defineStore } from "pinia";
 import { ref } from "vue";
 import { useGraphStore } from "./storage";
-import { useTaskStore } from "./task";
 
 /**
  * application的状态，有3种：
@@ -13,7 +12,6 @@ type AppStatus = "pending" | "initializing" | "initialized" | "error";
 export const useContextStore = defineStore("status", () => {
   const status = ref<AppStatus>("pending");
   const graphStore = useGraphStore();
-  const taskStore = useTaskStore();
 
   function setStatus(st: AppStatus) {
     status.value = st;
@@ -27,9 +25,6 @@ export const useContextStore = defineStore("status", () => {
       const obj = await FsUtil.readGraphsWithInit();
       // 加载graphsStore
       await graphStore.loadGraphs(obj);
-      // 加载tasksStore
-      const taskObj = await FsUtil.readTaskWithInit();
-      await taskStore.loadTasks(taskObj);
       status.value = "initialized";
       console.log("Initialized");
     }

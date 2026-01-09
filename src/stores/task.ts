@@ -1,49 +1,28 @@
 import { defineStore } from "pinia";
-import { computed, reactive } from "vue";
+import { computed } from "vue";
 import { useGraphStore } from "./storage";
-import { GraphUtils, debounce } from "@/utils";
+import { GraphUtils } from "@/utils";
 import { PNode } from "@/types";
-import { FsUtil } from "@/lib";
 
 export const useTaskStore = defineStore("task", () => {
-  const importantTaskIds = reactive<string[]>([]);
-
   const graphStore = useGraphStore();
 
-  async function loadTasks(taskIds: string[]) {
-    taskIds.forEach((id) => {
-      importantTaskIds.push(id);
-    });
-  }
+  const importantTasks = computed(() =>
+    Object.values(graphStore.allGraph)
+      .flatMap((graph) => Object.values(graph.nodes))
+      .filter((node) => !node.completed && node.priority),
+  );
 
-  /**
-   * 任务ID到任务对象的映射表
-   * 用于快速通过ID查找任务
-   */
-  const taskMap = computed(() => {
-    const map: Record<string, PNode> = {};
-    allList.value.forEach((task) => {
-      map[task.id] = task;
-    });
-    return map;
-  });
-
-  const importantTasks = computed(() => {
-    return importantTaskIds
-      .map((id) => taskMap.value[id])
-      .filter((task) => task && !task.completed);
-  });
-
-  const otherTasks = computed(() => {
-    return Object.values(allList.value).filter(
-      (task) => !importantTaskIds.includes(task.id),
-    );
+  const lowPriorityTasks = computed(() => {
+    const importantTaskIds = importantTasks.value.map((node) => node.id);
+    const set = new Set<string>(importantTaskIds);
+    return recommendationTasks.value.filter((node) => !set.has(node.id));
   });
 
   /**
-   * 可用执行的任务列表,无须状态
+   * 推荐任务列表.
    */
-  const allList = computed(() => {
+  const recommendationTasks = computed(() => {
     return Object.values(graphStore.allGraph).flatMap((graph) => {
       return GraphUtils.traverseGraph(graph, (n, g) => {
         const prevsCompleted = n.prevs
@@ -57,40 +36,31 @@ export const useTaskStore = defineStore("task", () => {
     });
   });
 
-  function toggleImportant(taskId: string) {
-    if (importantTaskIds.includes(taskId)) {
-      importantTaskIds.splice(importantTaskIds.indexOf(taskId), 1);
-    } else {
-      importantTaskIds.push(taskId);
-    }
-    debouncedSave();
+  const allTaskMap = computed(() => {
+    return Object.values(graphStore.allGraph)
+      .flatMap((graph) => Object.values(graph.nodes))
+      .reduce((acc, node) => {
+        acc.set(node.id, node);
+        return acc;
+      }, new Map<string, PNode>());
+  });
+
+  function toggleTaskPriority(id: string) {
+    const task = allTaskMap.value.get(id);
+    if (!task) return;
+    task.priority = task.priority ? 0 : 1;
   }
 
-  function clearInvalidTasks() {
-    // 当importantTaskIds不在allTasks中时，清除无效任务
-    const allTaskIds = new Set(allList.value.map((task) => task.id));
-    for (let i = importantTaskIds.length - 1; i >= 0; i--) {
-      if (!allTaskIds.has(importantTaskIds[i])) {
-        importantTaskIds.splice(i, 1);
-      }
-    }
+  function toggleTaskCompletion(id: string) {
+    const task = allTaskMap.value.get(id);
+    if (!task) return;
+    task.completed = !task.completed;
   }
-
-  async function saveTasks() {
-    await FsUtil.saveTask(importantTaskIds);
-  }
-
-  const debouncedSave = debounce(saveTasks, 1000);
 
   return {
-    importantTaskIds,
     importantTasks,
-    otherTasks,
-    allList,
-    toggleImportant,
-    clearInvalidTasks,
-    loadTasks,
-    saveTasks,
-    debouncedSave,
+    lowPriorityTasks,
+    toggleTaskPriority,
+    toggleTaskCompletion,
   };
 });

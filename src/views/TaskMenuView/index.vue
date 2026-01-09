@@ -30,7 +30,7 @@
                         <div
                             class="ml-auto rounded-full bg-[#00000020] text-xs font-light w-6 h-6 flex justify-center items-center"
                         >
-                            {{ taskStore.importantTaskIds.length }}
+                            {{ taskStore.importantTasks.length }}
                         </div>
                     </div>
                 </router-link>

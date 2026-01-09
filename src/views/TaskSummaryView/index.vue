@@ -6,7 +6,6 @@ import { ref } from "vue";
 
 const taskStore = useTaskStore();
 // 每次打开这个页面启动清理无效的任务
-taskStore.clearInvalidTasks();
 
 const toggleTask = (task: PNode) => {
     task.completed = !task.completed;
@@ -57,11 +56,11 @@ const showOthers = ref(false);
                     </span>
                     次要任务
                     <span class="text-gray-400"
-                        >（{{ taskStore.otherTasks.length }}）</span
+                        >（{{ taskStore.lowPriorityTasks.length }}）</span
                     >
                 </div>
                 <TaskItem
-                    :tasks="showOthers ? taskStore.otherTasks : []"
+                    :tasks="showOthers ? taskStore.lowPriorityTasks : []"
                     :toggleTask="toggleTask"
                 />
             </div>

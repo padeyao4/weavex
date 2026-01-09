@@ -14,6 +14,7 @@ export interface PNode {
   completedAt: number; // 节点完成时间
   completed: boolean; // 节点是否已完成
   expanded?: boolean; // 节点是否已展开,默认不展开
+  priority?: number; // 节点优先级，数字越大优先级越高
 }
 
 export interface PGraph {

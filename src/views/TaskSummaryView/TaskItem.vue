@@ -32,10 +32,10 @@
             </div>
             <div
                 class="m-2 ml-auto w-5 h-5 opacity-0 task-item:hover:opacity-100 transition-opacity duration-200"
-                @click="taskStore.toggleImportant(item.id)"
+                @click="taskStore.toggleTaskPriority(item.id)"
             >
                 <icon-star
-                    v-if="importantTaskIds.includes(item.id)"
+                    v-if="item.priority"
                     theme="filled"
                     size="20"
                     fill="#fbbf24"
@@ -67,7 +67,6 @@ interface Props {
 defineProps<Props>();
 
 const taskStore = useTaskStore();
-const importantTaskIds = taskStore.importantTaskIds;
 </script>
 
 <style scoped>
