@@ -63,7 +63,7 @@
     </div>
 </template>
 <script setup lang="ts">
-import { useCurrentGraphStore, useGraphStatusStore } from "@/stores";
+import { useCurrentGraphStore } from "@/stores";
 import { NodeUtil } from "@/utils";
 import {
     Element,
@@ -89,13 +89,11 @@ const drawerNode = reactive<PNode>(NodeUtil.createNode());
 
 let graph: Graph | undefined;
 
-const colors = ["#5C6F2B", "#DE802B", "#D8C9A7", "#EEEEEE", "#0F2854"];
-
 const fitCenter = () => {
     graph?.fitView();
 };
 
-const graphStatusStore = useGraphStatusStore();
+const animationPlaying = ref(false);
 
 onMounted(() => {
     graph = new Graph({
@@ -161,7 +159,7 @@ onMounted(() => {
                     _target: HTMLElement,
                     current?: Element,
                 ) => {
-                    if (!current || graphStatusStore.playing) return;
+                    if (!current || animationPlaying.value) return;
                     switch (value) {
                         case "node:delete-keep-edge":
                             {
@@ -388,28 +386,20 @@ onMounted(() => {
                     { key: "in", placement: "left", fill: "#7E92B5" },
                     { key: "out", placement: "right", fill: "#D580FF" },
                 ],
+                button: {
+                    r: 12,
+                    onClick: (id: string) => {
+                        if (animationPlaying.value) return;
+                        currentGraphStore.toggleNodeExpanded(id);
+                        renderGraph();
+                    },
+                },
             },
             state: {
                 hover: {},
                 default: {},
             },
         },
-
-        // combo配置
-        combo: {
-            type: "rect",
-            style: {
-                fill: colors[Math.floor(Math.random() * colors.length)],
-                lineDash: [5, 5],
-                lineWidth: 0.5,
-                radius: 4,
-                labelFill: "#1890ff",
-                labelFontSize: 14,
-                labelFontWeight: "bold",
-                padding: [10, -3, 10, -3],
-            },
-        },
-
         // 边配置
         edge: {
             type: "cubic-horizontal",
@@ -464,10 +454,10 @@ onMounted(() => {
         },
     );
     graph.on(GraphEvent.BEFORE_ANIMATE, () => {
-        graphStatusStore.setPlaying(true);
+        animationPlaying.value = true;
     });
     graph.on(GraphEvent.AFTER_ANIMATE, () => {
-        graphStatusStore.setPlaying(false);
+        animationPlaying.value = false;
     });
 
     graph.render();
@@ -484,7 +474,7 @@ function saveNode(node: PNode) {
 }
 
 function toggleGraphView() {
-    if (graphStatusStore.playing) return;
+    if (animationPlaying.value) return;
     currentGraphStore.updateGraph({
         id: currentGraphStore.graph?.id!,
         hideCompleted: !currentGraphStore.graph?.hideCompleted,
