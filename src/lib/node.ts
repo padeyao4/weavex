@@ -33,8 +33,8 @@ export class CustomNode extends Rect {
 
     // 按钮位置和大小
     const buttonSize = 20; // 按钮直径
-    const buttonX = width / 2 - buttonSize / 2; // 按钮中心X坐标
-    const buttonY = -height / 2 + buttonSize / 2; // 按钮中心Y坐标
+    const buttonX = width / 2 - 5; // 按钮中心X坐标
+    const buttonY = -height / 2 + 5; // 按钮中心Y坐标
 
     // 创建按钮组
     const buttonGroup = this.upsert(
@@ -62,7 +62,13 @@ export class CustomNode extends Rect {
     // 图标参数
     const iconOffset = 3; // 从按钮中心到图标起点的距离
     const lineWidth = 1; // 线宽，稍微粗一点更清晰
-    const iconColor = "#333";
+    const iconColor = "#33333395";
+
+    // 计算X图标的偏移量，使其线段长度与+图标一致
+    // +图标的线段长度 = 2 * iconOffset = 6
+    // X图标的线段长度 = √((2*xOffset)² + (2*xOffset)²) = √(8*xOffset²) = 2*xOffset*√2
+    // 解方程：2*xOffset*√2 = 2*iconOffset => xOffset*√2 = iconOffset => xOffset = iconOffset / √2
+    const xOffset = iconOffset / Math.sqrt(2);
 
     // 移除旧的图标元素（如果有的话）
     const oldLine1 = buttonGroup.getElementById("button-icon-line1");
@@ -74,10 +80,10 @@ export class CustomNode extends Rect {
       // 节点展开时：显示X图标（关闭图标）
       // 第一条线：从左上到右下
       const line1Style = {
-        x1: -iconOffset,
-        y1: -iconOffset,
-        x2: iconOffset,
-        y2: iconOffset,
+        x1: -xOffset,
+        y1: -xOffset,
+        x2: xOffset,
+        y2: xOffset,
         stroke: iconColor,
         strokeWidth: lineWidth,
         lineCap: "round" as const,
@@ -87,10 +93,10 @@ export class CustomNode extends Rect {
 
       // 第二条线：从左下到右上
       const line2Style = {
-        x1: -iconOffset,
-        y1: iconOffset,
-        x2: iconOffset,
-        y2: -iconOffset,
+        x1: -xOffset,
+        y1: xOffset,
+        x2: xOffset,
+        y2: -xOffset,
         stroke: iconColor,
         strokeWidth: lineWidth,
         lineCap: "round" as const,
