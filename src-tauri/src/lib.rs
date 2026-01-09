@@ -12,8 +12,17 @@ pub fn run() {
         }))
         .plugin(
             tauri_plugin_log::Builder::new()
-                .level(tauri_plugin_log::log::LevelFilter::Debug)
-                .build(),
+              .format(|out, message, record| {
+                use chrono::Local;
+                let timestamp = Local::now().format("%Y-%m-%d %H:%M:%S");
+                out.finish(format_args!(
+                  "[{} {}] {}",
+                  timestamp,
+                  record.level(),
+                  message
+                ))
+              })
+              .build()
         )
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_store::Builder::new().build())

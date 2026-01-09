@@ -12,7 +12,12 @@
                 <p class="text-sm text-gray-400 mt-1">编辑节点信息</p>
             </div>
 
-            <el-form :model="localNode" label-position="top" class="space-y-5">
+            <el-form
+                :model="localNode"
+                label-position="top"
+                class="space-y-5"
+                @submit.prevent
+            >
                 <el-form-item label="节点名称" required>
                     <el-input
                         v-model="localNode.name"
