@@ -18,7 +18,7 @@ export interface DagreLayoutOptions extends BaseLayoutOptions {
 }
 
 const defaultSize: Size = [120, 60];
-const margin = 10;
+const margin = 20;
 
 class SubGraph {
   id: string;

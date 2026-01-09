@@ -440,17 +440,13 @@ onMounted(() => {
     graph.on(
         NodeEvent.POINTER_ENTER,
         (evt: IElementEvent & { target: Element }) => {
-            debug("pointer enter" + evt.target.id);
             graph?.setElementState(evt.target.id, "hover");
-            graph?.draw();
         },
     );
     graph.on(
         NodeEvent.POINTER_LEAVE,
         (evt: IElementEvent & { target: Element }) => {
-            debug("pointer leave" + evt.target.id);
             graph?.setElementState(evt.target.id, "default");
-            graph?.draw();
         },
     );
     graph.on(GraphEvent.BEFORE_ANIMATE, () => {
