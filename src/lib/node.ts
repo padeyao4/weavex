@@ -2,6 +2,7 @@ import { useCurrentGraphStore, useGraphStatusStore } from "@/stores";
 import { PNode } from "@/types";
 import { Group } from "@antv/g";
 import { Rect, RectStyleProps } from "@antv/g6";
+import { debug } from "@tauri-apps/plugin-log";
 
 // 创建自定义节点，继承自 Rect
 export class CustomNode extends Rect {
@@ -27,6 +28,9 @@ export class CustomNode extends Rect {
   }
 
   drawButton(attributes: Required<RectStyleProps>, container: Group) {
+    const status = this.context.graph?.getElementState(this.id);
+    const statusHover = status.find((s) => s === "hover");
+
     const size = attributes.size;
     const [width, height] = typeof size === "number" ? [size, size] : size;
     const node = this.nodeData.data as unknown as PNode;
@@ -40,9 +44,13 @@ export class CustomNode extends Rect {
     const buttonGroup = this.upsert(
       "button-group",
       "group",
-      {},
+      statusHover ? {} : false,
       container,
     ) as Group;
+
+    if (!statusHover) {
+      return;
+    }
 
     // 设置按钮组的位置
     buttonGroup.setLocalPosition(buttonX, buttonY);

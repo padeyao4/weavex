@@ -443,6 +443,20 @@ onMounted(() => {
         Object.assign(drawerNode, node ?? {});
         drawer.value = true;
     });
+    graph.on(
+        NodeEvent.POINTER_ENTER,
+        (evt: IElementEvent & { target: Element }) => {
+            debug("pointer enter" + evt.target.id);
+            graph?.setElementState(evt.target.id, "hover");
+        },
+    );
+    graph.on(
+        NodeEvent.POINTER_LEAVE,
+        (evt: IElementEvent & { target: Element }) => {
+            debug("pointer leave" + evt.target.id);
+            graph?.setElementState(evt.target.id, "default");
+        },
+    );
     graph.on(GraphEvent.BEFORE_ANIMATE, () => {
         graphStatusStore.setPlaying(true);
     });
