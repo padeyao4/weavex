@@ -389,6 +389,10 @@ onMounted(() => {
                     { key: "out", placement: "right", fill: "#D580FF" },
                 ],
             },
+            state: {
+                hover: {},
+                default: {},
+            },
         },
 
         // combo配置
@@ -448,6 +452,7 @@ onMounted(() => {
         (evt: IElementEvent & { target: Element }) => {
             debug("pointer enter" + evt.target.id);
             graph?.setElementState(evt.target.id, "hover");
+            graph?.draw();
         },
     );
     graph.on(
@@ -455,6 +460,7 @@ onMounted(() => {
         (evt: IElementEvent & { target: Element }) => {
             debug("pointer leave" + evt.target.id);
             graph?.setElementState(evt.target.id, "default");
+            graph?.draw();
         },
     );
     graph.on(GraphEvent.BEFORE_ANIMATE, () => {
@@ -463,6 +469,7 @@ onMounted(() => {
     graph.on(GraphEvent.AFTER_ANIMATE, () => {
         graphStatusStore.setPlaying(false);
     });
+
     graph.render();
 });
 

@@ -8,6 +8,7 @@ import { debug } from "@tauri-apps/plugin-log";
 export class CustomNode extends Rect {
   currentGraphStore = useCurrentGraphStore();
   graphStatusStore = useGraphStatusStore();
+  private buttonGroup: Group | null = null;
 
   renderGraph() {
     this.context.graph.setData(this.currentGraphStore.graphData);
@@ -28,152 +29,275 @@ export class CustomNode extends Rect {
   }
 
   drawButton(attributes: Required<RectStyleProps>, container: Group) {
-    const status = this.context.graph?.getElementState(this.id);
-    const statusHover = status.find((s) => s === "hover");
+    const status = this.context.graph?.getElementState(this.id) || [];
+    const isHover = status.includes("hover");
 
-    const size = attributes.size;
-    const [width, height] = typeof size === "number" ? [size, size] : size;
-    const node = this.nodeData.data as unknown as PNode;
+    // 调试日志
+    debug(
+      `Node ${this.id}: hover=${isHover}, states=${JSON.stringify(status)}`,
+    );
 
-    // 按钮位置和大小
-    const buttonSize = 20; // 按钮直径
-    const buttonX = width / 2 - 5; // 按钮中心X坐标
-    const buttonY = -height / 2 + 5; // 按钮中心Y坐标
+    if (isHover) {
+      // 创建和更新
+      const size = attributes.size;
+      const [width, height] = typeof size === "number" ? [size, size] : size;
+      const node = this.nodeData.data as unknown as PNode;
 
-    // 创建按钮组
-    const buttonGroup = this.upsert(
-      "button-group",
-      "group",
-      statusHover ? {} : false,
-      container,
-    ) as Group;
+      // 按钮位置和大小
+      const buttonSize = 20; // 按钮直径
+      const buttonX = width / 2 - 5; // 按钮中心X坐标
+      const buttonY = -height / 2 + 5; // 按钮中心Y坐标
 
-    if (!statusHover) {
-      return;
-    }
+      // 创建或获取按钮组
+      this.buttonGroup = this.upsert(
+        "button-group",
+        "group",
+        {},
+        container,
+      ) as Group;
 
-    // 设置按钮组的位置
-    buttonGroup.setLocalPosition(buttonX, buttonY);
+      // 设置按钮组的位置
+      this.buttonGroup?.setLocalPosition(buttonX, buttonY);
 
-    // 创建按钮背景（圆形）
-    const btnStyle = {
-      r: buttonSize / 2,
-      fill: "#fff",
-      stroke: "#00000080",
-      lineWidth: 0.5,
-      cx: 0, // 相对于组中心
-      cy: 0, // 相对于组中心
-    };
-
-    this.upsert("button-background", "circle", btnStyle, buttonGroup)!;
-
-    // 图标参数
-    const iconOffset = 3; // 从按钮中心到图标起点的距离
-    const lineWidth = 1; // 线宽，稍微粗一点更清晰
-    const iconColor = "#33333395";
-
-    // 计算X图标的偏移量，使其线段长度与+图标一致
-    // +图标的线段长度 = 2 * iconOffset = 6
-    // X图标的线段长度 = √((2*xOffset)² + (2*xOffset)²) = √(8*xOffset²) = 2*xOffset*√2
-    // 解方程：2*xOffset*√2 = 2*iconOffset => xOffset*√2 = iconOffset => xOffset = iconOffset / √2
-    const xOffset = iconOffset / Math.sqrt(2);
-
-    // 移除旧的图标元素（如果有的话）
-    const oldLine1 = buttonGroup.getElementById("button-icon-line1");
-    const oldLine2 = buttonGroup.getElementById("button-icon-line2");
-    if (oldLine1) oldLine1.remove();
-    if (oldLine2) oldLine2.remove();
-
-    if (node.expanded) {
-      // 节点展开时：显示X图标（关闭图标）
-      // 第一条线：从左上到右下
-      const line1Style = {
-        x1: -xOffset,
-        y1: -xOffset,
-        x2: xOffset,
-        y2: xOffset,
-        stroke: iconColor,
-        strokeWidth: lineWidth,
-        lineCap: "round" as const,
-        lineJoin: "round" as const,
-        id: "button-icon-line1",
+      // 创建按钮背景（圆形）
+      const btnStyle = {
+        r: buttonSize / 2,
+        fill: "#fff",
+        stroke: "#00000080",
+        lineWidth: 0.5,
+        cx: 0, // 相对于组中心
+        cy: 0, // 相对于组中心
       };
 
-      // 第二条线：从左下到右上
-      const line2Style = {
-        x1: -xOffset,
-        y1: xOffset,
-        x2: xOffset,
-        y2: -xOffset,
-        stroke: iconColor,
-        strokeWidth: lineWidth,
-        lineCap: "round" as const,
-        lineJoin: "round" as const,
-        id: "button-icon-line2",
-      };
+      this.upsert("button-background", "circle", btnStyle, this.buttonGroup)!;
 
-      // 创建X图标的两条线
-      this.upsert("button-icon-line1", "line", line1Style, buttonGroup);
-      this.upsert("button-icon-line2", "line", line2Style, buttonGroup);
+      // 图标参数
+      const iconOffset = 3; // 从按钮中心到图标起点的距离
+      const lineWidth = 1; // 线宽，稍微粗一点更清晰
+      const iconColor = "#33333395";
+
+      // 计算X图标的偏移量
+      const xOffset = iconOffset / Math.sqrt(2);
+
+      // 移除旧的图标元素
+      const oldLine1 = this.buttonGroup.getElementById("button-icon-line1");
+      const oldLine2 = this.buttonGroup.getElementById("button-icon-line2");
+      if (oldLine1) oldLine1.remove();
+      if (oldLine2) oldLine2.remove();
+
+      if (node.expanded) {
+        // 节点展开时：显示X图标（关闭图标）
+        const line1Style = {
+          x1: -xOffset,
+          y1: -xOffset,
+          x2: xOffset,
+          y2: xOffset,
+          stroke: iconColor,
+          strokeWidth: lineWidth,
+          lineCap: "round" as const,
+          lineJoin: "round" as const,
+          id: "button-icon-line1",
+        };
+
+        const line2Style = {
+          x1: -xOffset,
+          y1: xOffset,
+          x2: xOffset,
+          y2: -xOffset,
+          stroke: iconColor,
+          strokeWidth: lineWidth,
+          lineCap: "round" as const,
+          lineJoin: "round" as const,
+          id: "button-icon-line2",
+        };
+
+        this.upsert("button-icon-line1", "line", line1Style, this.buttonGroup);
+        this.upsert("button-icon-line2", "line", line2Style, this.buttonGroup);
+      } else {
+        // 节点收起时：显示+图标（展开图标）
+        const horizontalLineStyle = {
+          x1: -iconOffset,
+          y1: 0,
+          x2: iconOffset,
+          y2: 0,
+          stroke: iconColor,
+          strokeWidth: lineWidth,
+          lineCap: "round" as const,
+          lineJoin: "round" as const,
+          id: "button-icon-line1",
+        };
+
+        const verticalLineStyle = {
+          x1: 0,
+          y1: -iconOffset,
+          x2: 0,
+          y2: iconOffset,
+          stroke: iconColor,
+          strokeWidth: lineWidth,
+          lineCap: "round" as const,
+          lineJoin: "round" as const,
+          id: "button-icon-line2",
+        };
+
+        this.upsert(
+          "button-icon-line1",
+          "line",
+          horizontalLineStyle,
+          this.buttonGroup,
+        );
+        this.upsert(
+          "button-icon-line2",
+          "line",
+          verticalLineStyle,
+          this.buttonGroup,
+        );
+      }
+
+      // 给整个按钮组添加点击事件
+      if (!(this.buttonGroup as any).clickBound) {
+        this.buttonGroup.addEventListener("click", (e: MouseEvent) => {
+          e.stopPropagation();
+          if (this.graphStatusStore.playing) {
+            return;
+          }
+          this.currentGraphStore.toggleNodeExpanded(node.id);
+          this.renderGraph();
+        });
+
+        (this.buttonGroup as any).clickBound = true;
+      }
     } else {
-      // 节点收起时：显示+图标（展开图标）
-      // 水平线：从左到右
-      const horizontalLineStyle = {
-        x1: -iconOffset,
-        y1: 0,
-        x2: iconOffset,
-        y2: 0,
-        stroke: iconColor,
-        strokeWidth: lineWidth,
-        lineCap: "round" as const,
-        lineJoin: "round" as const,
-        id: "button-icon-line1",
-      };
-
-      // 垂直线：从上到下
-      const verticalLineStyle = {
-        x1: 0,
-        y1: -iconOffset,
-        x2: 0,
-        y2: iconOffset,
-        stroke: iconColor,
-        strokeWidth: lineWidth,
-        lineCap: "round" as const,
-        lineJoin: "round" as const,
-        id: "button-icon-line2",
-      };
-
-      // 创建+图标的两条线
-      this.upsert(
-        "button-icon-line1",
-        "line",
-        horizontalLineStyle,
-        buttonGroup,
-      );
-      this.upsert("button-icon-line2", "line", verticalLineStyle, buttonGroup);
+      // 删除
+      const buttonGroup = this.upsert("button-group", "group", {}, container);
+      buttonGroup?.removeChildren();
     }
 
-    // 给整个按钮组添加点击事件
-    if (!(buttonGroup as any).clickBound) {
-      buttonGroup.addEventListener("click", (e: MouseEvent) => {
-        e.stopPropagation();
-        if (this.graphStatusStore.playing) {
-          return;
-        }
-        this.currentGraphStore.toggleNodeExpanded(node.id);
-        this.renderGraph();
-      });
+    // const size = attributes.size;
+    // const [width, height] = typeof size === "number" ? [size, size] : size;
+    // const node = this.nodeData.data as unknown as PNode;
 
-      // 添加鼠标悬停效果
-      // buttonGroup.addEventListener("mouseenter", () => {
-      //   btnBackground.attr("fill", node.expanded ? "#f0f0f0" : "#000000b0");
-      // });
+    // // 按钮位置和大小
+    // const buttonSize = 20; // 按钮直径
+    // const buttonX = width / 2 - 5; // 按钮中心X坐标
+    // const buttonY = -height / 2 + 5; // 按钮中心Y坐标
 
-      // buttonGroup.addEventListener("mouseleave", () => {
-      //   btnBackground.attr("fill", node.expanded ? "#fff" : "#00000080");
-      // });
+    // // 创建或获取按钮组
+    // this.buttonGroup = this.upsert(
+    //   "button-group",
+    //   "group",
+    //   isHover ? {} : false,
+    //   container,
+    // ) as Group;
 
-      (buttonGroup as any).clickBound = true;
-    }
+    // // 设置按钮组的位置
+    // this.buttonGroup?.setLocalPosition(buttonX, buttonY);
+
+    // // 创建按钮背景（圆形）
+    // const btnStyle = {
+    //   r: buttonSize / 2,
+    //   fill: "#fff",
+    //   stroke: "#00000080",
+    //   lineWidth: 0.5,
+    //   cx: 0, // 相对于组中心
+    //   cy: 0, // 相对于组中心
+    // };
+
+    // this.upsert("button-background", "circle", btnStyle, this.buttonGroup)!;
+
+    // // 图标参数
+    // const iconOffset = 3; // 从按钮中心到图标起点的距离
+    // const lineWidth = 1; // 线宽，稍微粗一点更清晰
+    // const iconColor = "#33333395";
+
+    // // 计算X图标的偏移量
+    // const xOffset = iconOffset / Math.sqrt(2);
+
+    // // 移除旧的图标元素
+    // const oldLine1 = this.buttonGroup.getElementById("button-icon-line1");
+    // const oldLine2 = this.buttonGroup.getElementById("button-icon-line2");
+    // if (oldLine1) oldLine1.remove();
+    // if (oldLine2) oldLine2.remove();
+
+    // if (node.expanded) {
+    //   // 节点展开时：显示X图标（关闭图标）
+    //   const line1Style = {
+    //     x1: -xOffset,
+    //     y1: -xOffset,
+    //     x2: xOffset,
+    //     y2: xOffset,
+    //     stroke: iconColor,
+    //     strokeWidth: lineWidth,
+    //     lineCap: "round" as const,
+    //     lineJoin: "round" as const,
+    //     id: "button-icon-line1",
+    //   };
+
+    //   const line2Style = {
+    //     x1: -xOffset,
+    //     y1: xOffset,
+    //     x2: xOffset,
+    //     y2: -xOffset,
+    //     stroke: iconColor,
+    //     strokeWidth: lineWidth,
+    //     lineCap: "round" as const,
+    //     lineJoin: "round" as const,
+    //     id: "button-icon-line2",
+    //   };
+
+    //   this.upsert("button-icon-line1", "line", line1Style, this.buttonGroup);
+    //   this.upsert("button-icon-line2", "line", line2Style, this.buttonGroup);
+    // } else {
+    //   // 节点收起时：显示+图标（展开图标）
+    //   const horizontalLineStyle = {
+    //     x1: -iconOffset,
+    //     y1: 0,
+    //     x2: iconOffset,
+    //     y2: 0,
+    //     stroke: iconColor,
+    //     strokeWidth: lineWidth,
+    //     lineCap: "round" as const,
+    //     lineJoin: "round" as const,
+    //     id: "button-icon-line1",
+    //   };
+
+    //   const verticalLineStyle = {
+    //     x1: 0,
+    //     y1: -iconOffset,
+    //     x2: 0,
+    //     y2: iconOffset,
+    //     stroke: iconColor,
+    //     strokeWidth: lineWidth,
+    //     lineCap: "round" as const,
+    //     lineJoin: "round" as const,
+    //     id: "button-icon-line2",
+    //   };
+
+    //   this.upsert(
+    //     "button-icon-line1",
+    //     "line",
+    //     horizontalLineStyle,
+    //     this.buttonGroup,
+    //   );
+    //   this.upsert(
+    //     "button-icon-line2",
+    //     "line",
+    //     verticalLineStyle,
+    //     this.buttonGroup,
+    //   );
+    // }
+
+    // // 给整个按钮组添加点击事件
+    // if (!(this.buttonGroup as any).clickBound) {
+    //   this.buttonGroup.addEventListener("click", (e: MouseEvent) => {
+    //     e.stopPropagation();
+    //     if (this.graphStatusStore.playing) {
+    //       return;
+    //     }
+    //     this.currentGraphStore.toggleNodeExpanded(node.id);
+    //     this.renderGraph();
+    //   });
+
+    //   (this.buttonGroup as any).clickBound = true;
+    // }
   }
 }
