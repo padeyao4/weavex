@@ -32,9 +32,9 @@ export class CustomNode extends Rect {
     const node = this.nodeData.data as unknown as PNode;
 
     // 按钮位置和大小
-    const buttonSize = 10; // 按钮直径
-    const buttonX = width / 2 - 5; // 按钮中心X坐标
-    const buttonY = -height / 2 + 5; // 按钮中心Y坐标
+    const buttonSize = 20; // 按钮直径
+    const buttonX = width / 2 - buttonSize / 2; // 按钮中心X坐标
+    const buttonY = -height / 2 + buttonSize / 2; // 按钮中心Y坐标
 
     // 创建按钮组
     const buttonGroup = this.upsert(
@@ -50,52 +50,94 @@ export class CustomNode extends Rect {
     // 创建按钮背景（圆形）
     const btnStyle = {
       r: buttonSize / 2,
-      fill: node.expanded ? "#fff" : "#00000080",
+      fill: "#fff",
       stroke: "#00000080",
       lineWidth: 0.5,
       cx: 0, // 相对于组中心
       cy: 0, // 相对于组中心
     };
 
-    const btnBackground = this.upsert(
-      "button-background",
-      "circle",
-      btnStyle,
-      buttonGroup,
-    )!;
+    this.upsert("button-background", "circle", btnStyle, buttonGroup)!;
 
-    // 绘制X图标
-    // X图标在按钮内的偏移量
+    // 图标参数
     const iconOffset = 3; // 从按钮中心到图标起点的距离
-    const lineWidth = 1.2; // 线宽，稍微粗一点更清晰
+    const lineWidth = 1; // 线宽，稍微粗一点更清晰
+    const iconColor = "#333";
 
-    // 第一条线：从左上到右下
-    const line1Style = {
-      x1: -iconOffset,
-      y1: -iconOffset,
-      x2: iconOffset,
-      y2: iconOffset,
-      stroke: node.expanded ? "#333" : "#fff",
-      strokeWidth: lineWidth,
-      lineCap: "square" as const,
-      lineJoin: "round" as const,
-    };
+    // 移除旧的图标元素（如果有的话）
+    const oldLine1 = buttonGroup.getElementById("button-icon-line1");
+    const oldLine2 = buttonGroup.getElementById("button-icon-line2");
+    if (oldLine1) oldLine1.remove();
+    if (oldLine2) oldLine2.remove();
 
-    // 第二条线：从左下到右上
-    const line2Style = {
-      x1: -iconOffset,
-      y1: iconOffset,
-      x2: iconOffset,
-      y2: -iconOffset,
-      stroke: node.expanded ? "#333" : "#fff",
-      strokeWidth: lineWidth,
-      lineCap: "square" as const,
-      lineJoin: "round" as const,
-    };
+    if (node.expanded) {
+      // 节点展开时：显示X图标（关闭图标）
+      // 第一条线：从左上到右下
+      const line1Style = {
+        x1: -iconOffset,
+        y1: -iconOffset,
+        x2: iconOffset,
+        y2: iconOffset,
+        stroke: iconColor,
+        strokeWidth: lineWidth,
+        lineCap: "round" as const,
+        lineJoin: "round" as const,
+        id: "button-icon-line1",
+      };
 
-    // 创建X图标的两条线
-    this.upsert("button-line1", "line", line1Style, buttonGroup);
-    this.upsert("button-line2", "line", line2Style, buttonGroup);
+      // 第二条线：从左下到右上
+      const line2Style = {
+        x1: -iconOffset,
+        y1: iconOffset,
+        x2: iconOffset,
+        y2: -iconOffset,
+        stroke: iconColor,
+        strokeWidth: lineWidth,
+        lineCap: "round" as const,
+        lineJoin: "round" as const,
+        id: "button-icon-line2",
+      };
+
+      // 创建X图标的两条线
+      this.upsert("button-icon-line1", "line", line1Style, buttonGroup);
+      this.upsert("button-icon-line2", "line", line2Style, buttonGroup);
+    } else {
+      // 节点收起时：显示+图标（展开图标）
+      // 水平线：从左到右
+      const horizontalLineStyle = {
+        x1: -iconOffset,
+        y1: 0,
+        x2: iconOffset,
+        y2: 0,
+        stroke: iconColor,
+        strokeWidth: lineWidth,
+        lineCap: "round" as const,
+        lineJoin: "round" as const,
+        id: "button-icon-line1",
+      };
+
+      // 垂直线：从上到下
+      const verticalLineStyle = {
+        x1: 0,
+        y1: -iconOffset,
+        x2: 0,
+        y2: iconOffset,
+        stroke: iconColor,
+        strokeWidth: lineWidth,
+        lineCap: "round" as const,
+        lineJoin: "round" as const,
+        id: "button-icon-line2",
+      };
+
+      // 创建+图标的两条线
+      this.upsert(
+        "button-icon-line1",
+        "line",
+        horizontalLineStyle,
+        buttonGroup,
+      );
+      this.upsert("button-icon-line2", "line", verticalLineStyle, buttonGroup);
+    }
 
     // 给整个按钮组添加点击事件
     if (!(buttonGroup as any).clickBound) {
@@ -109,13 +151,13 @@ export class CustomNode extends Rect {
       });
 
       // 添加鼠标悬停效果
-      buttonGroup.addEventListener("mouseenter", () => {
-        btnBackground.attr("fill", node.expanded ? "#f0f0f0" : "#000000b0");
-      });
+      // buttonGroup.addEventListener("mouseenter", () => {
+      //   btnBackground.attr("fill", node.expanded ? "#f0f0f0" : "#000000b0");
+      // });
 
-      buttonGroup.addEventListener("mouseleave", () => {
-        btnBackground.attr("fill", node.expanded ? "#fff" : "#00000080");
-      });
+      // buttonGroup.addEventListener("mouseleave", () => {
+      //   btnBackground.attr("fill", node.expanded ? "#fff" : "#00000080");
+      // });
 
       (buttonGroup as any).clickBound = true;
     }
