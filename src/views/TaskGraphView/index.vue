@@ -40,11 +40,27 @@
             </div>
             <div
                 class="w-10 h-10 hover:bg-gray-100 rounded-full flex justify-center items-center transition-colors duration-200"
+                @click="fitView()"
+                title="适应画布大小"
+            >
+                <div class="relative w-6 h-6">
+                    <icon-fill
+                        theme="outline"
+                        size="24"
+                        fill="#333"
+                        :strokeWidth="2"
+                        strokeLinecap="square"
+                        class="absolute"
+                    />
+                </div>
+            </div>
+            <div
+                class="w-10 h-10 hover:bg-gray-100 rounded-full flex justify-center items-center transition-colors duration-200"
                 @click="fitCenter()"
                 title="居中显示"
             >
                 <div class="relative w-6 h-6">
-                    <icon-horizontally-centered
+                    <icon-aiming
                         theme="outline"
                         size="24"
                         fill="#333"
@@ -90,8 +106,12 @@ const drawerNode = reactive<PNode>(NodeUtil.createNode());
 
 let graph: Graph | undefined;
 
-const fitCenter = () => {
+const fitView = () => {
     graph?.fitView();
+};
+
+const fitCenter = () => {
+    graph?.fitCenter();
 };
 
 const animationPlaying = ref(false);
