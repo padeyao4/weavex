@@ -39,48 +39,56 @@
             <div class="flex-1 flex flex-col min-h-0">
                 <div class="flex-1 overflow-y-auto mt-1">
                     <div class="flex flex-col gap-1">
-                        <router-link
-                            :to="{
-                                name: 'taskGraph',
-                                params: { taskId: item.id },
-                            }"
-                            custom
-                            v-slot="{ navigate, isActive }"
-                            v-for="item in graphsStore.graphsMeta"
-                            :key="item.id"
+                        <SortableList
+                            :list="graphsStore.graphsMeta"
+                            :update="debounceHandleGraphDrag"
                         >
-                            <div
-                                @click="navigate"
-                                :class="{ 'bg-gray-100 rounded-md': isActive }"
-                                class="flex flex-row h-9 hover:bg-gray-100 items-center ml-1 mr-1 pl-3 hover:rounded-md group cursor-default transition-colors duration-200"
-                            >
-                                <icon-chart-graph
-                                    theme="outline"
-                                    size="18"
-                                    fill="#6b7280"
-                                    :strokeWidth="2"
-                                />
-                                <div
-                                    class="pl-3 mr-auto select-none text-gray-700 text-sm font-normal"
+                            <template #default="{ item }">
+                                <router-link
+                                    :to="{
+                                        name: 'taskGraph',
+                                        params: { taskId: item.id },
+                                    }"
+                                    custom
+                                    v-slot="{ navigate, isActive }"
                                 >
-                                    {{ item.name }}
-                                </div>
-                                <div
-                                    class="flex justify-center items-center w-6 h-6 m-2 rounded-sm group-hover:opacity-100 opacity-0 hover:bg-gray-300 cursor-pointer transition-opacity duration-200"
-                                    @click.stop="
-                                        showContextMenu(
-                                            $event,
-                                            item.id,
-                                            item.name,
-                                        )
-                                    "
-                                >
-                                    <el-icon :size="14">
-                                        <icon-more />
-                                    </el-icon>
-                                </div>
-                            </div>
-                        </router-link>
+                                    <div
+                                        @click="navigate"
+                                        :class="{
+                                            'bg-gray-100 rounded-md': isActive,
+                                        }"
+                                        class="flex flex-row h-9 hover:bg-gray-100 items-center ml-1 mr-1 pl-3 hover:rounded-md group cursor-default transition-colors duration-200"
+                                        :data-draggable-move="item.id"
+                                    >
+                                        <icon-chart-graph
+                                            theme="outline"
+                                            size="18"
+                                            fill="#6b7280"
+                                            :strokeWidth="2"
+                                        />
+                                        <div
+                                            class="pl-3 mr-auto select-none text-gray-700 text-sm font-normal"
+                                        >
+                                            {{ item.name }}
+                                        </div>
+                                        <div
+                                            class="flex justify-center items-center w-6 h-6 m-2 rounded-sm group-hover:opacity-100 opacity-0 hover:bg-gray-300 cursor-pointer transition-opacity duration-200"
+                                            @click.stop="
+                                                showContextMenu(
+                                                    $event,
+                                                    item.id,
+                                                    item.name,
+                                                )
+                                            "
+                                        >
+                                            <el-icon :size="14">
+                                                <icon-more />
+                                            </el-icon>
+                                        </div>
+                                    </div>
+                                </router-link>
+                            </template>
+                        </SortableList>
                     </div>
                 </div>
             </div>
@@ -187,6 +195,9 @@ import { ElMessage } from "element-plus";
 import { router } from "@/router";
 import ContextMenu from "./ContextMenu.vue";
 import RenameDialog from "./RenameDialog.vue";
+import SortableList from "@/components/SortableList.vue";
+import { PGraph } from "@/types";
+import { debounce } from "lodash-es";
 
 const graphsStore = useGraphStore();
 const taskStore = useTaskStore();
@@ -304,4 +315,19 @@ const handleClickOutside = () => {
         closeContextMenu();
     }
 };
+
+// 处理项目拖拽排序
+const handleGraphDrag = (current: PGraph, other: PGraph) => {
+    // 如果优先级相同，添加随机值避免冲突
+    if (current.priority === other.priority) {
+        current.priority = (current.priority ?? 0) + Math.random() * 100;
+        other.priority = (other.priority ?? 0) + Math.random() * 100;
+    }
+
+    // 交换优先级
+    [current.priority, other.priority] = [other.priority, current.priority];
+};
+
+// 使用防抖函数优化拖拽性能
+const debounceHandleGraphDrag = debounce(handleGraphDrag, 10);
 </script>

@@ -26,4 +26,5 @@ export interface PGraph {
   rootNodeIds: string[]; // 多根支持（DAG 可能有多个入口）
   hideCompleted?: boolean; // 是否显示已完成节点
   nodes: Record<string, PNode>; // 扁平化节点映射
+  priority?: number; // 图优先级，数字越大优先级越高
 }

@@ -201,12 +201,9 @@ export const useGraphStore = defineStore("graph-storage", () => {
   }
 
   const graphsMeta = computed(() => {
-    return Object.values(allGraph).map((graph) => ({
-      id: graph.id,
-      name: graph.name,
-      createdAt: graph.createdAt,
-      updatedAt: graph.updatedAt,
-    }));
+    return Object.values(allGraph).sort(
+      (a, b) => (b.priority ?? 0) - (a.priority ?? 0),
+    );
   });
 
   return {
