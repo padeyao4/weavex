@@ -62,6 +62,8 @@ interface DragViewModel {
     origin: Point;
     clone?: HTMLElement; // 拖拽的元素
     target?: HTMLElement; // 点击后选择的元素
+    dragTimer?: number; // 拖拽计时器
+    isDragging: boolean; // 是否正在拖拽
 }
 
 const viewModel = reactive<DragViewModel>({
@@ -80,6 +82,8 @@ const viewModel = reactive<DragViewModel>({
     },
     clone: undefined,
     target: undefined,
+    dragTimer: undefined,
+    isDragging: false,
 });
 
 function setRefs(id: string, e: Element) {
@@ -108,7 +112,7 @@ function isInLine(r1: DOMRect, r2: DOMRect) {
 }
 
 useEventListener(["pointermove"], (e) => {
-    if (!viewModel.target || !viewModel.clone) return;
+    if (!viewModel.target || !viewModel.clone || !viewModel.isDragging) return;
     viewModel.end.x = e.clientX;
     viewModel.end.y = e.clientY;
     viewModel.clone.style.top = `${viewModel.origin.y + viewModel.end.y - viewModel.start.y}px`;
@@ -134,11 +138,22 @@ useEventListener(["pointermove"], (e) => {
 });
 
 useEventListener(["pointerup", "pointercancel"], () => {
-    if (!viewModel.target || !viewModel.clone) return;
-    document.body.removeChild(viewModel.clone);
-    viewModel.target.style.opacity = "1";
+    // 清理计时器
+    if (viewModel.dragTimer) {
+        clearTimeout(viewModel.dragTimer);
+        viewModel.dragTimer = undefined;
+    }
+
+    // 如果已经开始拖拽，清理拖拽元素
+    if (viewModel.isDragging && viewModel.target && viewModel.clone) {
+        document.body.removeChild(viewModel.clone);
+        viewModel.target.style.opacity = "1";
+    }
+
+    // 重置状态
     viewModel.target = undefined;
     viewModel.clone = undefined;
+    viewModel.isDragging = false;
 });
 
 function pointerDown(e: PointerEvent) {
@@ -167,20 +182,24 @@ function pointerDown(e: PointerEvent) {
     viewModel.origin.x = bound.left;
     viewModel.origin.y = bound.top;
 
-    // 创建克隆元素
-    viewModel.clone = el!.cloneNode(true) as HTMLElement;
-    viewModel.clone.style.position = "fixed";
-    viewModel.clone.style.top = `${bound.top}px`;
-    viewModel.clone.style.left = `${bound.left}px`;
-    viewModel.clone.style.width = `${bound.width}px`;
-    for (let child of viewModel.clone.children) {
-        (child as HTMLElement).style.boxShadow =
-            "0 0 5px 2px rgba(0, 0, 0, 0.2)";
-    }
-    document.body.appendChild(viewModel.clone);
+    // 设置50毫秒延迟后才开始拖拽
+    viewModel.dragTimer = setTimeout(() => {
+        // 创建克隆元素
+        viewModel.clone = el!.cloneNode(true) as HTMLElement;
+        viewModel.clone.style.position = "fixed";
+        viewModel.clone.style.top = `${bound.top}px`;
+        viewModel.clone.style.left = `${bound.left}px`;
+        viewModel.clone.style.width = `${bound.width}px`;
+        for (let child of viewModel.clone.children) {
+            (child as HTMLElement).style.boxShadow =
+                "0 0 5px 2px rgba(0, 0, 0, 0.2)";
+        }
+        document.body.appendChild(viewModel.clone);
 
-    viewModel.target = el!;
-    el!.style.opacity = "0";
+        viewModel.target = el!;
+        el!.style.opacity = "0";
+        viewModel.isDragging = true;
+    }, 300) as unknown as number;
 }
 </script>
 
