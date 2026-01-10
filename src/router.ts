@@ -1,10 +1,11 @@
 import { createRouter, createWebHistory } from "vue-router";
 import HomeView from "./views/HomeView.vue";
-import SettingsView from "./views/SettingsView.vue";
+import SettingsView from "./views/SettingsView/index.vue";
 import NoteView from "./views/NoteView.vue";
 import TaskGraphView from "./views/TaskGraphView/index.vue";
 import TaskMenuView from "./views/TaskMenuView/index.vue";
 import TaskSummaryView from "./views/TaskSummaryView/index.vue";
+import TestPageView from "./views/TestPageView.vue";
 
 export const router = createRouter({
   history: createWebHistory(),
@@ -36,6 +37,11 @@ export const router = createRouter({
           path: "note",
           name: "note",
           component: NoteView,
+        },
+        {
+          path: "test-page",
+          name: "testPage",
+          component: TestPageView,
         },
       ],
     },

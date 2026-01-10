@@ -63,7 +63,7 @@
     </div>
 </template>
 <script setup lang="ts">
-import { useCurrentGraphStore } from "@/stores";
+import { useConfigStore, useCurrentGraphStore } from "@/stores";
 import { NodeUtil } from "@/utils";
 import {
     Element,
@@ -83,6 +83,7 @@ const route = useRoute();
 const taskId = route.params.taskId as string;
 const currentGraphStore = useCurrentGraphStore();
 currentGraphStore.setGraph({ id: taskId as string });
+const configStore = useConfigStore();
 
 const drawer = ref(false);
 const drawerNode = reactive<PNode>(NodeUtil.createNode());
@@ -426,7 +427,7 @@ onMounted(() => {
             marginx: 0,
             marginy: 0,
         },
-        animation: true,
+        animation: configStore.config.graphAnimation,
     });
     graph.on(NodeEvent.CLICK, (evt: IElementEvent & { target: Element }) => {
         const nodeId = evt.target.id;

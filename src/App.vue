@@ -8,6 +8,7 @@ import LoadView from "@/views/LoadView.vue";
 import ErrorView from "@/views/ErrorView.vue";
 import { useContextStore, useGraphStore } from "@/stores";
 import { onMounted, watch } from "vue";
+import { error } from "@tauri-apps/plugin-log";
 const contextStore = useContextStore();
 const graphStore = useGraphStore();
 onMounted(async () => {
@@ -16,8 +17,8 @@ onMounted(async () => {
         watch([graphStore.allGraph], () => {
             graphStore.debouncedSave();
         });
-    } catch (error) {
-        console.error("Error initializing:", error);
+    } catch (e) {
+        error("Error initializing:" + JSON.stringify(e));
         contextStore.setStatus("error");
     }
 });
