@@ -1,5 +1,5 @@
 <template>
-    <div class="w-full h-screen flex flex-col pt-6">
+    <div class="flex-1 h-screen flex flex-col pt-6">
         <div class="h-14 flex items-center font-sans text-xl pl-4 select-none">
             {{ currentGraphStore.graph?.name }}
         </div>

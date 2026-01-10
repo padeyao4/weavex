@@ -113,7 +113,7 @@
                 </div>
             </div>
         </menu>
-        <router-view :key="$route.fullPath" class="h-full flex-1" />
+        <router-view :key="$route.fullPath" class="h-screen flex-1" />
 
         <!-- 创建项目对话框 -->
         <div
