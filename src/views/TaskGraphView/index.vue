@@ -1,5 +1,5 @@
 <template>
-    <div class="flex-1 h-screen flex flex-col pt-6">
+    <div class="flex flex-col pt-6">
         <div class="h-14 flex items-center font-sans text-xl pl-4 select-none">
             {{ currentGraphStore.graph?.name }}
         </div>
@@ -483,9 +483,3 @@ onUnmounted(() => {
     graph?.destroy();
 });
 </script>
-
-<style scoped>
-#container {
-    width: calc(100vw - 64px - 256px);
-}
-</style>

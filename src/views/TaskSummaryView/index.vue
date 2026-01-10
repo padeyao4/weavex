@@ -34,9 +34,7 @@ const debounceUpdate = debounce(onUpdate, 10);
 </script>
 
 <template>
-    <main
-        class="w-full h-screen bg-white flex flex-col overflow-hidden select-none"
-    >
+    <main class="flex flex-col overflow-hidden select-none">
         <div class="ml-6 mr-6 mb-6 mt-8 flex flex-col flex-1 min-h-0">
             <div class="h-10 flex items-center text-xl select-none">
                 任务列表

@@ -1,5 +1,5 @@
 <template>
-    <div @click="handleClickOutside" class="flex flex-1 flex-row h-screen">
+    <div @click="handleClickOutside" class="flex w-full flex-row h-screen">
         <menu
             class="w-64 border-r border-gray-100 flex flex-col shrink-0 h-full pt-8 select-none"
             @contextmenu.prevent
@@ -113,8 +113,7 @@
                 </div>
             </div>
         </menu>
-        <router-view :key="$route.fullPath" class="h-screen flex-1" />
-
+        <router-view :key="$route.fullPath" class="flex-1 min-w-0 min-h-0" />
         <!-- 创建项目对话框 -->
         <div
             class="h-screen w-screen bg-black/50 absolute left-0 right-0 top-0 transition-opacity duration-300"
