@@ -15,6 +15,7 @@ export interface PNode {
   completed: boolean; // 节点是否已完成
   expanded?: boolean; // 节点是否已展开,默认不展开
   priority?: number; // 节点优先级，数字越大优先级越高
+  isFollowed?: boolean; // 节点是否已关注
 }
 
 export interface PGraph {

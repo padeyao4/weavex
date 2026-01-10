@@ -2,7 +2,6 @@ import { defineStore } from "pinia";
 import { computed } from "vue";
 import { useGraphStore } from "./storage";
 import { GraphUtils } from "@/utils";
-import { PNode } from "@/types";
 
 export const useTaskStore = defineStore("task", () => {
   const graphStore = useGraphStore();
@@ -10,13 +9,16 @@ export const useTaskStore = defineStore("task", () => {
   const importantTasks = computed(() =>
     Object.values(graphStore.allGraph)
       .flatMap((graph) => Object.values(graph.nodes))
-      .filter((node) => !node.completed && node.priority),
+      .filter((node) => !node.completed && node.isFollowed)
+      .sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0)),
   );
 
   const lowPriorityTasks = computed(() => {
     const importantTaskIds = importantTasks.value.map((node) => node.id);
     const set = new Set<string>(importantTaskIds);
-    return recommendationTasks.value.filter((node) => !set.has(node.id));
+    return recommendationTasks.value
+      .filter((node) => !set.has(node.id))
+      .sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0));
   });
 
   /**
@@ -36,31 +38,8 @@ export const useTaskStore = defineStore("task", () => {
     });
   });
 
-  const allTaskMap = computed(() => {
-    return Object.values(graphStore.allGraph)
-      .flatMap((graph) => Object.values(graph.nodes))
-      .reduce((acc, node) => {
-        acc.set(node.id, node);
-        return acc;
-      }, new Map<string, PNode>());
-  });
-
-  function toggleTaskPriority(id: string) {
-    const task = allTaskMap.value.get(id);
-    if (!task) return;
-    task.priority = task.priority ? 0 : 1;
-  }
-
-  function toggleTaskCompletion(id: string) {
-    const task = allTaskMap.value.get(id);
-    if (!task) return;
-    task.completed = !task.completed;
-  }
-
   return {
     importantTasks,
     lowPriorityTasks,
-    toggleTaskPriority,
-    toggleTaskCompletion,
   };
 });
