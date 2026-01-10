@@ -94,6 +94,7 @@ import { useRoute } from "vue-router";
 import { PNode } from "@/types";
 import { debug } from "@tauri-apps/plugin-log";
 import NodeDetailDrawer from "./components/NodeDetailDrawer.vue";
+import { pull } from "lodash-es";
 
 const route = useRoute();
 const taskId = route.params.taskId as string;
@@ -130,39 +131,49 @@ onMounted(() => {
                     switch (e.targetType) {
                         case "node":
                             return [
-                                {
-                                    name: "添加后续节点",
-                                    value: "node:add-next",
-                                },
-                                {
-                                    name: "添加子节点",
-                                    value: "node:add-child",
-                                },
-                                {
-                                    name: "添加前置节点",
-                                    value: "node:add-prev",
-                                },
-                                {
-                                    name: "插入后续节点",
-                                    value: "node:insert-next",
-                                },
-                                {
-                                    name: "插入前置节点",
-                                    value: "node:insert-prev",
-                                },
-                                { name: "删除节点", value: "node:delete" },
-                                {
-                                    name: "删除前置关系",
-                                    value: "node:delete-prev-edge",
-                                },
-                                {
-                                    name: "删除后续关系",
-                                    value: "node:delete-next-edge",
-                                },
-                                {
-                                    name: "删除且保留关系",
-                                    value: "node:delete-keep-edge",
-                                },
+                                ...[
+                                    {
+                                        name: "添加后续节点",
+                                        value: "node:add-next",
+                                    },
+                                    {
+                                        name: "添加子节点",
+                                        value: "node:add-child",
+                                    },
+                                    {
+                                        name: "添加前置节点",
+                                        value: "node:add-prev",
+                                    },
+                                    {
+                                        name: "插入后续节点",
+                                        value: "node:insert-next",
+                                    },
+                                    {
+                                        name: "插入前置节点",
+                                        value: "node:insert-prev",
+                                    },
+                                    { name: "删除节点", value: "node:delete" },
+                                    {
+                                        name: "删除前置关系",
+                                        value: "node:delete-prev-edge",
+                                    },
+                                    {
+                                        name: "删除后续关系",
+                                        value: "node:delete-next-edge",
+                                    },
+                                    {
+                                        name: "删除且保留关系",
+                                        value: "node:delete-keep-edge",
+                                    },
+                                ],
+                                ...(configStore.config.testMode
+                                    ? [
+                                          {
+                                              name: "测试",
+                                              value: "node:test",
+                                          },
+                                      ]
+                                    : []),
                             ];
                         case "edge":
                             return [{ name: "删除边", value: "edge:delete" }];
@@ -367,6 +378,9 @@ onMounted(() => {
                                 );
                             }
                             break;
+                        case "node:test":
+                            testNode(current.id);
+                            break;
                         default:
                             console.warn(`Unknown action: ${value}`);
                             break;
@@ -400,6 +414,8 @@ onMounted(() => {
                 labelMaxWidth: "90%",
                 labelPadding: 4,
                 labelMaxLines: 3,
+                shadowColor: undefined,
+                shadowBlur: undefined,
                 labelTextOverflow: "ellipsis",
                 pointerEvents: (d: NodeData) => (d.type ? "none" : "all"),
                 port: false,
@@ -417,8 +433,19 @@ onMounted(() => {
                 },
             },
             state: {
+                default: {
+                    stroke: "#00000080",
+                    lineWidth: 0.5,
+                    shadowColor: "#000",
+                    shadowBlur: 0,
+                },
+                highlight: {
+                    stroke: "#3B82F6",
+                    lineWidth: 0.5,
+                    shadowColor: "#3B82F6",
+                    shadowBlur: 5,
+                },
                 hover: {},
-                default: {},
             },
         },
         // 边配置
@@ -461,13 +488,16 @@ onMounted(() => {
     graph.on(
         NodeEvent.POINTER_ENTER,
         (evt: IElementEvent & { target: Element }) => {
-            graph?.setElementState(evt.target.id, "hover");
+            const defaultState = graph?.getElementState(evt.target.id) ?? [];
+            graph?.setElementState(evt.target.id, [...defaultState, "hover"]);
         },
     );
     graph.on(
         NodeEvent.POINTER_LEAVE,
         (evt: IElementEvent & { target: Element }) => {
-            graph?.setElementState(evt.target.id, "default");
+            const defaultState = graph?.getElementState(evt.target.id) ?? [];
+            pull(defaultState, "hover");
+            graph?.setElementState(evt.target.id, defaultState);
         },
     );
     graph.on(GraphEvent.BEFORE_ANIMATE, () => {
@@ -480,12 +510,20 @@ onMounted(() => {
     graph.render();
 });
 
+const testNode = (id: string) => {
+    console.log(`Testing node ${id}`);
+    graph?.setElementState(id, "default");
+    const states = graph?.getElementState(id);
+    debug(`${states}`);
+};
+
 function renderGraph() {
     graph?.setData(() => currentGraphStore.graphData);
     graph?.render();
 }
 
 function saveNode(node: PNode) {
+    node.completed && graph?.setElementState(node.id, "default");
     currentGraphStore.updateNode(node);
     renderGraph();
 }
