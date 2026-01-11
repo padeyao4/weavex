@@ -439,12 +439,6 @@ onMounted(() => {
                     shadowColor: "#000",
                     shadowBlur: 0,
                 },
-                highlight: {
-                    stroke: "#3B82F6",
-                    lineWidth: 0.5,
-                    shadowColor: "#3B82F6",
-                    shadowBlur: 5,
-                },
                 followed: {
                     stroke: "#3B82F6",
                     lineWidth: 0.5,
@@ -538,7 +532,14 @@ function renderGraph() {
 }
 
 function saveNode(node: PNode) {
-    node.completed && graph?.setElementState(node.id, "default");
+    if (node.completed) {
+        graph?.setElementState(node.id, "default");
+    } else {
+        graph?.setElementState(
+            node.id,
+            node.isFollowed ? "followed" : "default",
+        );
+    }
     currentGraphStore.updateNode(node);
     renderGraph();
 }

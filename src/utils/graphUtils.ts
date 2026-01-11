@@ -228,7 +228,7 @@ export class GraphUtils {
       nodes.push({
         id: node.id,
         data: { ...node },
-        states: node.isFollowed && !node.completed ? ["highlight"] : [],
+        states: node.isFollowed && !node.completed ? ["followed"] : [],
         combo: undefined,
       });
       node.nexts?.forEach((next) => {
