@@ -1,6 +1,6 @@
 <template>
     <WindowsTitleBar />
-    <div class="h-screen w-screen flex bg-white overflow-hidden">
+    <div class="h-screen w-screen flex bg-[#f7f7f7] overflow-hidden">
         <aside
             class="w-14 h-screen flex flex-col shrink-0 items-center pt-9 pb-1"
         >
