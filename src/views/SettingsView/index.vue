@@ -5,6 +5,8 @@ import { FsUtil } from "@/lib";
 import { onMounted, ref } from "vue";
 import WindowTitleBar from "@/components/WindowsTitleBar.vue";
 import { useConfigStore } from "@/stores";
+import { open } from "@tauri-apps/plugin-dialog";
+import { debug } from "@tauri-apps/plugin-log";
 
 const router = useRouter();
 const dev = import.meta.env.VITE_APP_ENV === "dev";
@@ -21,6 +23,14 @@ const back = () => {
 };
 
 const configStore = useConfigStore();
+
+const openFileDialog = async () => {
+    const directory = await open({
+        multiple: false,
+        directory: true,
+    });
+    debug(directory ?? "");
+};
 </script>
 <template>
     <WindowTitleBar />
@@ -62,6 +72,17 @@ const configStore = useConfigStore();
                     v-model="configStore.config.graphAnimation"
                     size="sm"
                 />
+            </div>
+        </div>
+        <div
+            class="w-140 my-4 text-gray-500 font-light font-sans gap-1 flex flex-col pb-4 border-b border-gray-300"
+        >
+            <div class="text-md font-medium mb-2">切换项目</div>
+            <div class="flex flex-row items-center">
+                <div class="text-sm mr-auto">切换项目</div>
+                <el-button type="primary" size="small" @click="openFileDialog"
+                    >切换项目</el-button
+                >
             </div>
         </div>
         <div

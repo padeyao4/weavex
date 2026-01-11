@@ -7,22 +7,23 @@ fn greet(name: &str) -> String {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_single_instance::init(|_app, _args, _cwd| {
             print!("单例模式")
         }))
         .plugin(
             tauri_plugin_log::Builder::new()
-              .format(|out, message, record| {
-                use chrono::Local;
-                let timestamp = Local::now().format("%Y-%m-%d %H:%M:%S");
-                out.finish(format_args!(
-                  "[{} {}] {}",
-                  timestamp,
-                  record.level(),
-                  message
-                ))
-              })
-              .build()
+                .format(|out, message, record| {
+                    use chrono::Local;
+                    let timestamp = Local::now().format("%Y-%m-%d %H:%M:%S");
+                    out.finish(format_args!(
+                        "[{} {}] {}",
+                        timestamp,
+                        record.level(),
+                        message
+                    ))
+                })
+                .build(),
         )
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_store::Builder::new().build())

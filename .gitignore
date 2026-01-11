@@ -24,3 +24,4 @@ dist-ssr
 *.sln
 *.sw?
 q.text
+src-tauri/2

@@ -12,6 +12,10 @@ export interface ContextInfo {
   workDir?: string;
 }
 
+/**
+ * 程序上下文配置中心,用于保存程序运行时状态.
+ * 数据存储在数据目录和项目目录地址分开
+ */
 export const useContextStore = defineStore("status", () => {
   const context = useContextStorage<ContextInfo>("context.bin", {
     status: "pending",
