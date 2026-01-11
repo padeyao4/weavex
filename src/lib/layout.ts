@@ -7,7 +7,6 @@ import {
   NodeData,
   Size,
 } from "@antv/g6";
-import { debug } from "@tauri-apps/plugin-log";
 import dagre from "dagre";
 
 export interface DagreLayoutOptions extends BaseLayoutOptions {
@@ -153,13 +152,12 @@ export class DagreLayout extends BaseLayout<DagreLayoutOptions> {
     model: GraphData,
     options?: DagreLayoutOptions,
   ): Promise<GraphData> {
-    const { duration } = await measureTime(() => {
+    await measureTime(() => {
       executeLayout(model, {
         ...options,
         ...this.options,
       });
     });
-    debug(`DagreLayout execution time: ${duration} ms`);
     return model;
   }
 }

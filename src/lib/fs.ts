@@ -1,4 +1,4 @@
-import { join, resolve, documentDir } from "@tauri-apps/api/path";
+import { join, resolve, documentDir, appDataDir } from "@tauri-apps/api/path";
 import {
   exists,
   BaseDirectory,
@@ -20,8 +20,12 @@ export class FsUtil {
     return await exists(path, { baseDir: BaseDirectory.Document });
   }
 
-  static async getLocalStoragePath(): Promise<string> {
+  static async getDocumentDataPath(): Promise<string> {
     return await resolve(await documentDir(), this.DATA_PATH);
+  }
+
+  static async getAppDataPath(): Promise<string> {
+    return await resolve(await appDataDir(), "");
   }
 
   private static async ensureDataDirectory(): Promise<void> {

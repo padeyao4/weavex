@@ -8,10 +8,12 @@ import { useConfigStore } from "@/stores";
 
 const router = useRouter();
 const dev = import.meta.env.VITE_APP_ENV === "dev";
-const localPath = ref<string>();
+const documentDataPath = ref<string>();
+const appDataPath = ref<string>();
 
 onMounted(async () => {
-    localPath.value = await FsUtil.getLocalStoragePath();
+    documentDataPath.value = await FsUtil.getDocumentDataPath();
+    appDataPath.value = await FsUtil.getAppDataPath();
 });
 
 const back = () => {
@@ -40,7 +42,8 @@ const configStore = useConfigStore();
             class="w-140 my-4 text-gray-500 font-light font-sans gap-1 flex flex-col pb-4 border-b border-gray-300"
         >
             <div class="text-md font-medium mb-2">存储</div>
-            <div class="text-sm">数据存储目录: {{ localPath }}</div>
+            <div class="text-sm">项目存储目录: {{ documentDataPath }}</div>
+            <div class="text-sm">APP数据目录: {{ appDataPath }}</div>
             <div class="text-sm">
                 不要手动修改或者删除目录文件,升级或者迁移前可备份此文件
             </div>
