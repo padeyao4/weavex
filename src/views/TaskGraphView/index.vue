@@ -445,6 +445,12 @@ onMounted(() => {
                     shadowColor: "#3B82F6",
                     shadowBlur: 5,
                 },
+                followed: {
+                    stroke: "#3B82F6",
+                    lineWidth: 0.5,
+                    shadowColor: "#3B82F6",
+                    shadowBlur: 5,
+                },
                 hover: {},
             },
         },
@@ -488,16 +494,25 @@ onMounted(() => {
     graph.on(
         NodeEvent.POINTER_ENTER,
         (evt: IElementEvent & { target: Element }) => {
-            const defaultState = graph?.getElementState(evt.target.id) ?? [];
-            graph?.setElementState(evt.target.id, [...defaultState, "hover"]);
+            if (graph?.hasNode(evt.target.id)) {
+                const defaultState =
+                    graph?.getElementState(evt.target.id) ?? [];
+                graph?.setElementState(evt.target.id, [
+                    ...defaultState,
+                    "hover",
+                ]);
+            }
         },
     );
     graph.on(
         NodeEvent.POINTER_LEAVE,
         (evt: IElementEvent & { target: Element }) => {
-            const defaultState = graph?.getElementState(evt.target.id) ?? [];
-            pull(defaultState, "hover");
-            graph?.setElementState(evt.target.id, defaultState);
+            if (graph?.hasNode(evt.target.id)) {
+                const defaultState =
+                    graph?.getElementState(evt.target.id) ?? [];
+                pull(defaultState, "hover");
+                graph?.setElementState(evt.target.id, defaultState);
+            }
         },
     );
     graph.on(GraphEvent.BEFORE_ANIMATE, () => {
