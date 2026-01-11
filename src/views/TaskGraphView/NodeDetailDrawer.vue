@@ -57,6 +57,17 @@
                         </span>
                     </div>
                 </el-form-item>
+                <el-form-item label="关注状态">
+                    <div class="flex items-center space-x-2">
+                        <el-switch
+                            v-model="localNode.isFollowed"
+                            class="simple-switch"
+                        />
+                        <span class="text-sm text-gray-500">
+                            {{ localNode.isFollowed ? "已关注" : "未关注" }}
+                        </span>
+                    </div>
+                </el-form-item>
 
                 <div class="pt-4 border-t border-gray-100">
                     <div class="flex space-x-3">
