@@ -1,7 +1,9 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import WindowsTitleBar from "@/components/WindowsTitleBar.vue";
+</script>
 
 <template>
-    <div></div>
+    <WindowsTitleBar />
 </template>
 
 <style scoped></style>
