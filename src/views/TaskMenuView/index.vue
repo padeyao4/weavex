@@ -12,9 +12,9 @@
                     v-slot="{ navigate, isActive }"
                 >
                     <div
-                        class="flex flex-row items-center h-10 hover:bg-gray-100 pl-3 pr-2 m-1 rounded-md transition-colors duration-200"
+                        class="flex flex-row items-center h-10 hover:bg-[#eee] pl-3 pr-2 m-1 rounded-md transition-colors duration-200"
                         @click="navigate"
-                        :class="isActive ? 'bg-gray-100 rounded-md' : ''"
+                        :class="isActive ? 'bg-[#eee] rounded-md' : ''"
                     >
                         <icon-sun-one
                             theme="outline"
@@ -55,9 +55,9 @@
                                     <div
                                         @click="navigate"
                                         :class="{
-                                            'bg-gray-100 rounded-md': isActive,
+                                            'bg-[#eee] rounded-md': isActive,
                                         }"
-                                        class="flex flex-row h-9 hover:bg-gray-100 items-center ml-1 mr-1 pl-3 hover:rounded-md group cursor-default transition-colors duration-200"
+                                        class="flex flex-row h-9 hover:bg-[#eee] items-center ml-1 mr-1 pl-3 hover:rounded-md group cursor-default transition-colors duration-200"
                                         :data-draggable-move="item.id"
                                     >
                                         <icon-chart-graph
@@ -114,53 +114,13 @@
             </div>
         </menu>
         <router-view :key="$route.fullPath" class="flex-1 min-w-0 min-h-0" />
-        <!-- 创建项目对话框 -->
-        <div
-            class="h-screen w-screen bg-black/50 absolute left-0 right-0 top-0 transition-opacity duration-300"
-            :class="{
-                hidden: !formData.visible,
-                'opacity-0': !formData.visible,
-                'opacity-100': formData.visible,
-            }"
-            @click.self="formData.visible = false"
-            style="z-index: 9999"
-        >
-            <div
-                class="absolute w-1/3 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 border border-gray-300 bg-white rounded-md shadow-lg transition-all duration-300"
-                :class="{
-                    'scale-95 opacity-0': !formData.visible,
-                    'scale-100 opacity-100': formData.visible,
-                }"
-            >
-                <div class="flex flex-col m-4 py-2 justify-center items-center">
-                    <h3 class="text-lg font-semibold mb-4">创建新项目</h3>
-                    <el-form :model="formData" class="w-full">
-                        <el-form-item label="项目名称:" required>
-                            <el-input
-                                v-model="formData.name"
-                                placeholder="请输入项目名称"
-                                @keydown.enter="
-                                    (e: any) => {
-                                        createTaskGraph();
-                                        e.preventDefault();
-                                    }
-                                "
-                                :maxlength="50"
-                                show-word-limit
-                            ></el-input>
-                        </el-form-item>
-                    </el-form>
-                    <div class="flex gap-2 mt-4">
-                        <el-button @click="formData.visible = false"
-                            >取 消</el-button
-                        >
-                        <el-button type="primary" @click="createTaskGraph()"
-                            >确 定</el-button
-                        >
-                    </div>
-                </div>
-            </div>
-        </div>
+
+        <!-- 创建项目对话框组件 -->
+        <CreateProjectDialog
+            :visible="formData.visible"
+            @update:visible="(value) => (formData.visible = value)"
+            @confirm="createTaskGraph"
+        />
 
         <!-- 右键菜单组件 -->
         <ContextMenu
@@ -190,11 +150,11 @@
 import { useGraphStore, useTaskStore } from "@/stores";
 import { GraphUtils } from "@/utils";
 import { reactive, onMounted } from "vue";
-import { ElMessage } from "element-plus";
 import { router } from "@/router";
 import ContextMenu from "./ContextMenu.vue";
 import RenameDialog from "./RenameDialog.vue";
 import SortableList from "@/components/SortableList.vue";
+import CreateProjectDialog from "./CreateProjectDialog.vue";
 import { PGraph } from "@/types";
 import { debounce } from "lodash-es";
 
@@ -237,15 +197,9 @@ const renameDialog = reactive({
     graphId: "",
 });
 
-const createTaskGraph = () => {
-    if (!formData.name.trim()) {
-        ElMessage.warning("请输入项目名称");
-        return;
-    }
-    const newGraph = GraphUtils.createGraph({ name: formData.name.trim() });
+const createTaskGraph = (name: string) => {
+    const newGraph = GraphUtils.createGraph({ name: name.trim() });
     graphsStore.addGraph(newGraph);
-    formData.name = "";
-    formData.visible = false;
     router.push({ name: "taskGraph", params: { taskId: newGraph.id } });
 };
 

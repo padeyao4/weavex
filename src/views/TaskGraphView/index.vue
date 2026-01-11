@@ -93,7 +93,7 @@ import { onMounted, ref, reactive, onUnmounted } from "vue";
 import { useRoute } from "vue-router";
 import { PNode } from "@/types";
 import { debug } from "@tauri-apps/plugin-log";
-import NodeDetailDrawer from "./components/NodeDetailDrawer.vue";
+import NodeDetailDrawer from "./NodeDetailDrawer.vue";
 import { pull } from "lodash-es";
 
 const route = useRoute();
