@@ -12,16 +12,21 @@ const contextStore = useContextStore();
 const { context } = contextStore;
 const graphStore = useGraphStore();
 
-watch([context.workDir], async () => {
-    try {
-        runtimeStore.status.graph.loading = true;
-        await graphStore.loadGraphs();
-    } catch (err) {
-        error(JSON.stringify(err));
-    } finally {
-        runtimeStore.status.graph.loading = false;
-    }
-});
+watch(
+    () => context.existsWorkspace,
+    async (newVal) => {
+        if (newVal) {
+            try {
+                runtimeStore.status.graph.loading = true;
+                await graphStore.loadGraphs();
+            } catch (err) {
+                error(JSON.stringify(err));
+            } finally {
+                runtimeStore.status.graph.loading = false;
+            }
+        }
+    },
+);
 
 watch([graphStore.allGraph], () => {
     if (!runtimeStore.status.graph.loading) {
@@ -30,7 +35,7 @@ watch([graphStore.allGraph], () => {
 });
 
 onBeforeMount(() => {
-    if (!context.workDir) {
+    if (!context.existsWorkspace) {
         router.push({ name: "launch" });
     }
 });
