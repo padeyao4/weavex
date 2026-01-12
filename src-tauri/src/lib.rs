@@ -1,9 +1,17 @@
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
+use serde::{Deserialize, Serialize};
+use std::env;
+use std::fs;
+
+use std::path::Path;
+use std::process::Command;
+
 #[tauri::command]
 fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
 }
 
+#[derive(Debug, Serialize, Deserialize)]
 struct GitOptions {
     branch: String,
     repo_url: String,
@@ -12,26 +20,357 @@ struct GitOptions {
     password: Option<String>,
     ssh_key: Option<String>,
     auth_method: String,
+    commit_message: Option<String>,
+    files: Option<Vec<String>>,
 }
 
 #[tauri::command]
-fn git_clone(option: &GitOptions) {
-    // todo
+fn git_clone(options: GitOptions) -> Result<String, String> {
+    let target_path = Path::new(&options.target_dir);
+
+    // 检查目标目录是否存在，如果不存在则创建
+    if !target_path.exists() {
+        fs::create_dir_all(target_path)
+            .map_err(|e| format!("Failed to create directory: {}", e))?;
+    }
+
+    // 构建git clone命令
+    let mut cmd = Command::new("git");
+    cmd.arg("clone");
+
+    // 处理认证方式
+    let repo_url = match options.auth_method.as_str() {
+        "ssh" => {
+            if let Some(ssh_key) = &options.ssh_key {
+                // 将SSH密钥内容写入临时文件
+                let temp_dir = env::temp_dir();
+                let temp_file_path = temp_dir.join("git_ssh_key");
+
+                // 写入密钥内容到临时文件
+                fs::write(&temp_file_path, ssh_key)
+                    .map_err(|e| format!("Failed to write SSH key to temp file: {}", e))?;
+
+                // 设置文件权限（在Unix-like系统上）
+                #[cfg(unix)]
+                {
+                    use std::os::unix::fs::PermissionsExt;
+                    let mut perms = fs::metadata(&temp_file_path)
+                        .map_err(|e| format!("Failed to get file metadata: {}", e))?
+                        .permissions();
+                    perms.set_mode(0o600); // 只允许所有者读写
+                    fs::set_permissions(&temp_file_path, perms)
+                        .map_err(|e| format!("Failed to set file permissions: {}", e))?;
+                }
+
+                // 设置SSH密钥环境变量
+                env::set_var(
+                    "GIT_SSH_COMMAND",
+                    format!("ssh -i {}", temp_file_path.display()),
+                );
+            }
+            options.repo_url
+        }
+        "https" => {
+            if let (Some(username), Some(password)) = (&options.username, &options.password) {
+                // 在URL中包含用户名和密码
+                let url_with_auth = options
+                    .repo_url
+                    .replace("https://", &format!("https://{}:{}@", username, password));
+                url_with_auth
+            } else {
+                options.repo_url
+            }
+        }
+        _ => options.repo_url,
+    };
+
+    cmd.arg(&repo_url);
+    cmd.arg(&options.target_dir);
+
+    // 如果指定了分支，则添加分支参数
+    if !options.branch.is_empty() && options.branch != "main" && options.branch != "master" {
+        cmd.arg("--branch").arg(&options.branch);
+    }
+
+    // 执行命令
+    let output = cmd
+        .output()
+        .map_err(|e| format!("Failed to execute git clone: {}", e))?;
+
+    if output.status.success() {
+        Ok(format!(
+            "Repository cloned successfully to {}",
+            options.target_dir
+        ))
+    } else {
+        let error_msg = String::from_utf8_lossy(&output.stderr);
+        Err(format!("Git clone failed: {}", error_msg))
+    }
 }
 
 #[tauri::command]
-fn git_commit(option: &GitOptions) {
-    // todo
+fn git_pull(options: GitOptions) -> Result<String, String> {
+    let target_path = Path::new(&options.target_dir);
+
+    // 检查目录是否存在
+    if !target_path.exists() {
+        return Err(format!("Directory does not exist: {}", options.target_dir));
+    }
+
+    // 切换到目标目录
+    let current_dir =
+        env::current_dir().map_err(|e| format!("Failed to get current directory: {}", e))?;
+    env::set_current_dir(&target_path).map_err(|e| format!("Failed to change directory: {}", e))?;
+
+    // 处理认证方式
+    match options.auth_method.as_str() {
+        "ssh" => {
+            if let Some(ssh_key) = &options.ssh_key {
+                // 将SSH密钥内容写入临时文件
+                let temp_dir = env::temp_dir();
+                let temp_file_path = temp_dir.join("git_ssh_key");
+
+                // 写入密钥内容到临时文件
+                fs::write(&temp_file_path, ssh_key)
+                    .map_err(|e| format!("Failed to write SSH key to temp file: {}", e))?;
+
+                // 设置文件权限（在Unix-like系统上）
+                #[cfg(unix)]
+                {
+                    use std::os::unix::fs::PermissionsExt;
+                    let mut perms = fs::metadata(&temp_file_path)
+                        .map_err(|e| format!("Failed to get file metadata: {}", e))?
+                        .permissions();
+                    perms.set_mode(0o600); // 只允许所有者读写
+                    fs::set_permissions(&temp_file_path, perms)
+                        .map_err(|e| format!("Failed to set file permissions: {}", e))?;
+                }
+
+                // 设置SSH密钥环境变量
+                env::set_var(
+                    "GIT_SSH_COMMAND",
+                    format!("ssh -i {}", temp_file_path.display()),
+                );
+            }
+        }
+        "https" => {
+            if let (Some(username), Some(password)) = (&options.username, &options.password) {
+                // 配置git凭据
+                let _ = Command::new("git")
+                    .args(["config", "credential.helper", "store"])
+                    .output();
+
+                // 设置远程URL包含认证信息
+                let url_with_auth = options
+                    .repo_url
+                    .replace("https://", &format!("https://{}:{}@", username, password));
+                let _ = Command::new("git")
+                    .args(["remote", "set-url", "origin", &url_with_auth])
+                    .output();
+            }
+        }
+        _ => {}
+    }
+
+    // 构建git pull命令
+    let mut cmd = Command::new("git");
+    cmd.arg("pull");
+
+    // 如果指定了分支，则添加分支参数
+    if !options.branch.is_empty() {
+        cmd.arg("origin").arg(&options.branch);
+    }
+
+    // 执行命令
+    let output = cmd
+        .output()
+        .map_err(|e| format!("Failed to execute git pull: {}", e))?;
+
+    // 恢复原始目录
+    env::set_current_dir(&current_dir)
+        .map_err(|e| format!("Failed to restore directory: {}", e))?;
+
+    if output.status.success() {
+        let output_str = String::from_utf8_lossy(&output.stdout);
+        Ok(format!("Git pull successful: {}", output_str))
+    } else {
+        let error_msg = String::from_utf8_lossy(&output.stderr);
+        Err(format!("Git pull failed: {}", error_msg))
+    }
 }
 
 #[tauri::command]
-fn git_push(option: &GitOptions) {
-    // todo
+fn git_commit(options: GitOptions) -> Result<String, String> {
+    let target_path = Path::new(&options.target_dir);
+
+    // 检查目录是否存在
+    if !target_path.exists() {
+        return Err(format!("Directory does not exist: {}", options.target_dir));
+    }
+
+    // 切换到目标目录
+    let current_dir =
+        env::current_dir().map_err(|e| format!("Failed to get current directory: {}", e))?;
+    env::set_current_dir(&target_path).map_err(|e| format!("Failed to change directory: {}", e))?;
+
+    // 检查是否有提交消息
+    let commit_message = options
+        .commit_message
+        .ok_or("Commit message is required".to_string())?;
+
+    // 添加文件到暂存区
+    if let Some(files) = &options.files {
+        for file in files {
+            let mut add_cmd = Command::new("git");
+            add_cmd.arg("add").arg(file);
+            let add_output = add_cmd
+                .output()
+                .map_err(|e| format!("Failed to add file {}: {}", file, e))?;
+            if !add_output.status.success() {
+                let error_msg = String::from_utf8_lossy(&add_output.stderr);
+                env::set_current_dir(&current_dir).ok();
+                return Err(format!("Failed to add file {}: {}", file, error_msg));
+            }
+        }
+    } else {
+        // 如果没有指定文件，添加所有更改
+        let mut add_cmd = Command::new("git");
+        add_cmd.arg("add").arg(".");
+        let add_output = add_cmd
+            .output()
+            .map_err(|e| format!("Failed to add files: {}", e))?;
+        if !add_output.status.success() {
+            let error_msg = String::from_utf8_lossy(&add_output.stderr);
+            env::set_current_dir(&current_dir).ok();
+            return Err(format!("Failed to add files: {}", error_msg));
+        }
+    }
+
+    // 执行git commit
+    let mut cmd = Command::new("git");
+    cmd.arg("commit").arg("-m").arg(&commit_message);
+
+    let output = cmd
+        .output()
+        .map_err(|e| format!("Failed to execute git commit: {}", e))?;
+
+    // 恢复原始目录
+    env::set_current_dir(&current_dir)
+        .map_err(|e| format!("Failed to restore directory: {}", e))?;
+
+    if output.status.success() {
+        let output_str = String::from_utf8_lossy(&output.stdout);
+        Ok(format!("Commit successful: {}", output_str))
+    } else {
+        let error_msg = String::from_utf8_lossy(&output.stderr);
+        Err(format!("Commit failed: {}", error_msg))
+    }
 }
 
 #[tauri::command]
-fn git_pull(option: &GitOptions) {
-    // todo
+fn git_push(options: GitOptions) -> Result<String, String> {
+    let target_path = Path::new(&options.target_dir);
+
+    // 检查目录是否存在
+    if !target_path.exists() {
+        return Err(format!("Directory does not exist: {}", options.target_dir));
+    }
+
+    // 切换到目标目录
+    let current_dir =
+        env::current_dir().map_err(|e| format!("Failed to get current directory: {}", e))?;
+    env::set_current_dir(&target_path).map_err(|e| format!("Failed to change directory: {}", e))?;
+
+    // 处理认证方式
+    match options.auth_method.as_str() {
+        "ssh" => {
+            if let Some(ssh_key) = &options.ssh_key {
+                // 将SSH密钥内容写入临时文件
+                let temp_dir = env::temp_dir();
+                let temp_file_path = temp_dir.join("git_ssh_key");
+
+                // 写入密钥内容到临时文件
+                fs::write(&temp_file_path, ssh_key)
+                    .map_err(|e| format!("Failed to write SSH key to temp file: {}", e))?;
+
+                // 设置文件权限（在Unix-like系统上）
+                #[cfg(unix)]
+                {
+                    use std::os::unix::fs::PermissionsExt;
+                    let mut perms = fs::metadata(&temp_file_path)
+                        .map_err(|e| format!("Failed to get file metadata: {}", e))?
+                        .permissions();
+                    perms.set_mode(0o600); // 只允许所有者读写
+                    fs::set_permissions(&temp_file_path, perms)
+                        .map_err(|e| format!("Failed to set file permissions: {}", e))?;
+                }
+
+                // 设置SSH密钥环境变量
+                env::set_var(
+                    "GIT_SSH_COMMAND",
+                    format!("ssh -i {}", temp_file_path.display()),
+                );
+            }
+        }
+        "https" => {
+            if let (Some(username), Some(password)) = (&options.username, &options.password) {
+                // 配置git凭据
+                let _ = Command::new("git")
+                    .args(["config", "credential.helper", "store"])
+                    .output();
+
+                // 设置远程URL包含认证信息
+                let url_with_auth = options
+                    .repo_url
+                    .replace("https://", &format!("https://{}:{}@", username, password));
+                let _ = Command::new("git")
+                    .args(["remote", "set-url", "origin", &url_with_auth])
+                    .output();
+            }
+        }
+        _ => {}
+    }
+
+    // 构建git push命令
+    let mut cmd = Command::new("git");
+    cmd.arg("push");
+
+    // 如果指定了分支，则推送到特定分支
+    if !options.branch.is_empty() {
+        cmd.arg("origin").arg(&options.branch);
+    } else {
+        // 获取当前分支
+        let branch_cmd = Command::new("git")
+            .args(["branch", "--show-current"])
+            .output()
+            .map_err(|e| format!("Failed to get current branch: {}", e))?;
+
+        if branch_cmd.status.success() {
+            let current_branch = String::from_utf8_lossy(&branch_cmd.stdout)
+                .trim()
+                .to_string();
+            if !current_branch.is_empty() {
+                cmd.arg("origin").arg(&current_branch);
+            }
+        }
+    }
+
+    // 执行命令
+    let output = cmd
+        .output()
+        .map_err(|e| format!("Failed to execute git push: {}", e))?;
+
+    // 恢复原始目录
+    env::set_current_dir(&current_dir)
+        .map_err(|e| format!("Failed to restore directory: {}", e))?;
+
+    if output.status.success() {
+        let output_str = String::from_utf8_lossy(&output.stdout);
+        Ok(format!("Git push successful: {}", output_str))
+    } else {
+        let error_msg = String::from_utf8_lossy(&output.stderr);
+        Err(format!("Git push failed: {}", error_msg))
+    }
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -58,7 +397,9 @@ pub fn run() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![greet])
+        .invoke_handler(tauri::generate_handler![
+            greet, git_clone, git_pull, git_commit, git_push
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

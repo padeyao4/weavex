@@ -1,5 +1,5 @@
 <template>
-    <div class="h-screen w-screen flex justify-center items-center">
-        <div>loading</div>
-    </div>
+  <div class="flex h-screen w-screen items-center justify-center">
+    <div>loading</div>
+  </div>
 </template>

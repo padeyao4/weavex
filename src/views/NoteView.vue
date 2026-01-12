@@ -1,5 +1,5 @@
 <template>
-    <div class="w-screen h-screen flex justify-center items-center">
-        <el-empty description="todo" />
-    </div>
+  <div class="flex h-screen w-screen items-center justify-center">
+    <el-empty description="todo" />
+  </div>
 </template>
