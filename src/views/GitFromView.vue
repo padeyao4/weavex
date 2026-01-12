@@ -5,6 +5,11 @@ import { reactive, computed, watch, ref } from "vue";
 import { open } from "@tauri-apps/plugin-dialog";
 import { invoke } from "@tauri-apps/api/core";
 import { ElMessage } from "element-plus";
+import { useContextStore, useRuntimeStore } from "@/stores";
+import { router } from "@/router";
+
+const contextStore = useContextStore();
+const runtimeStore = useRuntimeStore();
 
 const form = reactive({
   repositoryUrl: "",
@@ -68,17 +73,11 @@ watch(
   },
 );
 
+/**
+ * 执行git clone
+ */
 const fetchRepository = async () => {
-  if (!form.repositoryUrl) {
-    ElMessage.error("请输入仓库URL");
-    return;
-  }
-
-  if (!form.workdir) {
-    ElMessage.error("请选择工作目录");
-    return;
-  }
-
+  // todo 参数验证
   loading.value = true;
   operationResult.value = null;
 
@@ -131,14 +130,21 @@ const fetchRepository = async () => {
     };
 
     info("仓库克隆成功: " + result);
-    ElMessage.success("仓库克隆成功！");
+
+    // 设置参数到context中
+    Object.assign(contextStore.context, form);
+    runtimeStore.status.application.existWorkspace = true;
+    setTimeout(() => {
+      router.push({
+        name: "taskSummary",
+      });
+    }, 2000);
   } catch (err: any) {
     const errorMessage = err.toString();
     operationResult.value = {
       success: false,
       message: errorMessage,
     };
-
     error("仓库克隆失败: " + errorMessage);
     ElMessage.error("仓库克隆失败: " + errorMessage);
   } finally {
@@ -315,15 +321,6 @@ const pullRepository = async () => {
             >
               {{ loading ? "处理中..." : "克隆仓库" }}
             </el-button>
-
-            <el-button
-              type="success"
-              @click="pullRepository"
-              :disabled="!form.workdir || loading"
-              :loading="loading"
-            >
-              {{ loading ? "处理中..." : "拉取更新" }}
-            </el-button>
           </div>
         </el-form-item>
       </el-form>
@@ -350,38 +347,6 @@ const pullRepository = async () => {
         >
           {{ operationResult.message }}
         </div>
-      </div>
-
-      <!-- 使用说明 -->
-      <div class="mt-8 rounded border bg-gray-50 p-4">
-        <h3 class="mb-2 font-bold text-gray-700">使用说明：</h3>
-        <ul class="space-y-1 text-sm text-gray-600">
-          <li>
-            • <strong>HTTP/HTTPS地址</strong>：以 http:// 或 https://
-            开头，使用用户名和密码认证
-          </li>
-          <li>
-            • <strong>SSH地址</strong>：以 git@ 或 ssh://
-            开头，可选择使用账号密码或Token认证
-          </li>
-          <li>
-            • <strong>简写SSH地址</strong>：如 github.com:user/repo.git
-            也会被识别为SSH地址
-          </li>
-          <li>
-            •
-            <strong>Token认证</strong>：适用于需要更高安全性的SSH连接，如GitHub
-            Personal Access Token
-          </li>
-          <li>
-            • <strong>SSH密钥格式</strong>：私钥内容应以"-----BEGIN RSA PRIVATE
-            KEY-----"开头，以"-----END RSA PRIVATE KEY-----"结尾
-          </li>
-          <li>• <strong>克隆仓库</strong>：将远程仓库克隆到本地指定目录</li>
-          <li class="mt-2">
-            • <strong>拉取更新</strong>：从远程仓库拉取最新更改到本地
-          </li>
-        </ul>
       </div>
     </div>
   </FramePage>

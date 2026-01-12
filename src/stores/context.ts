@@ -3,17 +3,16 @@ import { defineStore } from "pinia";
 
 export interface ContextInfo {
   workDir?: string;
-  repository?: string; // git远程地址
   branch?: string;
   username?: string;
   email?: string;
   password?: string;
-  token?: string;
-  authMethod?: "token" | "password";
   autoCommit?: boolean;
   autoPush?: boolean;
   autoPull?: boolean;
-  existsWorkspace?: boolean; // 是否存在工作目录,通过该参数决定git地址配置
+  repositoryUrl?: string,
+  authMethod?: "password" | "ssh_key", // password 或 ssh_key
+  sshKey?: string,
 }
 
 /**

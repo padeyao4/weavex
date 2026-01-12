@@ -25,6 +25,12 @@ struct GitOptions {
 }
 
 #[tauri::command]
+fn check_dir_is_git_repository(path: &str) -> bool {
+    // todo
+    return false;
+}
+
+#[tauri::command]
 fn git_clone(options: GitOptions) -> Result<String, String> {
     let target_path = Path::new(&options.target_dir);
 
