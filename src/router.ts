@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from "vue-router";
+import { createRouter, createWebHashHistory } from "vue-router";
 import HomeView from "./views/HomeView/index.vue";
 import SettingsView from "./views/SettingsView/index.vue";
 import NoteView from "./views/NoteView.vue";
@@ -9,9 +9,11 @@ import TestPageView from "./views/TestPageView.vue";
 import LocalFromView from "./views/LocalFromView.vue";
 import GitFromView from "./views/GitFromView.vue";
 import LaunchView from "./views/LaunchView.vue";
+import { initializeApp, isInitialized, existWorkspace } from "./composables/useAppInit";
+import { debug } from "@tauri-apps/plugin-log";
 
-export const router = createRouter({
-  history: createWebHistory(),
+const router = createRouter({
+  history: createWebHashHistory(),
   routes: [
     {
       path: "/home",
@@ -49,8 +51,8 @@ export const router = createRouter({
       ],
     },
     {
-      path: "/launch",
-      name: "launch",
+      path: "/launch-selection",
+      name: "launch-selection",
       component: LaunchView,
     },
     {
@@ -74,3 +76,23 @@ export const router = createRouter({
     },
   ],
 });
+
+
+router.beforeEach(async (to, from, next) => {
+  debug(`router.beforeEach: ${from.fullPath} -> ${to.fullPath}`);
+  if (!isInitialized.value) {
+    await initializeApp();
+  }
+  // 如果没有工作区
+  if (!existWorkspace.value) {
+    if (to.name === 'launch-selection') {
+      next();
+    } else {
+      next();
+    }
+  } else {
+    next();
+  }
+});
+
+export default router;

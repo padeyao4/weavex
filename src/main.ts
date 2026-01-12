@@ -4,13 +4,13 @@ import { createPinia } from "pinia";
 import "./assets/css/main.css";
 import "element-plus/dist/index.css";
 import ElementPlus from "element-plus";
-import { router } from "./router";
 import * as ElementPlusIconsVue from "@element-plus/icons-vue";
 import piniaPluginPersistedstate from "pinia-plugin-persistedstate";
 import { install } from "@icon-park/vue-next/es/all";
 import "@icon-park/vue-next/styles/index.css";
 import { register, ExtensionCategory } from "@antv/g6";
 import { CustomTransform, DagreLayout, CustomNode } from "@/lib";
+import router from "./router";
 
 const app = createApp(App);
 

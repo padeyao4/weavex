@@ -2,6 +2,7 @@
 use serde::{Deserialize, Serialize};
 use std::env;
 use std::fs;
+use tauri_plugin_log::log::debug;
 
 use std::path::Path;
 use std::process::Command;
@@ -25,9 +26,30 @@ struct GitOptions {
 }
 
 #[tauri::command]
-fn check_dir_is_git_repository(path: &str) -> bool {
-    // todo
-    return false;
+fn check_git_repository(path: Option<&str>) -> bool {
+    // 如果路径为None，直接返回false
+    let Some(path_str) = path else {
+        debug!("Path is None");
+        return false;
+    };
+
+    // 检查路径是否为空或空字符串
+    if path_str.trim().is_empty() {
+        debug!("Path is empty");
+        return false;
+    }
+
+    let dir_path = Path::new(path_str);
+
+    // 检查路径是否存在且是目录
+    if !dir_path.exists() || !dir_path.is_dir() {
+        debug!("Path does not exist or is not a directory");
+        return false;
+    }
+
+    // 检查是否存在.git目录
+    let git_dir = dir_path.join(".git");
+    git_dir.exists() && git_dir.is_dir()
 }
 
 #[tauri::command]
@@ -404,7 +426,12 @@ pub fn run() {
         .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
-            greet, git_clone, git_pull, git_commit, git_push
+            greet,
+            check_git_repository,
+            git_clone,
+            git_pull,
+            git_commit,
+            git_push
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

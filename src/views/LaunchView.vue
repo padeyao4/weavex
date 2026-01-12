@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import FramePage from "@/components/FramePage.vue";
-import { router } from "@/router";
+import router from "@/router";
 import { info } from "@tauri-apps/plugin-log";
 
 const handleGitWorkspace = () => {

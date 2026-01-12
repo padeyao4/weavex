@@ -5,18 +5,17 @@ import { reactive, computed, watch, ref } from "vue";
 import { open } from "@tauri-apps/plugin-dialog";
 import { invoke } from "@tauri-apps/api/core";
 import { ElMessage } from "element-plus";
-import { useContextStore, useRuntimeStore } from "@/stores";
-import { router } from "@/router";
+import { useContextStore } from "@/stores";
+import router from "@/router";
 
 const contextStore = useContextStore();
-const runtimeStore = useRuntimeStore();
 
 const form = reactive({
   repositoryUrl: "",
   branch: "main",
   username: "",
   password: "",
-  workdir: "",
+  workDir: "",
   authMethod: "password", // password 或 ssh_key
   sshKey: "",
 });
@@ -57,7 +56,7 @@ const openDirectory = async () => {
     directory: true,
   });
   if (directory) {
-    form.workdir = directory;
+    form.workDir = directory;
   }
 };
 
@@ -86,7 +85,7 @@ const fetchRepository = async () => {
     debug("分支: " + form.branch);
     debug("URL类型: " + urlType.value);
     debug("认证方式: " + form.authMethod);
-    debug("工作目录: " + form.workdir);
+    debug("工作目录: " + form.workDir);
 
     // 根据URL类型确定认证方式
     let authMethod = "none";
@@ -99,7 +98,7 @@ const fetchRepository = async () => {
     // 准备git选项
     const gitOptions = {
       repo_url: form.repositoryUrl,
-      target_dir: form.workdir,
+      target_dir: form.workDir,
       branch: form.branch,
       auth_method: authMethod,
       username: (form.username && encodeURIComponent(form.username)) || null,
@@ -133,7 +132,6 @@ const fetchRepository = async () => {
 
     // 设置参数到context中
     Object.assign(contextStore.context, form);
-    runtimeStore.status.application.existWorkspace = true;
     setTimeout(() => {
       router.push({
         name: "taskSummary",
@@ -154,7 +152,7 @@ const fetchRepository = async () => {
 
 // 新增：执行git pull操作
 const pullRepository = async () => {
-  if (!form.workdir) {
+  if (!form.workDir) {
     ElMessage.error("请选择工作目录");
     return;
   }
@@ -163,12 +161,12 @@ const pullRepository = async () => {
   operationResult.value = null;
 
   try {
-    debug("开始拉取仓库更新: " + form.workdir);
+    debug("开始拉取仓库更新: " + form.workDir);
 
     // 准备git选项
     const gitOptions = {
       repo_url: form.repositoryUrl,
-      target_dir: form.workdir,
+      target_dir: form.workDir,
       branch: form.branch,
       auth_method:
         urlType.value === "http"
@@ -305,7 +303,7 @@ const pullRepository = async () => {
         </el-form-item>
 
         <el-form-item label="Work Directory">
-          <el-text v-if="form.workdir">{{ form.workdir }}</el-text>
+          <el-text v-if="form.workDir">{{ form.workDir }}</el-text>
           <el-button @click="openDirectory">打开目录</el-button>
           <br />
           <div class="mt-1 text-xs text-gray-500">本地工作目录路径</div>
@@ -316,7 +314,7 @@ const pullRepository = async () => {
             <el-button
               type="primary"
               @click="fetchRepository"
-              :disabled="!form.repositoryUrl || !form.workdir || loading"
+              :disabled="!form.repositoryUrl || !form.workDir || loading"
               :loading="loading"
             >
               {{ loading ? "处理中..." : "克隆仓库" }}

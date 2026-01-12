@@ -1,5 +1,6 @@
-import { useContextStorage } from "@/lib";
+import { Store } from "@tauri-apps/plugin-store";
 import { defineStore } from "pinia";
+import { reactive } from "vue";
 
 export interface ContextInfo {
   workDir?: string;
@@ -13,6 +14,7 @@ export interface ContextInfo {
   repositoryUrl?: string,
   authMethod?: "password" | "ssh_key", // password 或 ssh_key
   sshKey?: string,
+  [key: string]: any;
 }
 
 /**
@@ -20,9 +22,25 @@ export interface ContextInfo {
  * 数据存储在数据目录和项目目录地址分开
  */
 export const useContextStore = defineStore("status", () => {
-  const context = useContextStorage<ContextInfo>("context.bin", {});
+  const context = reactive<ContextInfo>({})
+
+  const load = async () => {
+    const store = await Store.load("context.bin")
+    const data = (await store.get<string>("context.bin")) ?? "{}"
+    const obj = JSON.parse(data)
+    Object.keys(obj).forEach((key) => {
+      context[key] = obj[key];
+    });
+  }
+
+  const save = async () => {
+    const store = await Store.load("context.bin")
+    await store.set("context", context)
+  }
 
   return {
     context,
+    load,
+    save
   };
 });
