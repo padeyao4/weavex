@@ -2,6 +2,7 @@
 import FramePage from "@/components/FramePage.vue";
 import { debug } from "@tauri-apps/plugin-log";
 import { reactive, computed, watch } from "vue";
+import { open } from "@tauri-apps/plugin-dialog";
 
 const form = reactive({
     repositoryUrl: "",
@@ -39,6 +40,16 @@ const urlType = computed(() => {
 
     return "unknown";
 });
+
+const openDirectory = async () => {
+    const directory = await open({
+        multiple: false,
+        directory: true,
+    });
+    if (directory) {
+        form.workdir = directory;
+    }
+};
 
 // 监听URL变化，重置认证方式
 watch(
@@ -168,10 +179,9 @@ const fetchRepository = () => {
                 </el-form-item>
 
                 <el-form-item label="Work Directory">
-                    <el-input
-                        v-model="form.workdir"
-                        placeholder="Enter work directory"
-                    ></el-input>
+                    <el-text v-if="form.workdir">{{ form.workdir }}</el-text>
+                    <el-button @click="openDirectory">打开目录</el-button>
+                    <br />
                     <div class="text-xs text-gray-500 mt-1">
                         本地工作目录路径
                     </div>
