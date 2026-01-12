@@ -6,6 +6,8 @@ import TaskGraphView from "./views/TaskGraphView/index.vue";
 import TaskMenuView from "./views/TaskMenuView/index.vue";
 import TaskSummaryView from "./views/TaskSummaryView/index.vue";
 import TestPageView from "./views/TestPageView.vue";
+import LocalFromView from "./views/LocalFromView.vue";
+import GitFromView from "./views/GitFromView.vue";
 
 export const router = createRouter({
   history: createWebHistory(),
@@ -44,6 +46,16 @@ export const router = createRouter({
           component: TestPageView,
         },
       ],
+    },
+    {
+      path: "/launch-local",
+      name: "localWorkspace",
+      component: LocalFromView,
+    },
+    {
+      path: "/launch-cloud",
+      name: "cloudWorkspace",
+      component: GitFromView,
     },
     {
       path: "/settings",
