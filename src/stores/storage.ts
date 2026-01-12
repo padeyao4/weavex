@@ -92,7 +92,8 @@ export const useCurrentGraphStore = defineStore("graph-detail", () => {
 export const useGraphStore = defineStore("graph-storage", () => {
   const allGraph = reactive<Record<string, PGraph>>({});
 
-  async function loadGraphs(obj: Record<string, PGraph>) {
+  async function loadGraphs() {
+    const obj = await FsUtil.readGraphsWithInit();
     Object.keys(obj).forEach((key) => {
       allGraph[key] = obj[key];
     });

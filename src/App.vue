@@ -1,49 +1,37 @@
 <template>
-    <template v-if="context.workDir">
-        <router-view v-if="context.status === 'initialized'" />
-        <error-view v-else-if="context.status === 'error'" />
-        <load-view v-else />
-    </template>
-    <LaunchView v-else />
+    <router-view />
 </template>
 <script setup lang="ts">
-import LoadView from "@/views/LoadView.vue";
-import ErrorView from "@/views/ErrorView.vue";
-import { useContextStore, useGraphStore } from "@/stores";
-import { onMounted, watch } from "vue";
-import { error, info } from "@tauri-apps/plugin-log";
-import { FsUtil } from "./lib";
-import { measureTime } from "./utils";
-import LaunchView from "./views/LaunchView.vue";
+import { useContextStore, useGraphStore, useRuntimeStore } from "@/stores";
+import { error } from "@tauri-apps/plugin-log";
+import { onBeforeMount, watch } from "vue";
+import { router } from "./router";
 
+const runtimeStore = useRuntimeStore();
 const contextStore = useContextStore();
 const { context } = contextStore;
 const graphStore = useGraphStore();
 
-async function initialize() {
-    if (context.status === "pending") {
-        context.status = "initializing";
-        info("Initializing...");
-        // 读取graph json文件
-        const obj = await FsUtil.readGraphsWithInit();
-        // 加载graphsStore
-        await graphStore.loadGraphs(obj);
-        context.status = "initialized";
-        info("Initialized");
-    }
-}
-
-onMounted(async () => {
+watch([context.workDir], async () => {
     try {
-        measureTime(async () => {
-            await initialize();
-        });
-        watch([graphStore.allGraph], () => {
-            graphStore.debouncedSave();
-        });
-    } catch (e) {
-        error("Error initializing:" + JSON.stringify(e));
-        contextStore.setStatus("error");
+        runtimeStore.status.graph.loading = true;
+        await graphStore.loadGraphs();
+    } catch (err) {
+        error(JSON.stringify(err));
+    } finally {
+        runtimeStore.status.graph.loading = false;
+    }
+});
+
+watch([graphStore.allGraph], () => {
+    if (!runtimeStore.status.graph.loading) {
+        graphStore.debouncedSave();
+    }
+});
+
+onBeforeMount(() => {
+    if (!context.workDir) {
+        router.push({ name: "launch" });
     }
 });
 </script>

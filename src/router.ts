@@ -8,6 +8,7 @@ import TaskSummaryView from "./views/TaskSummaryView/index.vue";
 import TestPageView from "./views/TestPageView.vue";
 import LocalFromView from "./views/LocalFromView.vue";
 import GitFromView from "./views/GitFromView.vue";
+import LaunchView from "./views/LaunchView.vue";
 
 export const router = createRouter({
   history: createWebHistory(),
@@ -46,6 +47,11 @@ export const router = createRouter({
           component: TestPageView,
         },
       ],
+    },
+    {
+      path: "/launch",
+      name: "launch",
+      component: LaunchView,
     },
     {
       path: "/launch-local",
