@@ -4,6 +4,36 @@ fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
 }
 
+struct GitOptions {
+    branch: String,
+    repo_url: String,
+    target_dir: String,
+    username: Option<String>,
+    password: Option<String>,
+    ssh_key: Option<String>,
+    auth_method: String,
+}
+
+#[tauri::command]
+fn git_clone(option: &GitOptions) {
+    // todo
+}
+
+#[tauri::command]
+fn git_commit(option: &GitOptions) {
+    // todo
+}
+
+#[tauri::command]
+fn git_push(option: &GitOptions) {
+    // todo
+}
+
+#[tauri::command]
+fn git_pull(option: &GitOptions) {
+    // todo
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()

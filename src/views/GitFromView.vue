@@ -3,6 +3,7 @@ import FramePage from "@/components/FramePage.vue";
 import { debug } from "@tauri-apps/plugin-log";
 import { reactive, computed, watch } from "vue";
 import { open } from "@tauri-apps/plugin-dialog";
+import { invoke } from "@tauri-apps/api/core";
 
 const form = reactive({
     repositoryUrl: "",
@@ -40,6 +41,17 @@ const urlType = computed(() => {
 
     return "unknown";
 });
+
+function testButton() {
+    debug("测试按钮被点击了");
+    invoke("greet", { name: "Tauri" })
+        .then((message) => {
+            debug(message as string);
+        })
+        .catch((error) => {
+            debug(error);
+        });
+}
 
 const openDirectory = async () => {
     const directory = await open({
@@ -219,6 +231,9 @@ const fetchRepository = () => {
                         <strong>Token认证</strong
                         >：适用于需要更高安全性的SSH连接，如GitHub Personal
                         Access Token
+                    </li>
+                    <li>
+                        <button @click="testButton()">测试按钮</button>
                     </li>
                 </ul>
             </div>
