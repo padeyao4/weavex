@@ -2,12 +2,9 @@
 import router from "@/router";
 import { version } from "@/../package.json";
 import WindowTitleBar from "@/components/WindowsTitleBar.vue";
-import { useConfigStore, useGraphStore } from "@/stores";
-import { useContextStore } from "@/stores";
-import { existWorkspace } from "@/composables/useAppInit";
+import { useConfigStore, useRepoStore } from "@/stores";
 
-const contextStore = useContextStore();
-const graphStore = useGraphStore();
+const repoStore = useRepoStore();
 
 const dev = import.meta.env.VITE_APP_ENV === "dev";
 
@@ -17,11 +14,8 @@ const back = () => {
 
 const configStore = useConfigStore();
 
-const openFileDialog = async () => {
-  contextStore.clear();
-  existWorkspace.value = false;
-  graphStore.clear();
-  router.push({ name: "launch-selection" });
+const switchRepo = async () => {
+  repoStore.switchRepo();
 };
 </script>
 <template>
@@ -69,7 +63,7 @@ const openFileDialog = async () => {
       <div class="text-md mb-2 font-medium">切换项目</div>
       <div class="flex flex-row items-center">
         <div class="mr-auto text-sm">切换项目</div>
-        <el-button type="primary" size="small" @click="openFileDialog"
+        <el-button type="primary" size="small" @click="switchRepo"
           >切换项目</el-button
         >
       </div>

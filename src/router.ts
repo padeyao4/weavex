@@ -9,7 +9,7 @@ import TestPageView from "./views/TestPageView.vue";
 import LocalFromView from "./views/LocalFromView.vue";
 import GitFromView from "./views/GitFromView.vue";
 import LaunchView from "./views/LaunchView.vue";
-import { initializeApp, isInitialized, existWorkspace } from "./composables/useAppInit";
+import LoadingView from "./views/LoadingView.vue";
 import { debug } from "@tauri-apps/plugin-log";
 
 const router = createRouter({
@@ -51,19 +51,24 @@ const router = createRouter({
       ],
     },
     {
-      path: "/launch-selection",
-      name: "launch-selection",
+      path: "/launchView",
+      name: "LaunchView",
       component: LaunchView,
     },
     {
-      path: "/launch-local",
-      name: "localWorkspace",
+      path: "/LocalFromView",
+      name: "LocalFromView",
       component: LocalFromView,
     },
     {
-      path: "/launch-cloud",
-      name: "cloudWorkspace",
+      path: "/GitFromView",
+      name: "GitFromView",
       component: GitFromView,
+    },
+    {
+      path: "/loading",
+      name: "loading",
+      component: LoadingView,
     },
     {
       path: "/settings",
@@ -77,22 +82,9 @@ const router = createRouter({
   ],
 });
 
-
 router.beforeEach(async (to, from, next) => {
   debug(`router.beforeEach: ${from.fullPath} -> ${to.fullPath}`);
-  if (!isInitialized.value) {
-    await initializeApp();
-  }
-  // 如果没有工作区
-  if (!existWorkspace.value) {
-    if (to.fullPath.startsWith("/launch")) {
-      next();
-    } else {
-      next({ name: "launch-selection" });
-    }
-  } else {
-    next();
-  }
+  next();
 });
 
 export default router;

@@ -54,7 +54,7 @@ export const useGraphStore = defineStore("graph-storage", () => {
 
   const debouncedSave = debounce(saveGraphs, 1000);
 
-  function updateNode(
+  const updateNode = function (
     graphId: string,
     node: Partial<PNode> & Pick<PNode, "id">,
     options?: Options,
@@ -71,27 +71,32 @@ export const useGraphStore = defineStore("graph-storage", () => {
         extraProcess(graph, options);
       }
     }
-  }
+  };
 
-  function addGraph(graph: PGraph) {
+  const addGraph = function (graph: PGraph, options?: Options) {
     allGraph[graph.id] = graph;
-  }
+    extraProcess(allGraph[graph.id], options);
+  };
 
-  function updateGraph(updates: Partial<PGraph> & Pick<PGraph, "id">) {
+  const updateGraph = function (
+    updates: Partial<PGraph> & Pick<PGraph, "id">,
+    options?: Options,
+  ) {
     if (allGraph[updates.id]) {
       allGraph[updates.id] = {
         ...allGraph[updates.id],
         ...updates,
-        updatedAt: Date.now(),
       };
+      extraProcess(allGraph[updates.id], options);
     }
-  }
+  };
 
-  function removeGraph(graphId: string) {
+  const removeGraph = function (graphId: string, options?: Options) {
     if (allGraph[graphId]) {
       delete allGraph[graphId];
+      extraProcess(undefined, options);
     }
-  }
+  };
 
   const setNodeExpanded = function (
     graphId: string,
@@ -122,11 +127,11 @@ export const useGraphStore = defineStore("graph-storage", () => {
     }
   };
 
-  const extraProcess = function (graph: PGraph, options?: Options) {
-    if (options?.buildRoots) {
+  const extraProcess = function (graph?: PGraph, options?: Options) {
+    if (options?.buildRoots && graph) {
       buildRoots(graph.id);
     }
-    if (options?.update) {
+    if (options?.update && graph) {
       graph.updatedAt = Date.now();
     }
     if (options?.persist) {

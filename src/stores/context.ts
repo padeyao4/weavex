@@ -1,6 +1,12 @@
+import { invoke } from "@tauri-apps/api/core";
+import { debug } from "@tauri-apps/plugin-log";
 import { Store } from "@tauri-apps/plugin-store";
 import { defineStore } from "pinia";
 import { reactive } from "vue";
+
+type ContextOptions = {
+  persist?: boolean;
+};
 
 export interface ContextInfo {
   workDir?: string;
@@ -11,9 +17,9 @@ export interface ContextInfo {
   autoCommit?: boolean;
   autoPush?: boolean;
   autoPull?: boolean;
-  repositoryUrl?: string,
-  authMethod?: "password" | "ssh_key", // password 或 ssh_key
-  sshKey?: string,
+  repositoryUrl?: string;
+  authMethod?: "password" | "ssh_key"; // password 或 ssh_key
+  sshKey?: string;
   [key: string]: any;
 }
 
@@ -22,39 +28,78 @@ export interface ContextInfo {
  * 数据存储在数据目录和项目目录地址分开
  */
 export const useContextStore = defineStore("status", () => {
-  const context = reactive<ContextInfo>({})
+  const context = reactive<ContextInfo>({});
 
   const load = async () => {
-    const store = await Store.load("context.bin")
-    const data = (await store.get<ContextInfo>("context")) ?? {}
+    const store = await Store.load("context.bin");
+    const data = (await store.get<ContextInfo>("context")) ?? {};
     Object.keys(data).forEach((key) => {
       context[key] = data[key];
     });
-  }
+    const passwordInfo = context.password ? { password: "******" } : {};
+    const sshKeyInfo = context.sshKey ? { sshKey: "******" } : {};
+    const debugInfo = { ...context, ...passwordInfo, ...sshKeyInfo };
+    debug(`Loaded context: ${JSON.stringify(debugInfo)}`);
+  };
 
-  const update = (d: Partial<ContextInfo>) => {
+  /**
+   * 更新
+   * @param d
+   */
+  const update = function (d: Partial<ContextInfo>, options?: ContextOptions) {
     Object.keys(d).forEach((key) => {
       context[key] = d[key];
     });
-    save();
-  }
+    if (options?.persist) {
+      save();
+    }
+  };
 
-  const save = async () => {
-    const store = await Store.load("context.bin")
-    await store.set("context", context)
-  }
+  const save = async function () {
+    const store = await Store.load("context.bin");
+    await store.set("context", context);
+  };
 
-  const clear = async () => {
+  const clear = function (options?: ContextOptions) {
     Object.keys(context).forEach((key) => {
       delete context[key];
     });
-  }
+    if (options?.persist) {
+      save();
+    }
+  };
+
+  /**
+   * 切换工作目录
+   */
+  const switchWorkspace = function (
+    param: Partial<ContextInfo> & Pick<ContextInfo, "workDir">,
+    options?: ContextOptions,
+  ) {
+    clear();
+    update(param);
+    process(options);
+  };
+
+  const check_work_dir = async function () {
+    return await invoke<boolean>("check_directory_exists", {
+      path: context.workDir,
+    });
+  };
+
+  const process = function (options?: ContextOptions) {
+    if (options?.persist) {
+      save();
+    }
+  };
 
   return {
     context,
     load,
     save,
     clear,
-    update
+    update,
+    switchWorkspace,
+    check_work_dir,
   };
 });

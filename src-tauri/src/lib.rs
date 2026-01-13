@@ -416,7 +416,16 @@ fn read_file(path: &str) -> String {
 
 #[tauri::command]
 fn write_file(path: &str, content: &str) -> Result<(), String> {
+    // 检查路径是否存在
+    if !Path::new(path).exists() {
+        return Err(format!("File does not exist: {}", path));
+    }
     fs::write(path, content).map_err(|e| format!("Failed to write file: {}", e))
+}
+
+#[tauri::command]
+fn check_directory_exists(path: &str) -> bool {
+    Path::new(path).is_dir()
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -451,7 +460,8 @@ pub fn run() {
             git_commit,
             git_push,
             read_file,
-            write_file
+            write_file,
+            check_directory_exists
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

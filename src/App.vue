@@ -1,10 +1,12 @@
 <template>
-  <router-view v-if="isInitialized" />
-  <FramePage v-else>
-    <div>loading...</div>
-  </FramePage>
+  <router-view />
 </template>
 <script setup lang="ts">
-import FramePage from "./components/FramePage.vue";
-import { isInitialized } from "@/composables/useAppInit";
+import { onMounted } from "vue";
+import { useRepoStore } from "./stores/repo";
+const repoStore = useRepoStore();
+
+onMounted(() => {
+  repoStore.init();
+});
 </script>

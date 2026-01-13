@@ -188,7 +188,7 @@ const renameDialog = reactive({
 
 const createTaskGraph = (name: string) => {
   const newGraph = GraphUtils.createGraph({ name: name.trim() });
-  graphsStore.addGraph(newGraph);
+  graphsStore.addGraph(newGraph, { persist: true });
   router.push({ name: "taskGraph", params: { taskId: newGraph.id } });
 };
 
@@ -224,7 +224,7 @@ const deleteGraph = (graphId: string) => {
     String(currentRoute.params.taskId) === graphId;
 
   // 删除项目
-  graphsStore.removeGraph(graphId);
+  graphsStore.removeGraph(graphId, { persist: true });
   closeContextMenu();
 
   // 如果当前在要删除的项目的页面，则跳转到任务概览页
@@ -242,7 +242,10 @@ const openRenameDialog = (graphId: string, graphName: string) => {
 
 // 重命名项目
 const renameGraph = (graphId: string, name: string) => {
-  graphsStore.updateGraph(graphId, { name });
+  graphsStore.updateGraph(
+    { id: graphId, name },
+    { persist: true, update: true },
+  );
   renameDialog.visible = false;
 };
 
