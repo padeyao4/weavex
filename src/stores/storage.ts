@@ -1,99 +1,25 @@
-import { PGraph, PNode } from "@/types";
+import { PartialNode, PGraph, PNode } from "@/types";
 import { defineStore } from "pinia";
-import { computed, reactive, ref } from "vue";
+import { computed, reactive } from "vue";
 import { debounce, GraphUtils } from "@/utils";
-import { FsUtil } from "@/lib";
+import { useContextStore } from "./context";
+import { readFile, writeFile } from "@/utils";
+import { resolve } from "@tauri-apps/api/path";
+import { debug } from "@tauri-apps/plugin-log";
 
-export type PartialGraph = Partial<PGraph> & { id: string };
-export type PartialNode = Partial<PNode> & { id: string };
-
-/**
- * 当前选中的图谱存储
- * 用于管理当前正在查看或编辑的图谱ID
- */
-export const useCurrentGraphStore = defineStore("graph-detail", () => {
-  const graphId = ref<string | undefined>();
-  const graphStore = useGraphStore();
-
-  const graph = computed(() => {
-    if (graphId.value) {
-      return graphStore.allGraph[graphId.value];
-    }
-  });
-
-  const graphData = computed(() => {
-    return GraphUtils.transform(graph.value);
-  });
-
-  function buildRoots() {
-    if (graph.value) {
-      graph.value.rootNodeIds = GraphUtils.buildRootIds(graph.value?.nodes);
-    }
-  }
-
-  /**
-   * 设置当前图谱
-   * @param graph - 图谱对象（可选），如果提供则使用其ID，否则清空当前选中
-   */
-  function setGraph(graph?: Partial<PGraph>) {
-    graphId.value = graph?.id;
-  }
-
-  function addEdge(prevId?: string, nextId?: string) {
-    graphStore.addEdge(graph.value, prevId, nextId);
-  }
-
-  function removeNode(ids?: string[] | string) {
-    const param = typeof ids === "string" ? [ids] : ids;
-    graphStore.removeNode(graph.value, param ?? []);
-  }
-
-  function addNode(node?: PNode) {
-    graphStore.addNode(graph.value, node);
-  }
-
-  function removeEdge(ids?: string[] | { from: string; to: string }[]) {
-    graphStore.removeEdge(graph.value, ids);
-  }
-
-  function updateNode(node?: PartialNode) {
-    graphStore.updateNode(graph.value, node);
-  }
-
-  function updateGraph(partialGraph?: PartialGraph) {
-    graphStore.updateGraph(graph.value?.id, partialGraph);
-  }
-
-  function addChild(parentId?: string, childId?: string) {
-    graphStore.addChild(graph.value, parentId, childId);
-  }
-
-  function toggleNodeExpanded(nodeId: string) {
-    graphStore.toggleNodeExpanded(graph.value?.id, nodeId);
-  }
-
-  return {
-    graphId,
-    graph,
-    setGraph,
-    graphData,
-    addEdge,
-    removeNode,
-    addNode,
-    removeEdge,
-    updateNode,
-    updateGraph,
-    addChild,
-    toggleNodeExpanded,
-    buildRoots,
-  };
-});
+const GRAPH_FILE_NAME = "graphs.json"
 
 export const useGraphStore = defineStore("graph-storage", () => {
   const allGraph = reactive<Record<string, PGraph>>({});
 
+  const contextStore = useContextStore();
+
   async function loadGraphs() {
-    const obj = await FsUtil.readGraphsWithInit();
+    const path = await resolve(contextStore.context.workDir ?? "", GRAPH_FILE_NAME)
+    debug(`Loading graphs from ${path}`)
+    let jsonStr = (await readFile(path)).trim()
+    jsonStr = jsonStr === "" ? "{}" : jsonStr
+    const obj = JSON.parse(jsonStr)
     Object.keys(obj).forEach((key) => {
       allGraph[key] = obj[key];
     });
@@ -101,7 +27,7 @@ export const useGraphStore = defineStore("graph-storage", () => {
 
   async function saveGraphs() {
     const data = JSON.stringify(allGraph);
-    await FsUtil.saveGraph(data);
+    await writeFile(await resolve(contextStore.context.workDir ?? "", GRAPH_FILE_NAME), data);
   }
 
   const debouncedSave = debounce(saveGraphs, 1000);

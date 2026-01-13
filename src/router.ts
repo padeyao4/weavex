@@ -85,10 +85,10 @@ router.beforeEach(async (to, from, next) => {
   }
   // 如果没有工作区
   if (!existWorkspace.value) {
-    if (to.name === 'launch-selection') {
+    if (to.fullPath.startsWith("/launch")) {
       next();
     } else {
-      next();
+      next({ name: "launch-selection" });
     }
   } else {
     next();

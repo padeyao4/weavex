@@ -1,21 +1,12 @@
 <script setup lang="ts">
 import router from "@/router";
 import { version } from "@/../package.json";
-import { FsUtil } from "@/lib";
-import { onMounted, ref } from "vue";
 import WindowTitleBar from "@/components/WindowsTitleBar.vue";
 import { useConfigStore } from "@/stores";
 import { open } from "@tauri-apps/plugin-dialog";
 import { debug } from "@tauri-apps/plugin-log";
 
 const dev = import.meta.env.VITE_APP_ENV === "dev";
-const documentDataPath = ref<string>();
-const appDataPath = ref<string>();
-
-onMounted(async () => {
-  documentDataPath.value = await FsUtil.getDocumentDataPath();
-  appDataPath.value = await FsUtil.getAppDataPath();
-});
 
 const back = () => {
   router.push((router.options.history.state.back || { name: "home" }) as any);
@@ -51,8 +42,8 @@ const openFileDialog = async () => {
       class="my-4 flex w-140 flex-col gap-1 border-b border-gray-300 pb-4 font-sans font-light text-gray-500"
     >
       <div class="text-md mb-2 font-medium">存储</div>
-      <div class="text-sm">项目存储目录: {{ documentDataPath }}</div>
-      <div class="text-sm">APP数据目录: {{ appDataPath }}</div>
+      <div class="text-sm">项目存储目录: xxx</div>
+      <div class="text-sm">APP数据目录: xxxx</div>
       <div class="text-sm">
         不要手动修改或者删除目录文件,升级或者迁移前可备份此文件
       </div>

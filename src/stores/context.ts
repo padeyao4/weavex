@@ -26,10 +26,9 @@ export const useContextStore = defineStore("status", () => {
 
   const load = async () => {
     const store = await Store.load("context.bin")
-    const data = (await store.get<string>("context.bin")) ?? "{}"
-    const obj = JSON.parse(data)
-    Object.keys(obj).forEach((key) => {
-      context[key] = obj[key];
+    const data = (await store.get<ContextInfo>("context")) ?? {}
+    Object.keys(data).forEach((key) => {
+      context[key] = data[key];
     });
   }
 

@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::env;
 use std::fs;
 use tauri_plugin_log::log::debug;
+use tauri_plugin_log::log::error;
 
 use std::path::Path;
 use std::process::Command;
@@ -401,6 +402,23 @@ fn git_push(options: GitOptions) -> Result<String, String> {
     }
 }
 
+#[tauri::command]
+fn read_file(path: &str) -> String {
+    let default = "".into();
+    // 检查路径是否存在
+    if !Path::new(path).exists() {
+        error!("read file, File does not exist: {}", path);
+        return default;
+    } else {
+        return fs::read_to_string(path).unwrap_or(default);
+    }
+}
+
+#[tauri::command]
+fn write_file(path: &str, content: &str) -> Result<(), String> {
+    fs::write(path, content).map_err(|e| format!("Failed to write file: {}", e))
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -431,7 +449,9 @@ pub fn run() {
             git_clone,
             git_pull,
             git_commit,
-            git_push
+            git_push,
+            read_file,
+            write_file
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

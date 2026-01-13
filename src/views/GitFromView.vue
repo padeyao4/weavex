@@ -7,6 +7,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { ElMessage } from "element-plus";
 import { useContextStore } from "@/stores";
 import router from "@/router";
+import { existWorkspace } from "@/composables/useAppInit";
 
 const contextStore = useContextStore();
 
@@ -128,15 +129,17 @@ const fetchRepository = async () => {
       message: result,
     };
 
-    info("仓库克隆成功: " + result);
+    info("clone success: " + result);
 
     // 设置参数到context中
     Object.assign(contextStore.context, form);
+    await contextStore.save();
+    existWorkspace.value = true;
     setTimeout(() => {
       router.push({
         name: "taskSummary",
       });
-    }, 2000);
+    }, 1000);
   } catch (err: any) {
     const errorMessage = err.toString();
     operationResult.value = {
@@ -144,7 +147,7 @@ const fetchRepository = async () => {
       message: errorMessage,
     };
     error("仓库克隆失败: " + errorMessage);
-    ElMessage.error("仓库克隆失败: " + errorMessage);
+    ElMessage.error("clone repository failed: " + errorMessage);
   } finally {
     loading.value = false;
   }

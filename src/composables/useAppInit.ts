@@ -8,13 +8,13 @@ export const isInitialized = ref(false)
 export const existWorkspace = ref(false)
 
 export async function initializeApp() {
-  debug("initialize App")
+  debug("--- begin initialize App ---")
   if (isInitialized.value) return // 防止重复初始化
   const contextStore = useContextStore()
   const graphStore = useGraphStore()
   await contextStore.load()
 
-  debug(`contextStore loaded path: ${contextStore.context["workDir"]}`)
+  debug(`contextStore loaded path: ${JSON.stringify(contextStore.context)}`)
   existWorkspace.value = await invoke(
     "check_git_repository",
     { path: contextStore.context.workDir },
@@ -23,6 +23,7 @@ export async function initializeApp() {
   if (existWorkspace.value) {
     await graphStore.loadGraphs();
   }
+  debug("--- App initialized ---")
 
   isInitialized.value = true
 }
