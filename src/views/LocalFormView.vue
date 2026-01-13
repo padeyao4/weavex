@@ -3,9 +3,11 @@ import FramePage from "@/components/FramePage.vue";
 import { useRepoStore } from "@/stores";
 import { open } from "@tauri-apps/plugin-dialog";
 import { ref } from "vue";
+import { useRouter } from "vue-router";
 
 const directory = ref<string | null>();
 const repoStore = useRepoStore();
+const router = useRouter();
 
 const openLocalDir = async () => {
   directory.value = await open({
@@ -21,8 +23,27 @@ const openLocalDir = async () => {
 <template>
   <FramePage>
     <div class="flex h-full w-full items-center justify-center select-none">
+      <!-- 滑动式返回按钮 -->
+      <div class="absolute top-1/2 left-0 -translate-y-1/2">
+        <button
+          @click="router.back()"
+          class="group flex items-center gap-2 rounded-r-full bg-gray-100 px-3 py-4 pr-6 shadow-md transition-all hover:bg-gray-200 hover:shadow-lg active:scale-95"
+        >
+          <div
+            class="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-sm transition-transform group-hover:-translate-x-1"
+          >
+            <span class="text-lg text-gray-600">←</span>
+          </div>
+          <span
+            class="text-sm font-medium text-gray-700 opacity-0 transition-all group-hover:opacity-100"
+          >
+            返回
+          </span>
+        </button>
+      </div>
+
       <div
-        class="flex flex-col items-center justify-center gap-6 rounded-2xl border border-gray-200 p-8"
+        class="relative flex flex-col items-center justify-center gap-6 rounded-2xl border border-gray-200 p-8"
       >
         <div class="text-2xl font-bold text-gray-600">打开本地仓库</div>
         <div class="text-md text-center font-normal text-gray-600">

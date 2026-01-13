@@ -126,6 +126,25 @@ const fetchRepository = async () => {
 <template>
   <FramePage>
     <div class="flex h-full w-full items-center justify-center select-none">
+      <!-- 右侧滑动式返回按钮 -->
+      <div class="absolute top-1/2 right-0 -translate-y-1/2">
+        <button
+          @click="goBack"
+          class="group flex items-center gap-2 rounded-l-full bg-gray-100 px-3 py-4 pl-6 shadow-md transition-all hover:bg-gray-200 hover:shadow-lg active:scale-95"
+        >
+          <span
+            class="text-sm font-medium text-gray-700 opacity-0 transition-all group-hover:opacity-100"
+          >
+            返回
+          </span>
+          <div
+            class="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-sm transition-transform group-hover:translate-x-1"
+          >
+            <span class="text-lg text-gray-600">→</span>
+          </div>
+        </button>
+      </div>
+
       <div
         class="flex flex-col items-center justify-center gap-8 rounded-2xl border border-gray-200 p-10"
       >
@@ -220,7 +239,6 @@ const fetchRepository = async () => {
               <span v-if="loading">处理中...</span>
               <span v-else>克隆仓库</span>
             </button>
-            <button class="ml-4 min-w-fit" @click="goBack">返回</button>
           </div>
         </div>
 
