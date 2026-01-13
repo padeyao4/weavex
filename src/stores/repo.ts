@@ -2,7 +2,7 @@ import { defineStore } from "pinia";
 import { reactive } from "vue";
 import { ContextInfo, useContextStore } from "./context";
 import router from "@/router";
-import { debug } from "@tauri-apps/plugin-log";
+import { debug, info } from "@tauri-apps/plugin-log";
 import { useGraphStore } from "./storage";
 import { invoke } from "@tauri-apps/api/core";
 
@@ -14,13 +14,10 @@ type RepoProps = {
 };
 
 export type GitCloneOptions = {
-  repo_url: string | undefined;
-  target_dir: string | undefined;
-  branch: string | undefined;
-  auth_method: string | undefined;
-  username: string | null;
-  password: string | null;
-  ssh_key: string | undefined;
+  repo_url: string;
+  target_dir: string;
+  branch: string;
+  ssh_key: string | null;
   commit_message: null;
   files: null;
 };
@@ -93,8 +90,29 @@ export const useRepoStore = defineStore("repo", () => {
    * 使用git clone repository
    */
   const cloneRepo = async function (gitOptions: GitCloneOptions) {
-    await invoke<string>("git_clone", { options: gitOptions });
-    // todo
+    debug("开始克隆仓库: " + gitOptions.repo_url);
+    debug("分支: " + gitOptions.branch);
+    debug("工作目录: " + gitOptions.target_dir);
+
+    // 准备传递给Rust的参数
+    const rustOptions = {
+      repo_url: gitOptions.repo_url,
+      target_dir: gitOptions.target_dir,
+      branch: gitOptions.branch,
+      ssh_key: gitOptions.ssh_key,
+      commit_message: null,
+      files: null,
+    };
+
+    debug("调用git_clone命令");
+    const result = await invoke<string>("git_clone", {
+      options: rustOptions,
+    });
+
+    info("clone success: " + result);
+
+    // 克隆成功后，设置状态为has_repo
+    setState("has_repo");
   };
 
   return {

@@ -6,8 +6,8 @@ import TaskGraphView from "./views/TaskGraphView/index.vue";
 import TaskMenuView from "./views/TaskMenuView/index.vue";
 import TaskSummaryView from "./views/TaskSummaryView/index.vue";
 import TestPageView from "./views/TestPageView.vue";
-import LocalFromView from "./views/LocalFromView.vue";
-import GitFromView from "./views/GitFromView.vue";
+import LocalFormView from "./views/LocalFormView.vue";
+import GitFormView from "./views/GitFormView.vue";
 import LaunchView from "./views/LaunchView.vue";
 import LoadingView from "./views/LoadingView.vue";
 import { debug } from "@tauri-apps/plugin-log";
@@ -56,14 +56,14 @@ const router = createRouter({
       component: LaunchView,
     },
     {
-      path: "/LocalFromView",
-      name: "LocalFromView",
-      component: LocalFromView,
+      path: "/LocalFormView",
+      name: "LocalFormView",
+      component: LocalFormView,
     },
     {
-      path: "/GitFromView",
-      name: "GitFromView",
-      component: GitFromView,
+      path: "/GitFormView",
+      name: "GitFormView",
+      component: GitFormView,
     },
     {
       path: "/loading",

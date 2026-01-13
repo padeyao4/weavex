@@ -5,11 +5,11 @@ import { info } from "@tauri-apps/plugin-log";
 
 const handleGitWorkspace = () => {
   info("Launching cloud workspace");
-  router.push({ name: "GitFromView" });
+  router.push({ name: "GitFormView" });
 };
 const handleLocalWorkspace = () => {
   info("Launching local workspace");
-  router.push({ name: "LocalFromView" });
+  router.push({ name: "LocalFormView" });
 };
 </script>
 
