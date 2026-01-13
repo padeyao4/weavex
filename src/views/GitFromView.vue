@@ -5,11 +5,12 @@ import { reactive, computed, watch, ref } from "vue";
 import { open } from "@tauri-apps/plugin-dialog";
 import { invoke } from "@tauri-apps/api/core";
 import { ElMessage } from "element-plus";
-import { useContextStore } from "@/stores";
+import { useContextStore, useRepoStore } from "@/stores";
 import router from "@/router";
 import { existWorkspace } from "@/composables/useAppInit";
 
 const contextStore = useContextStore();
+const repoStore = useRepoStore();
 
 const form = reactive({
   repositoryUrl: "",

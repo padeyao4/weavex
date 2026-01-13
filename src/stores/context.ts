@@ -18,7 +18,7 @@ export interface ContextInfo {
   autoPush?: boolean;
   autoPull?: boolean;
   repositoryUrl?: string;
-  authMethod?: "password" | "ssh_key"; // password 或 ssh_key
+  authMethod?: "https" | "ssh"; // password 或 ssh_key
   sshKey?: string;
   [key: string]: any;
 }

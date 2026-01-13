@@ -18,10 +18,7 @@ struct GitOptions {
     branch: String,
     repo_url: String,
     target_dir: String,
-    username: Option<String>,
-    password: Option<String>,
-    ssh_key: Option<String>,
-    auth_method: String,
+    ssh_key: Option<String>, // SSH密钥文件路径
     commit_message: Option<String>,
     files: Option<Vec<String>>,
 }
@@ -67,51 +64,19 @@ fn git_clone(options: GitOptions) -> Result<String, String> {
     let mut cmd = Command::new("git");
     cmd.arg("clone");
 
-    // 处理认证方式
-    let repo_url = match options.auth_method.as_str() {
-        "ssh" => {
-            if let Some(ssh_key) = &options.ssh_key {
-                // 将SSH密钥内容写入临时文件
-                let temp_dir = env::temp_dir();
-                let temp_file_path = temp_dir.join("git_ssh_key");
-
-                // 写入密钥内容到临时文件
-                fs::write(&temp_file_path, ssh_key)
-                    .map_err(|e| format!("Failed to write SSH key to temp file: {}", e))?;
-
-                // 设置文件权限（在Unix-like系统上）
-                #[cfg(unix)]
-                {
-                    use std::os::unix::fs::PermissionsExt;
-                    let mut perms = fs::metadata(&temp_file_path)
-                        .map_err(|e| format!("Failed to get file metadata: {}", e))?
-                        .permissions();
-                    perms.set_mode(0o600); // 只允许所有者读写
-                    fs::set_permissions(&temp_file_path, perms)
-                        .map_err(|e| format!("Failed to set file permissions: {}", e))?;
-                }
-
-                // 设置SSH密钥环境变量
-                env::set_var(
-                    "GIT_SSH_COMMAND",
-                    format!("ssh -i {}", temp_file_path.display()),
-                );
-            }
-            options.repo_url
+    // 处理SSH认证
+    if let Some(ssh_key_path) = &options.ssh_key {
+        // 检查SSH密钥文件是否存在
+        let key_path = Path::new(ssh_key_path);
+        if !key_path.exists() {
+            return Err(format!("SSH key file does not exist: {}", ssh_key_path));
         }
-        "https" => {
-            if let (Some(username), Some(password)) = (&options.username, &options.password) {
-                // 在URL中包含用户名和密码
-                let url_with_auth = options
-                    .repo_url
-                    .replace("https://", &format!("https://{}:{}@", username, password));
-                url_with_auth
-            } else {
-                options.repo_url
-            }
-        }
-        _ => options.repo_url,
-    };
+
+        // 设置SSH密钥环境变量
+        env::set_var("GIT_SSH_COMMAND", format!("ssh -i {}", key_path.display()));
+    }
+
+    let repo_url = options.repo_url;
 
     cmd.arg(&repo_url);
     cmd.arg(&options.target_dir);
@@ -151,54 +116,17 @@ fn git_pull(options: GitOptions) -> Result<String, String> {
         env::current_dir().map_err(|e| format!("Failed to get current directory: {}", e))?;
     env::set_current_dir(&target_path).map_err(|e| format!("Failed to change directory: {}", e))?;
 
-    // 处理认证方式
-    match options.auth_method.as_str() {
-        "ssh" => {
-            if let Some(ssh_key) = &options.ssh_key {
-                // 将SSH密钥内容写入临时文件
-                let temp_dir = env::temp_dir();
-                let temp_file_path = temp_dir.join("git_ssh_key");
-
-                // 写入密钥内容到临时文件
-                fs::write(&temp_file_path, ssh_key)
-                    .map_err(|e| format!("Failed to write SSH key to temp file: {}", e))?;
-
-                // 设置文件权限（在Unix-like系统上）
-                #[cfg(unix)]
-                {
-                    use std::os::unix::fs::PermissionsExt;
-                    let mut perms = fs::metadata(&temp_file_path)
-                        .map_err(|e| format!("Failed to get file metadata: {}", e))?
-                        .permissions();
-                    perms.set_mode(0o600); // 只允许所有者读写
-                    fs::set_permissions(&temp_file_path, perms)
-                        .map_err(|e| format!("Failed to set file permissions: {}", e))?;
-                }
-
-                // 设置SSH密钥环境变量
-                env::set_var(
-                    "GIT_SSH_COMMAND",
-                    format!("ssh -i {}", temp_file_path.display()),
-                );
-            }
+    // 处理SSH认证
+    if let Some(ssh_key_path) = &options.ssh_key {
+        // 检查SSH密钥文件是否存在
+        let key_path = Path::new(ssh_key_path);
+        if !key_path.exists() {
+            env::set_current_dir(&current_dir).ok();
+            return Err(format!("SSH key file does not exist: {}", ssh_key_path));
         }
-        "https" => {
-            if let (Some(username), Some(password)) = (&options.username, &options.password) {
-                // 配置git凭据
-                let _ = Command::new("git")
-                    .args(["config", "credential.helper", "store"])
-                    .output();
 
-                // 设置远程URL包含认证信息
-                let url_with_auth = options
-                    .repo_url
-                    .replace("https://", &format!("https://{}:{}@", username, password));
-                let _ = Command::new("git")
-                    .args(["remote", "set-url", "origin", &url_with_auth])
-                    .output();
-            }
-        }
-        _ => {}
+        // 设置SSH密钥环境变量
+        env::set_var("GIT_SSH_COMMAND", format!("ssh -i {}", key_path.display()));
     }
 
     // 构建git pull命令
@@ -310,54 +238,17 @@ fn git_push(options: GitOptions) -> Result<String, String> {
         env::current_dir().map_err(|e| format!("Failed to get current directory: {}", e))?;
     env::set_current_dir(&target_path).map_err(|e| format!("Failed to change directory: {}", e))?;
 
-    // 处理认证方式
-    match options.auth_method.as_str() {
-        "ssh" => {
-            if let Some(ssh_key) = &options.ssh_key {
-                // 将SSH密钥内容写入临时文件
-                let temp_dir = env::temp_dir();
-                let temp_file_path = temp_dir.join("git_ssh_key");
-
-                // 写入密钥内容到临时文件
-                fs::write(&temp_file_path, ssh_key)
-                    .map_err(|e| format!("Failed to write SSH key to temp file: {}", e))?;
-
-                // 设置文件权限（在Unix-like系统上）
-                #[cfg(unix)]
-                {
-                    use std::os::unix::fs::PermissionsExt;
-                    let mut perms = fs::metadata(&temp_file_path)
-                        .map_err(|e| format!("Failed to get file metadata: {}", e))?
-                        .permissions();
-                    perms.set_mode(0o600); // 只允许所有者读写
-                    fs::set_permissions(&temp_file_path, perms)
-                        .map_err(|e| format!("Failed to set file permissions: {}", e))?;
-                }
-
-                // 设置SSH密钥环境变量
-                env::set_var(
-                    "GIT_SSH_COMMAND",
-                    format!("ssh -i {}", temp_file_path.display()),
-                );
-            }
+    // 处理SSH认证
+    if let Some(ssh_key_path) = &options.ssh_key {
+        // 检查SSH密钥文件是否存在
+        let key_path = Path::new(ssh_key_path);
+        if !key_path.exists() {
+            env::set_current_dir(&current_dir).ok();
+            return Err(format!("SSH key file does not exist: {}", ssh_key_path));
         }
-        "https" => {
-            if let (Some(username), Some(password)) = (&options.username, &options.password) {
-                // 配置git凭据
-                let _ = Command::new("git")
-                    .args(["config", "credential.helper", "store"])
-                    .output();
 
-                // 设置远程URL包含认证信息
-                let url_with_auth = options
-                    .repo_url
-                    .replace("https://", &format!("https://{}:{}@", username, password));
-                let _ = Command::new("git")
-                    .args(["remote", "set-url", "origin", &url_with_auth])
-                    .output();
-            }
-        }
-        _ => {}
+        // 设置SSH密钥环境变量
+        env::set_var("GIT_SSH_COMMAND", format!("ssh -i {}", key_path.display()));
     }
 
     // 构建git push命令

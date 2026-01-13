@@ -4,12 +4,25 @@ import { ContextInfo, useContextStore } from "./context";
 import router from "@/router";
 import { debug } from "@tauri-apps/plugin-log";
 import { useGraphStore } from "./storage";
+import { invoke } from "@tauri-apps/api/core";
 
 export type State = "idle" | "loading" | "no_repo" | "has_repo";
 
 type RepoProps = {
   state: State;
   error?: Error;
+};
+
+export type GitCloneOptions = {
+  repo_url: string | undefined;
+  target_dir: string | undefined;
+  branch: string | undefined;
+  auth_method: string | undefined;
+  username: string | null;
+  password: string | null;
+  ssh_key: string | undefined;
+  commit_message: null;
+  files: null;
 };
 
 export const useRepoStore = defineStore("repo", () => {
@@ -76,11 +89,20 @@ export const useRepoStore = defineStore("repo", () => {
     setState("has_repo");
   };
 
+  /**
+   * 使用git clone repository
+   */
+  const cloneRepo = async function (gitOptions: GitCloneOptions) {
+    await invoke<string>("git_clone", { options: gitOptions });
+    // todo
+  };
+
   return {
     repo,
     setState,
     init,
     switchRepo,
     loadRepo,
+    cloneRepo,
   };
 });
