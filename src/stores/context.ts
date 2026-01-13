@@ -37,9 +37,15 @@ export const useContextStore = defineStore("status", () => {
     await store.set("context", context)
   }
 
+  const clear = async () => {
+    const store = await Store.load("context.bin")
+    await store.set("context", {})
+  }
+
   return {
     context,
     load,
-    save
+    save,
+    clear,
   };
 });

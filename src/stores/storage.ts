@@ -14,6 +14,12 @@ export const useGraphStore = defineStore("graph-storage", () => {
 
   const contextStore = useContextStore();
 
+  function clear() {
+    Object.keys(allGraph).forEach((key) => {
+      delete allGraph[key];
+    });
+  }
+
   async function loadGraphs() {
     const path = await resolve(contextStore.context.workDir ?? "", GRAPH_FILE_NAME)
     debug(`Loading graphs from ${path}`)
@@ -27,7 +33,9 @@ export const useGraphStore = defineStore("graph-storage", () => {
 
   async function saveGraphs() {
     const data = JSON.stringify(allGraph);
-    await writeFile(await resolve(contextStore.context.workDir ?? "", GRAPH_FILE_NAME), data);
+    if (contextStore.context.workDir) {
+      await writeFile(await resolve(contextStore.context.workDir, GRAPH_FILE_NAME), data);
+    }
   }
 
   const debouncedSave = debounce(saveGraphs, 1000);
@@ -148,5 +156,6 @@ export const useGraphStore = defineStore("graph-storage", () => {
     debouncedSave,
     addChild,
     toggleNodeExpanded,
+    clear
   };
 });

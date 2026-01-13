@@ -2,9 +2,14 @@
 import router from "@/router";
 import { version } from "@/../package.json";
 import WindowTitleBar from "@/components/WindowsTitleBar.vue";
-import { useConfigStore } from "@/stores";
+import { useConfigStore, useGraphStore } from "@/stores";
 import { open } from "@tauri-apps/plugin-dialog";
 import { debug } from "@tauri-apps/plugin-log";
+import { useContextStore } from "@/stores";
+import { existWorkspace } from "@/composables/useAppInit";
+
+const contextStore = useContextStore();
+const graphStore = useGraphStore();
 
 const dev = import.meta.env.VITE_APP_ENV === "dev";
 
@@ -15,11 +20,10 @@ const back = () => {
 const configStore = useConfigStore();
 
 const openFileDialog = async () => {
-  const directory = await open({
-    multiple: false,
-    directory: true,
-  });
-  debug(directory ?? "");
+  contextStore.clear();
+  existWorkspace.value = false;
+  graphStore.clear();
+  router.push({ name: "launch-selection" });
 };
 </script>
 <template>
