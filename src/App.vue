@@ -12,13 +12,6 @@ import { useGraphStore } from "@/stores";
 import { debug } from "@tauri-apps/plugin-log";
 const graphStore = useGraphStore();
 
-watch(
-  () => isInitialized.value,
-  () => {
-    debug(`isInitialized: ${isInitialized.value}`);
-  },
-);
-
 watch([graphStore.allGraph], () => {
   debug("save graphs, allGraph has changed");
   graphStore.debouncedSave();

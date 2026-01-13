@@ -1,2 +1,1 @@
-export * from "./type.d";
-export * from "./model"
+export * from "./model";

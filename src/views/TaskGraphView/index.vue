@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-col pt-6">
     <div class="flex h-14 items-center pl-4 font-sans text-xl select-none">
-      {{ currentGraphStore.graph?.name }}
+      {{ currentGraph?.name }}
     </div>
     <div
       id="container"
@@ -33,7 +33,7 @@
             strokeLinecap="square"
             class="absolute"
             :class="{
-              hidden: !currentGraphStore.graph?.hideCompleted,
+              hidden: !currentGraph?.hideCompleted,
             }"
           />
         </div>
@@ -75,7 +75,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { useConfigStore, useCurrentGraphStore } from "@/stores";
+import { useConfigStore, useGraphStore } from "@/stores";
 import { NodeUtil } from "@/utils";
 import {
   Element,
@@ -85,7 +85,7 @@ import {
   NodeData,
   NodeEvent,
 } from "@antv/g6";
-import { onMounted, ref, reactive, onUnmounted } from "vue";
+import { onMounted, ref, reactive, onUnmounted, computed } from "vue";
 import { useRoute } from "vue-router";
 import { PNode } from "@/types";
 import { debug } from "@tauri-apps/plugin-log";
@@ -93,10 +93,10 @@ import NodeDetailDrawer from "./NodeDetailDrawer.vue";
 import { pull } from "lodash-es";
 
 const route = useRoute();
-const taskId = route.params.taskId as string;
-const currentGraphStore = useCurrentGraphStore();
-currentGraphStore.setGraph({ id: taskId as string });
+const graphId = route.params.taskId as string;
+const graphStore = useGraphStore();
 const configStore = useConfigStore();
+const currentGraph = computed(() => graphStore.getGraph(graphId));
 
 const drawer = ref(false);
 const drawerNode = reactive<PNode>(NodeUtil.createNode());
@@ -117,7 +117,7 @@ onMounted(() => {
   graph = new Graph({
     container: "container",
     autoResize: true,
-    data: currentGraphStore.graphData,
+    data: graphStore.transform(graphId),
     transforms: ["custom-transform"],
     plugins: [
       {
@@ -183,147 +183,38 @@ onMounted(() => {
         onClick: (value: any, _target: HTMLElement, current?: Element) => {
           if (!current || animationPlaying.value) return;
           switch (value) {
-            case "node:delete-keep-edge":
-              {
-                // 删除当前节点但保留当前节点的关系，比如 a->b->c ,当删除b的时候，变成a->c
-                // 如果有 a->c b->c  c->d ,当删除c的时候，变成a->d b->d
-                // 如果有 a->c b->c  c->d c->e ,删除c的时候，变成 a->d b->d a->e b->e
-                const currentNode =
-                  currentGraphStore.graph?.nodes[
-                    current.id.replace(/-combo$/, "")
-                  ];
-                const prevs = [...(currentNode?.prevs ?? [])];
-                const nexts = [...(currentNode?.nexts ?? [])];
-
-                // 为每一对（前驱，后继）建立新的边
-                for (const prevId of prevs) {
-                  for (const nextId of nexts) {
-                    // 避免创建重复的边
-                    const prevNode = currentGraphStore.graph?.nodes[prevId];
-                    const nextNode = currentGraphStore.graph?.nodes[nextId];
-                    if (
-                      prevNode &&
-                      nextNode &&
-                      !prevNode.nexts.includes(nextId)
-                    ) {
-                      currentGraphStore.addEdge(prevId, nextId);
-                    }
-                  }
-                }
-                // 删除当前节点
-                currentGraphStore.removeNode([current.id]);
-              }
+            case "node:delete-keep-edge": // 删除节点保持前后边的关系
+              graphStore.deleteNodeKeepEdges(graphId, current.id);
               break;
             case "node:delete":
-              currentGraphStore.removeNode([current.id]);
+              graphStore.removeNode(graphId, current.id);
               break;
             case "node:add-next":
-              {
-                const nextNode = NodeUtil.createNode();
-                const parentId =
-                  currentGraphStore.graph?.nodes[current.id].parent;
-                currentGraphStore.addNode(nextNode);
-                currentGraphStore.addChild(parentId, nextNode.id);
-                currentGraphStore.addEdge(current.id, nextNode.id);
-              }
+              graphStore.appendNewNode(graphId, current.id);
               break;
             case "node:insert-next":
-              {
-                const nextNode = NodeUtil.createNode();
-                const currentNode = currentGraphStore.graph?.nodes[current.id];
-                currentGraphStore.addNode(nextNode);
-                currentGraphStore.addChild(currentNode?.parent, nextNode.id);
-                currentNode?.nexts.forEach((id) => {
-                  currentGraphStore.addEdge(nextNode.id, id);
-                  currentGraphStore.removeEdge([
-                    { from: currentNode?.id, to: id },
-                  ]);
-                });
-
-                currentGraphStore.addEdge(currentNode?.id, nextNode.id);
-              }
+              graphStore.insertNewNode(graphId, current.id);
               break;
             case "node:add-prev":
-              {
-                // 添加前置节点
-                const prevNode = NodeUtil.createNode();
-                const parentId =
-                  currentGraphStore.graph?.nodes[current.id]?.parent;
-                currentGraphStore.addNode(prevNode);
-                currentGraphStore.addChild(parentId, prevNode.id);
-                currentGraphStore.addEdge(prevNode.id, current.id);
-                currentGraphStore.buildRoots();
-              }
+              graphStore.addFrontNewNode(graphId, current.id);
               break;
             case "node:insert-prev": // 插入前置节点
-              {
-                const prevNode = NodeUtil.createNode();
-                const currentNode = currentGraphStore.graph?.nodes[current.id];
-
-                currentGraphStore.addNode(prevNode);
-                currentGraphStore.addChild(currentNode?.parent, prevNode.id);
-
-                // 将当前节点的所有前驱节点转移到新节点前面
-                currentNode?.prevs.forEach((id) => {
-                  currentGraphStore.addEdge(id, prevNode.id);
-                  currentGraphStore.removeEdge([
-                    { from: id, to: currentNode?.id },
-                  ]);
-                });
-
-                currentGraphStore.addEdge(prevNode.id, current.id);
-              }
+              graphStore.insertFrontNewNode(graphId, current.id);
               break;
             case "node:delete-prev-edge": // 删除当前节点的所有前置节点（实际上是删除边）
-              {
-                const currentNode = currentGraphStore.graph?.nodes[current.id];
-                // 创建要删除的边列表
-                const edgesToDelete =
-                  currentNode?.prevs.map((id) => ({
-                    from: id,
-                    to: current.id,
-                  })) || [];
-
-                if (edgesToDelete.length > 0) {
-                  currentGraphStore.removeEdge(edgesToDelete);
-                }
-              }
+              graphStore.deletePrevsNodeEdge(graphId, current.id);
               break;
             case "node:delete-next-edge":
-              {
-                // 删除当前节点的所有后续节点（实际上是删除边）
-                const currentNode = currentGraphStore.graph?.nodes[current.id];
-                // 创建要删除的边列表
-                const edgesToDelete =
-                  currentNode?.nexts.map((id) => ({
-                    from: current.id,
-                    to: id,
-                  })) || [];
-                if (edgesToDelete.length > 0) {
-                  currentGraphStore.removeEdge(edgesToDelete);
-                }
-              }
+              graphStore.deleteNextsNodeEdge(graphId, current.id);
               break;
             case "edge:delete":
-              currentGraphStore.removeEdge([current.id]);
+              graphStore.deleteEdgeById(graphId, current.id);
               break;
             case "canvas:add-node":
-              {
-                const node = NodeUtil.createNode();
-                currentGraphStore.addNode(node);
-              }
+              graphStore.addNewNode(graphId);
               break;
             case "node:add-child":
-              {
-                const currentNode = currentGraphStore.graph?.nodes[current.id]!;
-                Object.assign(currentNode, {
-                  expanded: true,
-                });
-                currentGraphStore.updateNode(currentNode);
-                const newNode = NodeUtil.createNode();
-                currentGraphStore.addNode(newNode);
-                currentGraphStore.addChild(currentNode.id, newNode.id);
-              }
+              graphStore.addNewChildNode(graphId, current.id);
               break;
             case "node:test":
               testNode(current.id);
@@ -373,7 +264,7 @@ onMounted(() => {
           r: 12,
           onClick: (id: string) => {
             if (animationPlaying.value) return;
-            currentGraphStore.toggleNodeExpanded(id);
+            graphStore.toggleNodeExpanded(graphId, id);
             renderGraph();
           },
         },
@@ -424,7 +315,7 @@ onMounted(() => {
   });
   graph.on(NodeEvent.CLICK, (evt: IElementEvent & { target: Element }) => {
     const nodeId = evt.target.id;
-    const node = currentGraphStore.graph?.nodes[nodeId];
+    const node = currentGraph.value.nodes[nodeId];
     Object.keys(drawerNode).forEach(
       (key) => delete drawerNode[key as keyof PNode],
     );
@@ -468,7 +359,7 @@ const testNode = (id: string) => {
 };
 
 function renderGraph() {
-  graph?.setData(() => currentGraphStore.graphData);
+  graph?.setData(() => graphStore.transform(graphId));
   graph?.render();
 }
 
@@ -478,15 +369,15 @@ function saveNode(node: PNode) {
   } else {
     graph?.setElementState(node.id, node.isFollowed ? "followed" : "default");
   }
-  currentGraphStore.updateNode(node);
+  graphStore.updateNode(graphId, node);
   renderGraph();
 }
 
 function toggleGraphView() {
   if (animationPlaying.value) return;
-  currentGraphStore.updateGraph({
-    id: currentGraphStore.graph?.id!,
-    hideCompleted: !currentGraphStore.graph?.hideCompleted,
+  graphStore.updateGraph({
+    id: graphId,
+    hideCompleted: !currentGraph.value.hideCompleted,
   });
   renderGraph();
 }
