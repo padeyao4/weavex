@@ -32,14 +32,22 @@ export const useContextStore = defineStore("status", () => {
     });
   }
 
+  const update = (d: Partial<ContextInfo>) => {
+    Object.keys(d).forEach((key) => {
+      context[key] = d[key];
+    });
+    save();
+  }
+
   const save = async () => {
     const store = await Store.load("context.bin")
     await store.set("context", context)
   }
 
   const clear = async () => {
-    const store = await Store.load("context.bin")
-    await store.set("context", {})
+    Object.keys(context).forEach((key) => {
+      delete context[key];
+    });
   }
 
   return {
@@ -47,5 +55,6 @@ export const useContextStore = defineStore("status", () => {
     load,
     save,
     clear,
+    update
   };
 });

@@ -3,8 +3,6 @@ import router from "@/router";
 import { version } from "@/../package.json";
 import WindowTitleBar from "@/components/WindowsTitleBar.vue";
 import { useConfigStore, useGraphStore } from "@/stores";
-import { open } from "@tauri-apps/plugin-dialog";
-import { debug } from "@tauri-apps/plugin-log";
 import { useContextStore } from "@/stores";
 import { existWorkspace } from "@/composables/useAppInit";
 
