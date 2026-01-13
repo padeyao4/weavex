@@ -184,37 +184,79 @@ onMounted(() => {
           if (!current || animationPlaying.value) return;
           switch (value) {
             case "node:delete-keep-edge": // 删除节点保持前后边的关系
-              graphStore.deleteNodeKeepEdges(graphId, current.id);
+              graphStore.deleteNodeKeepEdges(graphId, current.id, {
+                persist: true,
+                buildRoots: true,
+                update: true,
+              });
               break;
             case "node:delete":
-              graphStore.removeNode(graphId, current.id);
+              graphStore.removeNode(graphId, current.id, {
+                persist: true,
+                buildRoots: true,
+                update: true,
+              });
               break;
             case "node:add-next":
-              graphStore.appendNewNode(graphId, current.id);
+              graphStore.appendNewNode(graphId, current.id, {
+                persist: true,
+                buildRoots: true,
+                update: true,
+              });
               break;
             case "node:insert-next":
-              graphStore.insertNewNode(graphId, current.id);
+              graphStore.insertNewNode(graphId, current.id, {
+                persist: true,
+                buildRoots: true,
+                update: true,
+              });
               break;
             case "node:add-prev":
-              graphStore.addFrontNewNode(graphId, current.id);
+              graphStore.addFrontNewNode(graphId, current.id, {
+                persist: true,
+                buildRoots: true,
+                update: true,
+              });
               break;
             case "node:insert-prev": // 插入前置节点
-              graphStore.insertFrontNewNode(graphId, current.id);
+              graphStore.insertFrontNewNode(graphId, current.id, {
+                persist: true,
+                buildRoots: true,
+                update: true,
+              });
               break;
             case "node:delete-prev-edge": // 删除当前节点的所有前置节点（实际上是删除边）
-              graphStore.deletePrevsNodeEdge(graphId, current.id);
+              graphStore.deletePrevsNodeEdge(graphId, current.id, {
+                persist: true,
+                buildRoots: true,
+                update: true,
+              });
               break;
             case "node:delete-next-edge":
-              graphStore.deleteNextsNodeEdge(graphId, current.id);
+              graphStore.deleteNextsNodeEdge(graphId, current.id, {
+                persist: true,
+                buildRoots: true,
+                update: true,
+              });
               break;
             case "edge:delete":
               graphStore.deleteEdgeById(graphId, current.id);
               break;
             case "canvas:add-node":
-              graphStore.addNewNode(graphId);
+              graphStore.addNewNode(graphId, {
+                persist: true,
+                update: true,
+                buildRoots: true,
+              });
               break;
             case "node:add-child":
-              graphStore.addNewChildNode(graphId, current.id);
+              graphStore.addNewChildNode(graphId, current.id, {
+                buildRoots: true,
+              });
+              graphStore.setNodeExpanded(graphId, current.id, true, {
+                update: true,
+                persist: true,
+              });
               break;
             case "node:test":
               testNode(current.id);

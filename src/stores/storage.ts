@@ -8,7 +8,11 @@ import { debug } from "@tauri-apps/plugin-log";
 import { cloneDeep, debounce } from "lodash-es";
 import { EdgeData, GraphData, NodeData } from "@antv/g6";
 
-type Options = { persist?: boolean; update?: boolean; buildRoots?: boolean };
+export type Options = {
+  persist?: boolean;
+  update?: boolean;
+  buildRoots?: boolean;
+};
 
 const GRAPH_FILE_NAME = "graphs.json";
 
@@ -40,6 +44,7 @@ export const useGraphStore = defineStore("graph-storage", () => {
     const contextStore = useContextStore();
     const data = JSON.stringify(allGraph);
     if (contextStore.context.workDir) {
+      debug("save graphs");
       await writeFile(
         await resolve(contextStore.context.workDir, GRAPH_FILE_NAME),
         data,
@@ -88,15 +93,34 @@ export const useGraphStore = defineStore("graph-storage", () => {
     }
   }
 
-  function toggleNodeExpanded(graphId: string, nodeId: string) {
+  const setNodeExpanded = function (
+    graphId: string,
+    nodeId: string,
+    expanded: boolean,
+    options?: Options,
+  ) {
+    if (graphId && nodeId && allGraph[graphId]) {
+      const graph = allGraph[graphId];
+      if (graph.nodes[nodeId]) {
+        graph.nodes[nodeId].expanded = expanded;
+        extraProcess(graph, options);
+      }
+    }
+  };
+
+  const toggleNodeExpanded = function (
+    graphId: string,
+    nodeId: string,
+    options?: Options,
+  ) {
     if (graphId && nodeId && allGraph[graphId]) {
       const graph = allGraph[graphId];
       if (graph.nodes[nodeId]) {
         graph.nodes[nodeId].expanded = !graph.nodes[nodeId].expanded;
-        graph.updatedAt = Date.now();
+        extraProcess(graph, options);
       }
     }
-  }
+  };
 
   const extraProcess = function (graph: PGraph, options?: Options) {
     if (options?.buildRoots) {
@@ -599,5 +623,6 @@ export const useGraphStore = defineStore("graph-storage", () => {
     addNewNode,
     addNewChildNode,
     getGraph,
+    setNodeExpanded,
   };
 });
