@@ -411,7 +411,7 @@ function saveNode(node: PNode) {
   } else {
     graph?.setElementState(node.id, node.isFollowed ? "followed" : "default");
   }
-  graphStore.updateNode(graphId, node);
+  graphStore.updateNode(graphId, node, { persist: true, update: true });
   renderGraph();
 }
 

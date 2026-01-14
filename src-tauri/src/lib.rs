@@ -276,10 +276,18 @@ fn read_file(path: &str) -> String {
 
 #[tauri::command]
 fn write_file(path: &str, content: &str) -> Result<(), String> {
-    // 检查路径是否存在
-    if !Path::new(path).exists() {
-        return Err(format!("File does not exist: {}", path));
+    // 检查文件所在目录是否存在
+    let file_path = Path::new(path);
+    if let Some(parent_dir) = file_path.parent() {
+        if !parent_dir.exists() {
+            debug!("Directory does not exist: {}", parent_dir.display());
+            return Err(format!(
+                "Directory does not exist: {}",
+                parent_dir.display()
+            ));
+        }
     }
+    debug!("rust write file, path: {}", path);
     fs::write(path, content).map_err(|e| format!("Failed to write file: {}", e))
 }
 

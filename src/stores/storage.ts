@@ -44,11 +44,18 @@ export const useGraphStore = defineStore("graph-storage", () => {
     const contextStore = useContextStore();
     const data = JSON.stringify(allGraph);
     if (contextStore.context.workDir) {
-      debug("save graphs");
-      await writeFile(
-        await resolve(contextStore.context.workDir, GRAPH_FILE_NAME),
-        data,
+      const filePath = await resolve(
+        contextStore.context.workDir,
+        GRAPH_FILE_NAME,
       );
+      debug(`save graphs, path : ${filePath}`);
+      await writeFile(filePath, data)
+        .then(() => {
+          debug(`Graphs saved successfully`);
+        })
+        .catch((error) => {
+          debug(`Failed to save graphs: ${error}`);
+        });
     }
   }
 
