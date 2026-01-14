@@ -512,13 +512,13 @@ export const useGraphStore = defineStore("graph-storage", () => {
         nodes[node.id] = node;
       }
     }
+    clone.nodes = nodes;
     buildRoots(clone);
   };
 
   const toGraphData = function (graph: PGraph | string): GraphData {
     graph = typeof graph === "string" ? allGraph[graph] : graph;
     if (!graph) return {};
-
     const nodeMap = graph.nodes;
     const nodes: NodeData[] = [];
     const edges: EdgeData[] = [];

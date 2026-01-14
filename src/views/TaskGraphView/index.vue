@@ -471,7 +471,8 @@ function toggleGraphView() {
     id: graphId,
     hideCompleted: !currentGraph.value.hideCompleted,
   });
-  // renderGraph();
+  graph?.setData(graphStore.transform(graphId));
+  graph?.render();
 }
 
 onUnmounted(() => {
