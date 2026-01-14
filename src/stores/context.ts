@@ -78,7 +78,7 @@ export const useContextStore = defineStore("status", () => {
 
   const check_work_dir = async function () {
     return await invoke<boolean>("check_directory_exists", {
-      path: context.workDir,
+      path: context.workDir ?? "",
     });
   };
 
