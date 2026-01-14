@@ -3,6 +3,8 @@ import { Group } from "@antv/g";
 import { Rect, RectStyleProps } from "@antv/g6";
 
 export interface CustomNodeProps extends Required<RectStyleProps> {
+  showExpandedButton: boolean;
+  countChildren: number;
   button?: {
     r: number;
     onClick: (id: string | undefined) => void;
@@ -58,47 +60,30 @@ export class CustomNode extends Rect {
         lineWidth: 0.5,
         cx: 0, // 相对于组中心
         cy: 0, // 相对于组中心
-        opacity: this.isHover ? 1 : 0,
+        interactive: attributes.countChildren !== 0,
+        visibility: attributes.countChildren !== 0 ? "visible" : "hidden",
+        cursor: attributes.countChildren !== 0 ? "pointer" : "default",
       },
       buttonGroup,
     )!;
 
-    // 图标参数
-    const iconOffset = 5; // 从按钮中心到图标起点的距离
-    const lineWidth = 1; // 线宽，稍微粗一点更清晰
-    const iconColor = "#33333395";
-
-    // 计算X图标的偏移量
-    const xOffset = iconOffset / Math.sqrt(2);
-
-    const isExpanded = this.data?.expanded;
-    const line1Style = {
-      x1: isExpanded ? -xOffset : -iconOffset,
-      y1: isExpanded ? -xOffset : 0,
-      x2: isExpanded ? xOffset : iconOffset,
-      y2: isExpanded ? xOffset : 0,
-      stroke: iconColor,
-      strokeWidth: lineWidth,
-      lineCap: "round" as const,
-      lineJoin: "round" as const,
-      id: "button-icon-line1",
-      opacity: this.isHover ? 1 : 0,
-    };
-
-    const line2Style = {
-      x1: isExpanded ? -xOffset : 0,
-      y1: isExpanded ? xOffset : -iconOffset,
-      x2: isExpanded ? xOffset : 0,
-      y2: isExpanded ? -xOffset : iconOffset,
-      stroke: iconColor,
-      strokeWidth: lineWidth,
-      lineCap: "round" as const,
-      lineJoin: "round" as const,
-      id: "button-icon-line2",
-      opacity: this.isHover ? 1 : 0,
-    };
-    this.upsert("button-icon-line1", "line", line1Style, buttonGroup);
-    this.upsert("button-icon-line2", "line", line2Style, buttonGroup);
+    this.upsert(
+      "counter",
+      "text",
+      {
+        text: `${attributes.countChildren}`,
+        fontSize: 12,
+        fill: "#33333380",
+        x: 0,
+        y: 0,
+        textAlign: "center",
+        textBaseline: "middle",
+        interactive: attributes.countChildren !== 0,
+        visibility: attributes.countChildren !== 0 ? "visible" : "hidden",
+        cursor: attributes.countChildren !== 0 ? "pointer" : "default",
+      },
+      buttonGroup,
+    );
 
     // 给整个按钮组添加点击事件
     if (!(buttonGroup as any).clickBound) {
@@ -108,10 +93,5 @@ export class CustomNode extends Rect {
       });
       (buttonGroup as any).clickBound = true;
     }
-  }
-
-  get isHover() {
-    const status = this.context.graph?.getElementState(this.id) || [];
-    return status.includes("hover");
   }
 }

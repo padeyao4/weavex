@@ -1,7 +1,8 @@
 <template>
   <div class="flex flex-col pt-6">
     <div class="flex h-14 items-center pl-4 font-sans text-xl select-none">
-      {{ currentGraph?.name }}
+      {{ currentGraph?.name
+      }}<span>{{ animationPlaying ? "running" : "stopped" }}</span>
     </div>
     <div
       id="container"
@@ -97,7 +98,6 @@ import { useRoute } from "vue-router";
 import { PNode } from "@/types";
 import { debug } from "@tauri-apps/plugin-log";
 import NodeDetailDrawer from "./NodeDetailDrawer.vue";
-import { pull } from "lodash-es";
 
 const route = useRoute();
 const graphId = route.params.taskId as string;
@@ -303,6 +303,8 @@ onMounted(() => {
           { key: "in", placement: "left", fill: "#7E92B5" },
           { key: "out", placement: "right", fill: "#D580FF" },
         ],
+        countChildren: (d?: NodeData) =>
+          ((d?.data?.children as string[]) || []).length,
         button: {
           r: 12,
           onClick: (id: string | undefined) => {
@@ -319,7 +321,6 @@ onMounted(() => {
           shadowColor: "#3B82F6",
           shadowBlur: 5,
         },
-        hover: {},
       },
       animation: {
         enter: [
@@ -370,25 +371,6 @@ onMounted(() => {
     Object.assign(drawerNode, node ?? {});
     drawer.value = true;
   });
-  graph.on(
-    NodeEvent.POINTER_ENTER,
-    (evt: IElementEvent & { target: Element }) => {
-      if (!animationPlaying.value && graph?.hasNode(evt.target.id)) {
-        const defaultState = graph?.getElementState(evt.target.id) ?? [];
-        graph?.setElementState(evt.target.id, [...defaultState, "hover"]);
-      }
-    },
-  );
-  graph.on(
-    NodeEvent.POINTER_LEAVE,
-    (evt: IElementEvent & { target: Element }) => {
-      if (!animationPlaying.value && graph?.hasNode(evt.target.id)) {
-        const defaultState = graph?.getElementState(evt.target.id) ?? [];
-        pull(defaultState, "hover");
-        graph?.setElementState(evt.target.id, defaultState);
-      }
-    },
-  );
   graph.on(GraphEvent.BEFORE_ANIMATE, () => {
     animationPlaying.value = true;
   });
