@@ -315,7 +315,7 @@ onMounted(() => {
         },
       },
       state: {
-        default: {
+        noFollowed: {
           stroke: "#00000080",
           lineWidth: 0.5,
           shadowColor: "#000",
@@ -446,11 +446,17 @@ const testNode = (id: string) => {
  * @param node
  */
 function updateNode(node: PNode) {
-  // if (node.completed) {
-  //   graph?.setElementState(node.id, "default");
-  // } else {
-  //   graph?.setElementState(node.id, node.isFollowed ? "followed" : "default");
-  // }
+  const states = graph?.getElementState(node.id) ?? [];
+  const set = new Set(states);
+  if (node.isFollowed && !node.completed) {
+    set.add("followed");
+    set.delete("noFollowed");
+  } else {
+    set.add("noFollowed");
+    set.delete("followed");
+  }
+  graph?.setElementState(node.id, Array.from(set));
+
   const r = graphStore.updateNode(graphId, node, {
     persist: true,
     update: true,
