@@ -17,9 +17,6 @@ export type GitCloneOptions = {
   repo_url: string;
   target_dir: string;
   branch: string;
-  ssh_key: string | null;
-  commit_message: null;
-  files: null;
 };
 
 export const useRepoStore = defineStore("repo", () => {
@@ -87,31 +84,30 @@ export const useRepoStore = defineStore("repo", () => {
   };
 
   /**
-   * 使用git clone repository
+   * 使用git clone repository,并处理后续逻辑
    */
   const cloneRepo = async function (gitOptions: GitCloneOptions) {
     debug("开始克隆仓库: " + gitOptions.repo_url);
     debug("分支: " + gitOptions.branch);
     debug("工作目录: " + gitOptions.target_dir);
 
-    // 准备传递给Rust的参数
-    const rustOptions = {
-      repo_url: gitOptions.repo_url,
-      target_dir: gitOptions.target_dir,
-      branch: gitOptions.branch,
-      ssh_key: gitOptions.ssh_key,
-      commit_message: null,
-      files: null,
-    };
-
     debug("调用git_clone命令");
     const result = await invoke<string>("git_clone", {
-      options: rustOptions,
+      options: gitOptions,
     });
 
     info("clone success: " + result);
 
     // 克隆成功后，设置状态为has_repo
+    const contextStore = useContextStore();
+    contextStore.update(
+      {
+        workDir: gitOptions.target_dir,
+        repositoryUrl: gitOptions.repo_url,
+        branch: gitOptions.branch,
+      },
+      { persist: true },
+    );
     setState("has_repo");
   };
 

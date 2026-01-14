@@ -36,10 +36,7 @@ export const useContextStore = defineStore("status", () => {
     Object.keys(data).forEach((key) => {
       context[key] = data[key];
     });
-    const passwordInfo = context.password ? { password: "******" } : {};
-    const sshKeyInfo = context.sshKey ? { sshKey: "******" } : {};
-    const debugInfo = { ...context, ...passwordInfo, ...sshKeyInfo };
-    debug(`Loaded context: ${JSON.stringify(debugInfo)}`);
+    debug(`Loaded context: ${JSON.stringify(context)}`);
   };
 
   /**

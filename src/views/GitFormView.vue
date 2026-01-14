@@ -4,17 +4,14 @@ import { debug, error, info } from "@tauri-apps/plugin-log";
 import { reactive, ref } from "vue";
 import { open } from "@tauri-apps/plugin-dialog";
 import { ElMessage } from "element-plus";
-import { useContextStore, useRepoStore } from "@/stores";
+import { useRepoStore } from "@/stores";
 import router from "@/router";
-import { existWorkspace } from "@/composables/useAppInit";
 
-const contextStore = useContextStore();
 const repoStore = useRepoStore();
 
 const form = reactive({
   repositoryUrl: "",
   branch: "main",
-  sshKey: "",
   workDir: "",
 });
 
@@ -35,25 +32,10 @@ const goBack = () => {
   router.back();
 };
 
-const openSshKeyFile = async () => {
-  const file = await open({
-    multiple: false,
-    filters: [
-      {
-        name: "SSH Key Files",
-        extensions: ["pem", "key", "ppk", ""],
-      },
-    ],
-  });
-  if (file) {
-    form.sshKey = file;
-  }
-};
-
 /**
  * 执行git clone
  */
-const fetchRepository = async () => {
+const handleGitClone = async () => {
   // 参数验证
   if (!form.repositoryUrl.trim()) {
     ElMessage.error("请输入仓库URL");
@@ -73,18 +55,11 @@ const fetchRepository = async () => {
   operationResult.value = null;
 
   try {
-    debug("开始克隆仓库: " + form.repositoryUrl);
-    debug("分支: " + form.branch);
-    debug("工作目录: " + form.workDir);
-
     // 准备git选项
     const gitOptions = {
       repo_url: form.repositoryUrl.trim(),
       target_dir: form.workDir.trim(),
       branch: form.branch.trim() || "main",
-      ssh_key: form.sshKey.trim() || null,
-      commit_message: null,
-      files: null,
     };
 
     debug("Git选项: " + JSON.stringify(gitOptions));
@@ -98,11 +73,6 @@ const fetchRepository = async () => {
     };
 
     info("clone success");
-
-    // 设置参数到context中
-    Object.assign(contextStore.context, form);
-    await contextStore.save();
-    existWorkspace.value = true;
 
     setTimeout(() => {
       router.push({
@@ -157,60 +127,48 @@ const fetchRepository = async () => {
         <div class="w-full max-w-md space-y-4">
           <!-- 仓库地址 -->
           <div class="space-y-2">
-            <label class="block text-sm font-medium text-gray-700">
-              仓库地址 <span class="text-red-500">*</span>
-            </label>
+            <div class="flex flex-row">
+              <label class="block text-sm font-medium text-gray-700">
+                仓库地址 <span class="text-red-500">*</span>
+              </label>
+              <div class="ml-auto text-xs text-gray-500">
+                支持SSH格式的仓库地址
+              </div>
+            </div>
             <input
               v-model="form.repositoryUrl"
               type="text"
               placeholder="git@github.com:user/repo.git"
               class="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-700 placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none"
             />
-            <div class="text-xs text-gray-500">支持SSH格式的仓库地址</div>
           </div>
 
           <!-- 分支 -->
           <div class="space-y-2">
-            <label class="block text-sm font-medium text-gray-700">
-              分支
-            </label>
+            <div class="flex flex-row">
+              <label class="block text-sm font-medium text-gray-700">
+                分支
+              </label>
+              <div class="ml-auto text-xs text-gray-500">
+                默认使用 main 分支
+              </div>
+            </div>
             <input
               v-model="form.branch"
               type="text"
               placeholder="main"
               class="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-700 placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none"
             />
-            <div class="text-xs text-gray-500">默认使用 main 分支</div>
-          </div>
-
-          <!-- SSH密钥 -->
-          <div class="space-y-2">
-            <label class="block text-sm font-medium text-gray-700">
-              SSH密钥 (可选)
-            </label>
-            <div class="flex gap-2">
-              <input
-                v-model="form.sshKey"
-                type="text"
-                placeholder="选择SSH密钥文件"
-                readonly
-                class="flex-1 rounded-lg border border-gray-300 bg-gray-50 px-4 py-3 text-gray-700 placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none"
-              />
-              <button
-                @click="openSshKeyFile"
-                class="rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:ring-2 focus:ring-blue-200 focus:outline-none"
-              >
-                选择文件
-              </button>
-            </div>
-            <div class="text-xs text-gray-500">用于SSH认证的私钥文件路径</div>
           </div>
 
           <!-- 工作目录 -->
           <div class="space-y-2">
-            <label class="block text-sm font-medium text-gray-700">
-              工作目录 <span class="text-red-500">*</span>
-            </label>
+            <div class="flex flex-row">
+              <label class="block text-sm font-medium text-gray-700">
+                工作目录 <span class="text-red-500">*</span>
+              </label>
+              <div class="ml-auto text-xs text-gray-500">本地工作目录路径</div>
+            </div>
             <div class="flex gap-2">
               <input
                 v-model="form.workDir"
@@ -226,13 +184,12 @@ const fetchRepository = async () => {
                 选择目录
               </button>
             </div>
-            <div class="text-xs text-gray-500">本地工作目录路径</div>
           </div>
 
           <!-- 提交按钮 -->
           <div class="flex flex-row pt-4">
             <button
-              @click="fetchRepository"
+              @click="handleGitClone"
               :disabled="!form.repositoryUrl || !form.workDir || loading"
               class="w-full rounded-lg bg-blue-600 px-4 py-3 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-400"
             >

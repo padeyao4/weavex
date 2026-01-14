@@ -18,7 +18,6 @@ struct GitOptions {
     branch: String,
     repo_url: String,
     target_dir: String,
-    ssh_key: Option<String>, // SSH密钥文件路径
     commit_message: Option<String>,
     files: Option<Vec<String>>,
 }
@@ -50,6 +49,11 @@ fn check_git_repository(path: Option<&str>) -> bool {
     git_dir.exists() && git_dir.is_dir()
 }
 
+/**
+ * 克隆Git仓库
+ *
+ * 自动调用系统的git命令进行clone.认证方式使用默认ssh key
+ */
 #[tauri::command]
 fn git_clone(options: GitOptions) -> Result<String, String> {
     let target_path = Path::new(&options.target_dir);
@@ -64,18 +68,6 @@ fn git_clone(options: GitOptions) -> Result<String, String> {
     let mut cmd = Command::new("git");
     cmd.arg("clone");
 
-    // 处理SSH认证
-    if let Some(ssh_key_path) = &options.ssh_key {
-        // 检查SSH密钥文件是否存在
-        let key_path = Path::new(ssh_key_path);
-        if !key_path.exists() {
-            return Err(format!("SSH key file does not exist: {}", ssh_key_path));
-        }
-
-        // 设置SSH密钥环境变量
-        env::set_var("GIT_SSH_COMMAND", format!("ssh -i {}", key_path.display()));
-    }
-
     let repo_url = options.repo_url;
 
     cmd.arg(&repo_url);
@@ -85,6 +77,9 @@ fn git_clone(options: GitOptions) -> Result<String, String> {
     if !options.branch.is_empty() && options.branch != "main" && options.branch != "master" {
         cmd.arg("--branch").arg(&options.branch);
     }
+
+    // 打印执行的git命令
+    debug!("Executing git command: {:?}", cmd);
 
     // 执行命令
     let output = cmd
@@ -115,19 +110,6 @@ fn git_pull(options: GitOptions) -> Result<String, String> {
     let current_dir =
         env::current_dir().map_err(|e| format!("Failed to get current directory: {}", e))?;
     env::set_current_dir(&target_path).map_err(|e| format!("Failed to change directory: {}", e))?;
-
-    // 处理SSH认证
-    if let Some(ssh_key_path) = &options.ssh_key {
-        // 检查SSH密钥文件是否存在
-        let key_path = Path::new(ssh_key_path);
-        if !key_path.exists() {
-            env::set_current_dir(&current_dir).ok();
-            return Err(format!("SSH key file does not exist: {}", ssh_key_path));
-        }
-
-        // 设置SSH密钥环境变量
-        env::set_var("GIT_SSH_COMMAND", format!("ssh -i {}", key_path.display()));
-    }
 
     // 构建git pull命令
     let mut cmd = Command::new("git");
@@ -237,19 +219,6 @@ fn git_push(options: GitOptions) -> Result<String, String> {
     let current_dir =
         env::current_dir().map_err(|e| format!("Failed to get current directory: {}", e))?;
     env::set_current_dir(&target_path).map_err(|e| format!("Failed to change directory: {}", e))?;
-
-    // 处理SSH认证
-    if let Some(ssh_key_path) = &options.ssh_key {
-        // 检查SSH密钥文件是否存在
-        let key_path = Path::new(ssh_key_path);
-        if !key_path.exists() {
-            env::set_current_dir(&current_dir).ok();
-            return Err(format!("SSH key file does not exist: {}", ssh_key_path));
-        }
-
-        // 设置SSH密钥环境变量
-        env::set_var("GIT_SSH_COMMAND", format!("ssh -i {}", key_path.display()));
-    }
 
     // 构建git push命令
     let mut cmd = Command::new("git");
