@@ -295,10 +295,9 @@ onMounted(() => {
         labelMaxWidth: "90%",
         labelPadding: 4,
         labelMaxLines: 3,
-        shadowColor: undefined,
-        shadowBlur: undefined,
+        shadowColor: "#000",
+        shadowBlur: 0,
         labelTextOverflow: "ellipsis",
-        pointerEvents: (d: NodeData) => (d.type ? "none" : "all"),
         port: false,
         ports: [
           { key: "in", placement: "left", fill: "#7E92B5" },
@@ -314,12 +313,6 @@ onMounted(() => {
         },
       },
       state: {
-        noFollowed: {
-          stroke: "#00000080",
-          lineWidth: 0.5,
-          shadowColor: "#000",
-          shadowBlur: 0,
-        },
         followed: {
           stroke: "#3B82F6",
           lineWidth: 0.5,
@@ -457,9 +450,7 @@ function updateNode(node: PNode) {
   const set = new Set(states);
   if (node.isFollowed && !node.completed) {
     set.add("followed");
-    set.delete("noFollowed");
   } else {
-    set.add("noFollowed");
     set.delete("followed");
   }
   graph?.setElementState(node.id, Array.from(set));
