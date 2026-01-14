@@ -75,9 +75,15 @@
   </div>
 </template>
 <script setup lang="ts">
-import { useConfigStore, useGraphStore } from "@/stores";
+import {
+  mergeResult,
+  ResultAble,
+  useConfigStore,
+  useGraphStore,
+} from "@/stores";
 import { NodeUtil } from "@/utils";
 import {
+  EdgeData,
   Element,
   Graph,
   GraphEvent,
@@ -90,7 +96,7 @@ import { useRoute } from "vue-router";
 import { PNode } from "@/types";
 import { debug } from "@tauri-apps/plugin-log";
 import NodeDetailDrawer from "./NodeDetailDrawer.vue";
-import { pull } from "lodash-es";
+import { keyBy, pull, values } from "lodash-es";
 
 const route = useRoute();
 const graphId = route.params.taskId as string;
@@ -174,7 +180,7 @@ onMounted(() => {
             case "edge":
               return [{ name: "删除边", value: "edge:delete" }];
             case "canvas":
-              return [{ name: "添加节点", value: "canvas:add-node" }];
+              return [{ name: "添加节点", value: "canvas:add-new-node" }];
             default:
               debug("getItems : " + e.targetType);
               return [];
@@ -182,27 +188,30 @@ onMounted(() => {
         },
         onClick: (value: any, _target: HTMLElement, current?: Element) => {
           if (!current || animationPlaying.value) return;
+          const options = {
+            persist: true,
+            buildRoots: true,
+            update: true,
+          };
           switch (value) {
             case "node:delete-keep-edge": // 删除节点保持前后边的关系
-              graphStore.deleteNodeKeepEdges(graphId, current.id, {
-                persist: true,
-                buildRoots: true,
-                update: true,
-              });
+              graphStore.deleteNodeKeepEdges(graphId, current.id, options);
               break;
             case "node:delete":
-              graphStore.removeNode(graphId, current.id, {
-                persist: true,
-                buildRoots: true,
-                update: true,
-              });
+              {
+                const r = graphStore.removeNode(graphId, current.id, options);
+                incrementRender(r);
+              }
               break;
             case "node:add-next":
-              graphStore.appendNewNode(graphId, current.id, {
-                persist: true,
-                buildRoots: true,
-                update: true,
-              });
+              {
+                const r = graphStore.appendNewNode(
+                  graphId,
+                  current.id,
+                  options,
+                );
+                incrementRender(r);
+              }
               break;
             case "node:insert-next":
               graphStore.insertNewNode(graphId, current.id, {
@@ -242,21 +251,34 @@ onMounted(() => {
             case "edge:delete":
               graphStore.deleteEdgeById(graphId, current.id);
               break;
-            case "canvas:add-node":
-              graphStore.addNewNode(graphId, {
-                persist: true,
-                update: true,
-                buildRoots: true,
-              });
+            case "canvas:add-new-node":
+              {
+                const r = graphStore.addNewNode(graphId, {
+                  persist: true,
+                  update: true,
+                  buildRoots: true,
+                });
+                incrementRender(r);
+              }
               break;
             case "node:add-child":
-              graphStore.addNewChildNode(graphId, current.id, {
-                buildRoots: true,
-              });
-              graphStore.setNodeExpanded(graphId, current.id, true, {
-                update: true,
-                persist: true,
-              });
+              {
+                const a = graphStore.addNewChildNode(graphId, current.id, {
+                  buildRoots: true,
+                });
+                const b = graphStore.setNodeExpanded(
+                  graphId,
+                  current.id,
+                  true,
+                  {
+                    update: true,
+                    persist: true,
+                  },
+                );
+                const r = mergeResult(a, b);
+                r!.nodes!.add = values(keyBy(r.nodes?.add, "id"));
+                incrementRender(r);
+              }
               break;
             case "node:test":
               testNode(current.id);
@@ -265,7 +287,6 @@ onMounted(() => {
               console.warn(`Unknown action: ${value}`);
               break;
           }
-          renderGraph();
         },
       },
     ],
@@ -307,7 +328,8 @@ onMounted(() => {
           onClick: (id: string) => {
             if (animationPlaying.value) return;
             graphStore.toggleNodeExpanded(graphId, id);
-            renderGraph();
+            // todo
+            // renderGraph();
           },
         },
       },
@@ -325,6 +347,9 @@ onMounted(() => {
           shadowBlur: 5,
         },
         hover: {},
+      },
+      animation: {
+        enter: "fade",
       },
     },
     // 边配置
@@ -393,17 +418,44 @@ onMounted(() => {
   graph.render();
 });
 
+/**
+ * 增量渲染
+ * @param data
+ */
+const incrementRender = async function (data: ResultAble) {
+  if (!data) return;
+  const adds = data?.nodes?.add?.map<NodeData>((node) => ({
+    id: node.id,
+    data: { ...node },
+  }));
+  graph?.addNodeData(adds ?? []);
+
+  const deletes = data?.nodes?.remove?.map((node) => node.id);
+  graph?.removeNodeData(deletes ?? []);
+
+  const updates = data?.nodes?.update?.map((node) => ({
+    id: node.id,
+    data: { ...node },
+  }));
+  graph?.updateNodeData(updates ?? []);
+
+  const edges = data?.edges?.add?.map<EdgeData>((edge) => ({
+    id: edge.id,
+    source: edge.source,
+    target: edge.target,
+  }));
+  debug(`edges: ${JSON.stringify(edges)}`);
+  graph?.addEdgeData(edges ?? []);
+
+  graph?.render();
+};
+
 const testNode = (id: string) => {
   console.log(`Testing node ${id}`);
   graph?.setElementState(id, "default");
   const states = graph?.getElementState(id);
   debug(`${states}`);
 };
-
-function renderGraph() {
-  graph?.setData(() => graphStore.transform(graphId));
-  graph?.render();
-}
 
 function saveNode(node: PNode) {
   if (node.completed) {
@@ -412,7 +464,6 @@ function saveNode(node: PNode) {
     graph?.setElementState(node.id, node.isFollowed ? "followed" : "default");
   }
   graphStore.updateNode(graphId, node, { persist: true, update: true });
-  renderGraph();
 }
 
 function toggleGraphView() {
@@ -421,7 +472,7 @@ function toggleGraphView() {
     id: graphId,
     hideCompleted: !currentGraph.value.hideCompleted,
   });
-  renderGraph();
+  // renderGraph();
 }
 
 onUnmounted(() => {
