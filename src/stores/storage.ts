@@ -5,7 +5,7 @@ import { useContextStore } from "./context";
 import { NodeUtil, readFile, writeFile } from "@/utils";
 import { resolve } from "@tauri-apps/api/path";
 import { debug } from "@tauri-apps/plugin-log";
-import { cloneDeep, debounce } from "lodash-es";
+import { cloneDeep, debounce, keyBy, values } from "lodash-es";
 import { EdgeData, GraphData, NodeData } from "@antv/g6";
 
 export type Options = {
@@ -35,6 +35,15 @@ export interface GraphResult {
 }
 
 /**
+ * 给数组按id去重,只保留最后一个
+ * @param arr
+ * @returns
+ */
+export const uniqueById = function <T extends { id: string }>(arr: T[]) {
+  return values(keyBy(arr, "id"));
+};
+
+/**
  * 合并结果
  * @param a
  * @param b
@@ -53,6 +62,34 @@ export const mergeResult = (...rest: ResultAble[]): GraphResult => {
     },
   };
 };
+
+/**
+ * 给结果去重
+ * @param result
+ * @returns
+ */
+export const uniqueGraphResult = (result?: GraphResult): GraphResult => {
+  return {
+    nodes: {
+      add: uniqueById([...(result?.nodes?.add ?? [])]),
+      update: uniqueById([...(result?.nodes?.update ?? [])]),
+      remove: uniqueById([...(result?.nodes?.remove ?? [])]),
+    },
+    edges: {
+      add: uniqueById([...(result?.edges?.add ?? [])]),
+      remove: uniqueById([...(result?.edges?.remove ?? [])]),
+    },
+  };
+};
+
+/**
+ * 生成edge id
+ * @param source
+ * @param target
+ * @returns
+ */
+export const generateEdgeId = (source: string, target: string) =>
+  `${source}_${target}`;
 
 export type ResultAble = GraphResult | undefined;
 
@@ -372,7 +409,7 @@ export const useGraphStore = defineStore("graph-storage", () => {
           edges: {
             add: [
               {
-                id: `${from}-${to}`,
+                id: generateEdgeId(from, to),
                 source: from,
                 target: to,
               },
@@ -388,7 +425,7 @@ export const useGraphStore = defineStore("graph-storage", () => {
     from: string,
     to: string,
     options?: Options,
-  ) {
+  ): ResultAble {
     const graph = allGraph[graphId];
     if (graph) {
       const fromNode = graph.nodes[from];
@@ -397,6 +434,20 @@ export const useGraphStore = defineStore("graph-storage", () => {
         fromNode.nexts = fromNode.nexts.filter((nextId) => nextId !== to);
         toNode.prevs = toNode.prevs.filter((prevId) => prevId !== from);
         extraProcess(graph, options);
+        return {
+          nodes: {
+            update: [fromNode, toNode],
+          },
+          edges: {
+            remove: [
+              {
+                id: generateEdgeId(from, to),
+                source: from,
+                target: to,
+              },
+            ],
+          },
+        };
       }
     }
   };
@@ -498,7 +549,7 @@ export const useGraphStore = defineStore("graph-storage", () => {
       });
       node.nexts.forEach((next) => {
         edges.push({
-          id: `${node.id}_${next}`,
+          id: generateEdgeId(node.id, next),
           source: node.id,
           target: next,
         });
@@ -534,7 +585,7 @@ export const useGraphStore = defineStore("graph-storage", () => {
     const currentNode = graph.nodes[nodeId];
     const prevs = [...(currentNode?.prevs ?? [])];
     const nexts = [...(currentNode?.nexts ?? [])];
-
+    const arr = [];
     // 为每一对（前驱，后继）建立新的边
     for (const prevId of prevs) {
       for (const nextId of nexts) {
@@ -542,12 +593,13 @@ export const useGraphStore = defineStore("graph-storage", () => {
         const prevNode = graph.nodes[prevId];
         const nextNode = graph.nodes[nextId];
         if (prevNode && nextNode && !prevNode.nexts.includes(nextId)) {
-          addEdge(graphId, prevId, nextId);
+          arr.push(addEdge(graphId, prevId, nextId));
         }
       }
     }
     // 删除当前节点
-    removeNode(graphId, nodeId, options);
+    arr.push(removeNode(graphId, nodeId, options));
+    return mergeResult(...arr);
   };
 
   /**
@@ -590,17 +642,18 @@ export const useGraphStore = defineStore("graph-storage", () => {
     const nextNode = NodeUtil.createNode();
     const currentNode = graph.nodes[nodeId];
     if (!currentNode) return;
-    addNode(graphId, nextNode);
+    const arr = [];
+    arr.push(addNode(graphId, nextNode));
     if (currentNode.parent) {
-      setChild(graphId, currentNode.parent, nextNode.id);
+      arr.push(setChild(graphId, currentNode.parent, nextNode.id));
     }
     currentNode.nexts.forEach((id) => {
-      addEdge(graphId, nextNode.id, id);
-      removeEdge(graphId, currentNode.id, id);
+      arr.push(addEdge(graphId, nextNode.id, id));
+      arr.push(removeEdge(graphId, currentNode.id, id));
     });
-
-    addEdge(graphId, currentNode.id, nextNode.id);
+    arr.push(addEdge(graphId, currentNode.id, nextNode.id));
     extraProcess(graph, options);
+    return mergeResult(...arr);
   };
 
   /**
@@ -618,12 +671,14 @@ export const useGraphStore = defineStore("graph-storage", () => {
 
     const prevNode = NodeUtil.createNode();
     const parentId = graph.nodes[nodeId].parent;
-    addNode(graphId, prevNode);
-    if (parentId) {
-      setChild(graphId, parentId, prevNode.id);
-    }
-    addEdge(graphId, prevNode.id, nodeId);
+
+    const arr = [];
+    arr.push(addNode(graphId, prevNode));
+
+    parentId && arr.push(setChild(graphId, parentId, prevNode.id));
+    arr.push(addEdge(graphId, prevNode.id, nodeId));
     extraProcess(graph, options);
+    return mergeResult(...arr);
   };
 
   /**
@@ -642,20 +697,21 @@ export const useGraphStore = defineStore("graph-storage", () => {
     if (!graph) return;
     const currentNode = graph.nodes[nodeId];
     const prevNode = NodeUtil.createNode();
-
-    addNode(graphId, prevNode);
+    const arr = [];
+    arr.push(addNode(graphId, prevNode));
     if (currentNode.parent) {
-      setChild(graphId, currentNode.parent, prevNode.id);
+      arr.push(setChild(graphId, currentNode.parent, prevNode.id));
     }
 
     // 将当前节点的所有前驱节点转移到新节点前面
     currentNode.prevs.forEach((id) => {
-      addEdge(graphId, id, prevNode.id);
-      removeEdge(graphId, id, currentNode.id);
+      arr.push(addEdge(graphId, id, prevNode.id));
+      arr.push(removeEdge(graphId, id, currentNode.id));
     });
 
-    addEdge(graphId, prevNode.id, currentNode.id);
+    arr.push(addEdge(graphId, prevNode.id, currentNode.id));
     extraProcess(graph, options);
+    return mergeResult(...arr);
   };
 
   /**
@@ -669,15 +725,17 @@ export const useGraphStore = defineStore("graph-storage", () => {
     graphId: string,
     nodeId: string,
     options?: Options,
-  ) {
+  ): ResultAble {
     const graph = allGraph[graphId];
     if (!graph) return;
     const currentNode = graph.nodes[nodeId];
     if (!currentNode) return;
+    const arr: ResultAble[] = [];
     currentNode.prevs.forEach((id) => {
-      removeEdge(graphId, id, currentNode.id);
+      arr.push(removeEdge(graphId, id, currentNode.id));
     });
     extraProcess(graph, options);
+    return mergeResult(...arr);
   };
 
   /**
@@ -691,15 +749,17 @@ export const useGraphStore = defineStore("graph-storage", () => {
     graphId: string,
     nodeId: string,
     options?: Options,
-  ) {
+  ): ResultAble {
     const graph = allGraph[graphId];
     if (!graph) return;
     const currentNode = graph.nodes[nodeId];
     if (!currentNode) return;
+    const arr: ResultAble[] = [];
     currentNode.nexts.forEach((id) => {
-      removeEdge(graphId, currentNode.id, id);
+      arr.push(removeEdge(graphId, currentNode.id, id));
     });
     extraProcess(graph, options);
+    return mergeResult(...arr);
   };
 
   const deleteEdgeById = function (
