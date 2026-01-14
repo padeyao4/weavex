@@ -249,18 +249,12 @@ export const useGraphStore = defineStore("graph-storage", () => {
     nodeId: string,
     options?: Options,
   ): ResultAble {
-    if (graphId && nodeId && allGraph[graphId]) {
-      const graph = allGraph[graphId];
-      if (graph.nodes[nodeId]) {
-        graph.nodes[nodeId].expanded = !graph.nodes[nodeId].expanded;
-        extraProcess(graph, options);
-        return {
-          nodes: {
-            update: [graph.nodes[nodeId]],
-          },
-        };
-      }
-    }
+    return setNodeExpanded(
+      graphId,
+      nodeId,
+      !allGraph[graphId].nodes[nodeId].expanded,
+      options,
+    );
   };
 
   const extraProcess = function (graph?: PGraph, options?: Options) {

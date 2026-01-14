@@ -5,7 +5,7 @@ import { Rect, RectStyleProps } from "@antv/g6";
 export interface CustomNodeProps extends Required<RectStyleProps> {
   button?: {
     r: number;
-    onClick: (id: string) => void;
+    onClick: (id: string | undefined) => void;
   };
 }
 
@@ -18,10 +18,13 @@ export class CustomNode extends Rect {
   }
 
   get nodeData() {
-    return this.context.graph.getNodeData(this.id);
+    const g = this.context.graph;
+    if (g.hasNode(this.id)) {
+      return g.getNodeData(this.id);
+    }
   }
   get data() {
-    return this.nodeData.data as unknown as PNode;
+    return this.nodeData?.data as PNode | undefined;
   }
 
   get size() {
@@ -68,7 +71,7 @@ export class CustomNode extends Rect {
     // 计算X图标的偏移量
     const xOffset = iconOffset / Math.sqrt(2);
 
-    const isExpanded = this.data.expanded;
+    const isExpanded = this.data?.expanded;
     const line1Style = {
       x1: isExpanded ? -xOffset : -iconOffset,
       y1: isExpanded ? -xOffset : 0,
@@ -101,7 +104,7 @@ export class CustomNode extends Rect {
     if (!(buttonGroup as any).clickBound) {
       buttonGroup.addEventListener("click", (e: MouseEvent) => {
         e.stopPropagation();
-        attributes?.button?.onClick(this.data.id);
+        attributes?.button?.onClick(this.data?.id);
       });
       (buttonGroup as any).clickBound = true;
     }

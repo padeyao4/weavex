@@ -306,11 +306,10 @@ onMounted(() => {
         ],
         button: {
           r: 12,
-          onClick: (id: string) => {
-            if (animationPlaying.value) return;
-            graphStore.toggleNodeExpanded(graphId, id);
-            // todo
-            // renderGraph();
+          onClick: (id: string | undefined) => {
+            if (animationPlaying.value || !id) return;
+            const r = graphStore.toggleNodeExpanded(graphId, id);
+            incrementRender(r);
           },
         },
       },
@@ -330,7 +329,15 @@ onMounted(() => {
         hover: {},
       },
       animation: {
-        enter: "fade",
+        enter: [
+          { fields: ["opacity"], duration: 50 },
+          {
+            fields: ["opacity"],
+            shape: "button-group",
+            duration: 1000,
+          },
+        ],
+        exit: false,
       },
     },
     // 边配置
@@ -373,7 +380,7 @@ onMounted(() => {
   graph.on(
     NodeEvent.POINTER_ENTER,
     (evt: IElementEvent & { target: Element }) => {
-      if (graph?.hasNode(evt.target.id)) {
+      if (!animationPlaying.value && graph?.hasNode(evt.target.id)) {
         const defaultState = graph?.getElementState(evt.target.id) ?? [];
         graph?.setElementState(evt.target.id, [...defaultState, "hover"]);
       }
@@ -382,7 +389,7 @@ onMounted(() => {
   graph.on(
     NodeEvent.POINTER_LEAVE,
     (evt: IElementEvent & { target: Element }) => {
-      if (graph?.hasNode(evt.target.id)) {
+      if (!animationPlaying.value && graph?.hasNode(evt.target.id)) {
         const defaultState = graph?.getElementState(evt.target.id) ?? [];
         pull(defaultState, "hover");
         graph?.setElementState(evt.target.id, defaultState);
