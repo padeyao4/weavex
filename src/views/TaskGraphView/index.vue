@@ -1,8 +1,7 @@
 <template>
   <div class="flex flex-col pt-6">
     <div class="flex h-14 items-center pl-4 font-sans text-xl select-none">
-      {{ currentGraph?.name
-      }}<span>{{ animationPlaying ? "running" : "stopped" }}</span>
+      {{ currentGraph?.name }}
     </div>
     <div
       id="container"
