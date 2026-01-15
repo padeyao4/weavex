@@ -205,17 +205,22 @@ export const useGraphStore = defineStore("graph-storage", () => {
       if (graph.nodes[nodeId]) {
         graph.nodes[nodeId].expanded = expanded;
         extraProcess(graph, options);
+
+        const children = findAllChildren(graph, graph.nodes[nodeId], {
+          filter: (node) => node.expanded === true,
+        });
+
         return expanded
           ? {
               nodes: {
                 update: [graph.nodes[nodeId]],
-                add: [...findAllChildren(graph, graph.nodes[nodeId])],
+                add: children,
               },
             }
           : {
               nodes: {
                 update: [graph.nodes[nodeId]],
-                remove: [...findAllChildren(graph, graph.nodes[nodeId])],
+                remove: children,
               },
             };
       }
@@ -228,19 +233,26 @@ export const useGraphStore = defineStore("graph-storage", () => {
    * @param node
    * @returns
    */
-  const findAllChildren = function (graph: PGraph, node: PNode): PNode[] {
+  const findAllChildren = function (
+    graph: PGraph,
+    node: PNode,
+    option?: { filter?: (node: PNode) => boolean },
+  ): PNode[] {
     const children: PNode[] = [];
-    const stack: PNode[] = [node];
-    while (stack.length > 0) {
-      const currentNode = stack.pop()!;
+
+    function collectChildren(currentNode: PNode) {
       for (const childId of currentNode.children) {
         const childNode = graph.nodes[childId];
         if (childNode) {
           children.push(childNode);
-          stack.push(childNode);
+          if (!option?.filter || option.filter(childNode)) {
+            collectChildren(childNode);
+          }
         }
       }
     }
+
+    collectChildren(node);
     return children;
   };
 
