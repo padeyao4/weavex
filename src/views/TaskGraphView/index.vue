@@ -132,20 +132,7 @@ const toggleArchive = () => {
     id: graphId,
     showArchive: !currentGraph.value.showArchive,
   });
-  const arr: (Partial<NodeData> & { id: string })[] = Object.values(
-    currentGraph.value.nodes,
-  )
-    .filter((node) => node?.isArchive)
-    .map((node) => {
-      return {
-        id: node.id,
-        style: {
-          visibility: currentGraph.value.showArchive ? "visible" : "hidden",
-        },
-      };
-    });
-  graph?.updateNodeData(arr);
-  graph?.draw();
+  graph?.render();
 };
 
 onMounted(() => {
@@ -153,7 +140,20 @@ onMounted(() => {
     container: "container",
     autoResize: true,
     data: graphStore.toGraphData(graphId),
-    transforms: ["custom-transform"],
+    transforms: [
+      {
+        type: "expanded-transform",
+        graphId: graphId,
+      },
+      {
+        type: "archive-transform",
+        graphId: graphId,
+      },
+      {
+        type: "custom-transform",
+        graphId: graphId,
+      },
+    ],
     plugins: [
       {
         type: "contextmenu",
@@ -312,11 +312,6 @@ onMounted(() => {
         labelText: (d: NodeData) => {
           return d.data?.expanded ? "" : (d.data?.name as string);
         },
-        visibility: (d: NodeData) => {
-          return currentGraph?.value.showArchive || !d.data?.isArchive
-            ? "visible"
-            : "hidden";
-        },
         labelBackground: true,
         labelBackgroundOpacity: 0.7,
         labelBackgroundRadius: 2,
@@ -331,6 +326,15 @@ onMounted(() => {
         shadowColor: "#000",
         shadowBlur: 0,
         labelTextOverflow: "ellipsis",
+        badges: (d: NodeData) => {
+          return d.data?.isArchive
+            ? [
+                { text: "归", placement: "left-top", offsetX: 6, offsetY: -2 }, // 默认显示在上方
+              ]
+            : undefined;
+        },
+        badgeFontSize: 6,
+        badgePadding: [1, 3],
         port: false,
         ports: [
           { key: "in", placement: "left", fill: "#7E92B5" },
@@ -489,16 +493,6 @@ function updateNode(node: PNode) {
   graph?.updateNodeData(updatedNodes ?? []);
   graph?.draw();
 }
-
-// function toggleGraphView() {
-//   if (animationPlaying.value) return;
-//   graphStore.updateGraph({
-//     id: graphId,
-//     hideCompleted: !currentGraph.value.hideCompleted,
-//   });
-//   graph?.setData(graphStore.toGraphData(graphId));
-//   graph?.render();
-// }
 
 onUnmounted(() => {
   graph?.destroy();
