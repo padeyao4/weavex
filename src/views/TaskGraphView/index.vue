@@ -82,13 +82,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import {
-  mergeResult,
-  ResultAble,
-  uniqueGraphResult,
-  useConfigStore,
-  useGraphStore,
-} from "@/stores";
+import { useConfigStore, useGraphStore } from "@/stores";
 import { NodeUtil } from "@/utils";
 import {
   EdgeData,
@@ -99,12 +93,13 @@ import {
   NodeData,
   NodeEvent,
 } from "@antv/g6";
-import { onMounted, ref, reactive, onUnmounted, computed } from "vue";
+import { onMounted, ref, reactive, onUnmounted, computed, watch } from "vue";
 import { useRoute } from "vue-router";
 import { PNode } from "@/types";
 import { debug } from "@tauri-apps/plugin-log";
 import NodeDetailDrawer from "./NodeDetailDrawer.vue";
 import { View } from "@element-plus/icons-vue";
+import { debounce } from "lodash-es";
 
 const route = useRoute();
 const graphId = route.params.taskId as string;
@@ -116,6 +111,20 @@ const drawer = ref(false);
 const drawerNode = reactive<PNode>(NodeUtil.createNode());
 
 let graph: Graph | undefined;
+
+const syncGraphData = function () {
+  console.info("sync graph data");
+  graph?.setData(graphStore.toGraphData(graphStore.allGraph[graphId]));
+  graph?.render();
+};
+
+const debounceSyncData = debounce(() => {
+  syncGraphData();
+}, 50);
+
+watch([graphStore.allGraph], () => {
+  debounceSyncData();
+});
 
 const fitView = () => {
   graph?.fitView();
@@ -222,47 +231,47 @@ onMounted(() => {
             buildRoots: true,
             update: true,
           };
-          let r = undefined;
+
           switch (value) {
             case "node:delete-keep-edge": // 删除节点保持前后边的关系
-              r = graphStore.deleteNodeKeepEdges(graphId, current.id, options);
+              graphStore.deleteNodeKeepEdges(graphId, current.id, options);
               break;
             case "node:delete":
-              r = graphStore.removeNode(graphId, current.id);
+              graphStore.removeNode(graphId, current.id);
               break;
             case "node:add-next":
-              r = graphStore.appendNewNode(graphId, current.id, options);
+              graphStore.appendNewNode(graphId, current.id, options);
               break;
             case "node:insert-next":
-              r = graphStore.insertNewNode(graphId, current.id, {
+              graphStore.insertNewNode(graphId, current.id, {
                 persist: true,
                 buildRoots: true,
                 update: true,
               });
               break;
             case "node:add-prev":
-              r = graphStore.addFrontNewNode(graphId, current.id, {
+              graphStore.addFrontNewNode(graphId, current.id, {
                 persist: true,
                 buildRoots: true,
                 update: true,
               });
               break;
             case "node:insert-prev": // 插入前置节点
-              r = graphStore.insertFrontNewNode(graphId, current.id, {
+              graphStore.insertFrontNewNode(graphId, current.id, {
                 persist: true,
                 buildRoots: true,
                 update: true,
               });
               break;
             case "node:delete-prev-edge": // 删除当前节点的所有前置节点（实际上是删除边）
-              r = graphStore.deletePrevsNodeEdge(graphId, current.id, {
+              graphStore.deletePrevsNodeEdge(graphId, current.id, {
                 persist: true,
                 buildRoots: true,
                 update: true,
               });
               break;
             case "node:delete-next-edge":
-              r = graphStore.deleteNextsNodeEdge(graphId, current.id, {
+              graphStore.deleteNextsNodeEdge(graphId, current.id, {
                 persist: true,
                 buildRoots: true,
                 update: true,
@@ -272,30 +281,27 @@ onMounted(() => {
               graphStore.deleteEdgeById(graphId, current.id);
               break;
             case "canvas:add-new-node":
-              r = graphStore.addNewNode(graphId, {
+              graphStore.addNewNode(graphId, {
                 persist: true,
                 update: true,
                 buildRoots: true,
               });
               break;
             case "node:add-child":
-              const a = graphStore.addNewChildNode(graphId, current.id, {
+              graphStore.addNewChildNode(graphId, current.id, {
                 buildRoots: true,
               });
-              const b = graphStore.setNodeExpanded(graphId, current.id, true, {
+              graphStore.setNodeExpanded(graphId, current.id, true, {
                 update: true,
                 persist: true,
               });
-              r = mergeResult(a, b);
               break;
             case "node:test":
-              testNode(current.id);
               break;
             default:
               console.warn(`Unknown action: ${value}`);
               break;
           }
-          incrementRender(r);
         },
       },
     ],
@@ -346,8 +352,8 @@ onMounted(() => {
           r: 12,
           onClick: (id: string | undefined) => {
             if (animationPlaying.value || !id) return;
-            const r = graphStore.toggleNodeExpanded(graphId, id);
-            incrementRender(r);
+            graphStore.toggleNodeExpanded(graphId, id);
+            // todo
           },
         },
       },
@@ -423,49 +429,6 @@ onMounted(() => {
 
   graph.render();
 });
-
-/**
- * 增量渲染
- * @param data
- */
-const incrementRender = async function (data: ResultAble) {
-  if (!data) return;
-  data = uniqueGraphResult(data);
-  const adds = data?.nodes?.add?.map<NodeData>((node) => ({
-    id: node.id,
-    data: { ...node },
-  }));
-  graph?.addNodeData(adds ?? []);
-
-  const deletes = data?.nodes?.remove?.map((node) => node.id);
-  graph?.removeNodeData(deletes ?? []);
-
-  const updates = data?.nodes?.update?.map((node) => ({
-    id: node.id,
-    data: { ...node },
-  }));
-  graph?.updateNodeData(updates ?? []);
-
-  const edges = data?.edges?.add?.map<EdgeData>((edge) => ({
-    id: edge.id,
-    source: edge.source,
-    target: edge.target,
-  }));
-  graph?.addEdgeData(edges ?? []);
-
-  const removeEdges = data?.edges?.remove?.map((edge) => edge.id);
-  graph?.removeEdgeData(removeEdges ?? []);
-
-  graph?.render();
-};
-
-const testNode = (id: string) => {
-  console.log(`Testing node ${id}`);
-  graph?.setElementState(id, "default");
-  const states = graph?.getElementState(id);
-  debug(`${states}`);
-};
-
 /**
  * 更新节点
  * @param node
@@ -480,17 +443,10 @@ function updateNode(node: PNode) {
   }
   graph?.setElementState(node.id, Array.from(set));
 
-  const r = graphStore.updateNode(graphId, node, {
+  graphStore.updateNode(graphId, node, {
     persist: true,
     update: true,
   });
-  const updatedNodes = r?.nodes?.update?.map((node) => {
-    return {
-      id: node.id,
-      data: { ...node },
-    };
-  });
-  graph?.updateNodeData(updatedNodes ?? []);
   graph?.draw();
 }
 
