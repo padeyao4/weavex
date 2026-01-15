@@ -16,6 +16,7 @@ export interface PNode {
   expanded?: boolean; // 节点是否已展开,默认不展开
   priority?: number; // 节点优先级，数字越大优先级越高
   isFollowed?: boolean; // 节点是否已关注
+  isArchive?: boolean; // 节点是否已归档,归档的要求是prevs节点归档,chilren的节点也归档,该节点次才能归档.归档的节点禁止任何操作
 }
 
 export interface PGraph {
@@ -24,7 +25,7 @@ export interface PGraph {
   createdAt: number; // 创建时间
   updatedAt: number; // 更新时间
   rootNodeIds: string[]; // 多根支持（DAG 可能有多个入口）
-  hideCompleted?: boolean; // 是否显示已完成节点
+  showArchive?: boolean; // 是否显示归档节点
   nodes: Record<string, PNode>; // 扁平化节点映射
   priority?: number; // 图优先级，数字越大优先级越高
 }

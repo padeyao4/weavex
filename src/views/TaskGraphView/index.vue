@@ -11,7 +11,7 @@
     <footer
       class="flex h-12 flex-row items-center justify-center gap-2 border-t border-gray-200"
     >
-      <div
+      <!-- <div
         class="flex h-10 w-10 items-center justify-center rounded-full transition-colors duration-200 hover:bg-gray-100"
         @click="toggleGraphView"
         title="切换视图"
@@ -37,7 +37,14 @@
             }"
           />
         </div>
-      </div>
+      </div> -->
+      <el-button
+        circle
+        :icon="View"
+        :type="currentGraph?.showArchive ? 'default' : 'primary'"
+        @click="toggleArchive"
+        :loading="animationPlaying"
+      />
       <div
         class="flex h-10 w-10 items-center justify-center rounded-full transition-colors duration-200 hover:bg-gray-100"
         @click="fitView()"
@@ -97,6 +104,7 @@ import { useRoute } from "vue-router";
 import { PNode } from "@/types";
 import { debug } from "@tauri-apps/plugin-log";
 import NodeDetailDrawer from "./NodeDetailDrawer.vue";
+import { View } from "@element-plus/icons-vue";
 
 const route = useRoute();
 const graphId = route.params.taskId as string;
@@ -119,11 +127,32 @@ const fitCenter = () => {
 
 const animationPlaying = ref(false);
 
+const toggleArchive = () => {
+  graphStore.updateGraph({
+    id: graphId,
+    showArchive: !currentGraph.value.showArchive,
+  });
+  const arr: (Partial<NodeData> & { id: string })[] = Object.values(
+    currentGraph.value.nodes,
+  )
+    .filter((node) => node?.isArchive)
+    .map((node) => {
+      return {
+        id: node.id,
+        style: {
+          visibility: currentGraph.value.showArchive ? "visible" : "hidden",
+        },
+      };
+    });
+  graph?.updateNodeData(arr);
+  graph?.draw();
+};
+
 onMounted(() => {
   graph = new Graph({
     container: "container",
     autoResize: true,
-    data: graphStore.transform(graphId),
+    data: graphStore.toGraphData(graphId),
     transforms: ["custom-transform"],
     plugins: [
       {
@@ -199,7 +228,7 @@ onMounted(() => {
               r = graphStore.deleteNodeKeepEdges(graphId, current.id, options);
               break;
             case "node:delete":
-              r = graphStore.removeNode(graphId, current.id, options);
+              r = graphStore.removeNode(graphId, current.id);
               break;
             case "node:add-next":
               r = graphStore.appendNewNode(graphId, current.id, options);
@@ -283,6 +312,11 @@ onMounted(() => {
         labelText: (d: NodeData) => {
           return d.data?.expanded ? "" : (d.data?.name as string);
         },
+        visibility: (d: NodeData) => {
+          return currentGraph?.value.showArchive || !d.data?.isArchive
+            ? "visible"
+            : "hidden";
+        },
         labelBackground: true,
         labelBackgroundOpacity: 0.7,
         labelBackgroundRadius: 2,
@@ -341,6 +375,12 @@ onMounted(() => {
         lineWidth: 0.5,
         increasedLineWidthForHitTesting: 3,
         cursor: "pointer",
+        visibility: (d: EdgeData) => {
+          const source = graph?.getNodeData(d.source).data;
+          return currentGraph?.value.showArchive || !source?.isArchive
+            ? "visible"
+            : "hidden";
+        },
       },
     },
 
@@ -450,15 +490,15 @@ function updateNode(node: PNode) {
   graph?.draw();
 }
 
-function toggleGraphView() {
-  if (animationPlaying.value) return;
-  graphStore.updateGraph({
-    id: graphId,
-    hideCompleted: !currentGraph.value.hideCompleted,
-  });
-  graph?.setData(graphStore.transform(graphId));
-  graph?.render();
-}
+// function toggleGraphView() {
+//   if (animationPlaying.value) return;
+//   graphStore.updateGraph({
+//     id: graphId,
+//     hideCompleted: !currentGraph.value.hideCompleted,
+//   });
+//   graph?.setData(graphStore.toGraphData(graphId));
+//   graph?.render();
+// }
 
 onUnmounted(() => {
   graph?.destroy();
