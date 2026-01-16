@@ -113,7 +113,6 @@ const drawerNode = reactive<PNode>(NodeUtil.createNode());
 let graph: Graph | undefined;
 
 const syncGraphData = function () {
-  console.info("sync graph data");
   graph?.setData(graphStore.toGraphData(graphStore.allGraph[graphId]));
   graph?.render();
 };
@@ -141,7 +140,10 @@ const toggleArchive = () => {
     id: graphId,
     showArchive: !currentGraph.value.showArchive,
   });
-  graph?.render();
+  graph?.updateTransform({
+    key: "archive-transform",
+    showArchive: graphStore.getGraph(graphId).showArchive,
+  });
 };
 
 onMounted(() => {
@@ -152,11 +154,12 @@ onMounted(() => {
     transforms: [
       {
         type: "expanded-transform",
-        graphId: graphId,
+        showArchive: graphStore.getGraph(graphId).showArchive,
       },
       {
         type: "archive-transform",
-        graphId: graphId,
+        key: "archive-transform",
+        showArchive: graphStore.getGraph(graphId).showArchive,
       },
       {
         type: "custom-transform",
@@ -402,6 +405,7 @@ onMounted(() => {
         key: "drag-canvas",
         sensitivity: 1, // 设置拖拽灵敏度
       },
+      "drag-element",
     ],
     layout: {
       type: "custom-layout",

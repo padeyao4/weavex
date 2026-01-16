@@ -8,7 +8,6 @@ import {
   Size,
 } from "@antv/g6";
 import dagre from "dagre";
-import { clone } from "lodash-es";
 
 export interface DagreLayoutOptions extends BaseLayoutOptions {
   rankdir?: string;
@@ -153,23 +152,13 @@ export class DagreLayout extends BaseLayout<DagreLayoutOptions> {
     model: GraphData,
     options?: DagreLayoutOptions,
   ): Promise<GraphData> {
-    const data = clone(model);
+    // const data = cloneDeep(model);
     await measureTime(() => {
-      executeLayout(data, {
+      executeLayout(model, {
         ...options,
         ...this.options,
       });
     });
-    return {
-      nodes: data.nodes?.map((node) => ({
-        id: node.id,
-        style: {
-          ...node.style,
-          animation: {
-            enter: "fade",
-          },
-        },
-      })),
-    };
+    return model;
   }
 }

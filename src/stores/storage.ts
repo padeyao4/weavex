@@ -316,49 +316,40 @@ export const useGraphStore = defineStore("graph-storage", () => {
 
   const toGraphData = function (graph: PGraph | string): GraphData {
     graph = typeof graph === "string" ? allGraph[graph] : graph;
-    if (!graph) return {};
+    if (!graph) return { nodes: [], edges: [] };
+
     const nodeMap = graph.nodes;
     const nodes: NodeData[] = [];
     const edges: EdgeData[] = [];
-    const visited = new Set<string>();
 
-    function getInitStates(node: PNode): string[] {
-      return node.isFollowed && !node.completed && !node.isArchive
-        ? ["followed"]
-        : [];
-    }
-
-    function travel(node: PNode) {
-      if (!node || visited.has(node.id)) {
-        return;
-      }
-      visited.add(node.id);
+    //  直接遍历所有节点（保证完整性）
+    Object.values(nodeMap).forEach((node) => {
       nodes.push({
         id: node.id,
         data: { ...node },
-        states: getInitStates(node),
+        states:
+          node.isFollowed && !node.completed && !node.isArchive
+            ? ["followed"]
+            : [],
         combo: undefined,
       });
-      node.nexts.forEach((next) => {
-        edges.push({
-          id: generateEdgeId(node.id, next),
-          source: node.id,
-          target: next,
-        });
+    });
+
+    //  遍历所有节点的 nexts，生成边（防御性检查 target 是否存在）
+    Object.values(nodeMap).forEach((node) => {
+      node.nexts.forEach((targetId) => {
+        if (nodeMap[targetId]) {
+          // ← 关键：只加存在的目标
+          edges.push({
+            id: generateEdgeId(node.id, targetId),
+            source: node.id,
+            target: targetId,
+          });
+        }
       });
-      for (const nodeId of [...node.nexts, ...node.children]) {
-        travel(nodeMap[nodeId]);
-      }
-    }
+    });
 
-    for (const rootId of graph.rootNodeIds) {
-      travel(nodeMap[rootId]);
-    }
-
-    return {
-      nodes,
-      edges,
-    };
+    return { nodes, edges };
   };
 
   /**
