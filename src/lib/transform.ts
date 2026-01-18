@@ -8,26 +8,59 @@ import {
   ElementType,
   NodeData,
 } from "@antv/g6";
+import { DataController } from "@antv/g6/lib/runtime/data";
 import { DrawContext } from "@antv/g6/lib/runtime/element";
+
+function isAncestorExpaned(node: NodeData, model: DataController): boolean {
+  if (node.data?.parent) {
+    const parentNode = model.getNodeData([node.data.parent as string])[0];
+    if (parentNode.data?.expanded) {
+      return isAncestorExpaned(parentNode, model);
+    } else {
+      return false;
+    }
+  } else {
+    return true;
+  }
+}
 
 interface CustomTransformProps extends BaseTransformOptions {
   showArchive?: boolean;
 }
 
 /**
- * 用于判断是否显示扩展和折叠
+ * 用于节点折叠
  */
-export class ExpandedTransform extends BaseTransform<CustomTransformProps> {
+export class CollapsedTransform extends BaseTransform {
   public beforeDraw(data: DrawData, _context: DrawContext): DrawData {
-    return data;
-  }
-}
+    const { add, update } = data;
+    const model = this.context.model;
+    const nodesToRemove = new Map<string, NodeData>();
+    const edgesToRemove = new Map<string, EdgeData>();
+    const allNodes = new Map([...add.nodes, ...update.nodes]);
+    const handleNodes = new Set<string>();
 
-/**
- * 用于判断是否显示扩展和折叠
- */
-export class CollapsedTransform extends BaseTransform<CustomTransformProps> {
-  public beforeDraw(data: DrawData, _context: DrawContext): DrawData {
+    allNodes.forEach((node, id) => {
+      if (handleNodes.has(id)) return;
+      handleNodes.add(id);
+      if (!isAncestorExpaned(node, model)) {
+        nodesToRemove.set(id, node);
+        model.getRelatedEdgesData(id).forEach((edge) => {
+          if (edge.id) {
+            edgesToRemove.set(edge.id, edge);
+          }
+        });
+      }
+    });
+
+    edgesToRemove.forEach((edge) => {
+      reassignTo(data, "remove", "edge", edge);
+    });
+
+    nodesToRemove.forEach((node) => {
+      reassignTo(data, "remove", "node", node);
+    });
+
     return data;
   }
 }

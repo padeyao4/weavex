@@ -12,7 +12,6 @@ import { register, ExtensionCategory } from "@antv/g6";
 import {
   DagreLayout,
   CustomNode,
-  ExpandedTransform,
   ArchiveTransform,
   CollapsedTransform,
 } from "@/lib";
@@ -36,7 +35,6 @@ register(
   "collapsed-transform",
   CollapsedTransform,
 );
-register(ExtensionCategory.TRANSFORM, "expanded-transform", ExpandedTransform);
 register(ExtensionCategory.TRANSFORM, "archive-transform", ArchiveTransform);
 register(ExtensionCategory.LAYOUT, "custom-layout", DagreLayout);
 register(ExtensionCategory.NODE, "custom-node", CustomNode);
