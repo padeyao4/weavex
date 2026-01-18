@@ -14,7 +14,7 @@ import {
   CustomNode,
   ExpandedTransform,
   ArchiveTransform,
-  CustomTransform,
+  CollapsedTransform,
 } from "@/lib";
 import router from "./router";
 
@@ -31,7 +31,11 @@ pinia.use(piniaPluginPersistedstate);
 app.use(pinia).use(ElementPlus).use(router).mount("#app");
 
 // 注册自定义数据处理器
-register(ExtensionCategory.TRANSFORM, "custom-transform", CustomTransform);
+register(
+  ExtensionCategory.TRANSFORM,
+  "collapsed-transform",
+  CollapsedTransform,
+);
 register(ExtensionCategory.TRANSFORM, "expanded-transform", ExpandedTransform);
 register(ExtensionCategory.TRANSFORM, "archive-transform", ArchiveTransform);
 register(ExtensionCategory.LAYOUT, "custom-layout", DagreLayout);

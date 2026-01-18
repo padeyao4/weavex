@@ -14,7 +14,10 @@ interface CustomTransformProps extends BaseTransformOptions {
   showArchive?: boolean;
 }
 
-export class CustomTransform extends BaseTransform<CustomTransformProps> {
+/**
+ * 用于判断是否显示扩展和折叠
+ */
+export class ExpandedTransform extends BaseTransform<CustomTransformProps> {
   public beforeDraw(data: DrawData, _context: DrawContext): DrawData {
     return data;
   }
@@ -23,7 +26,7 @@ export class CustomTransform extends BaseTransform<CustomTransformProps> {
 /**
  * 用于判断是否显示扩展和折叠
  */
-export class ExpandedTransform extends BaseTransform<CustomTransformProps> {
+export class CollapsedTransform extends BaseTransform<CustomTransformProps> {
   public beforeDraw(data: DrawData, _context: DrawContext): DrawData {
     return data;
   }

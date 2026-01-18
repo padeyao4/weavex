@@ -153,18 +153,12 @@ onMounted(() => {
     autoResize: true,
     data: graphStore.toGraphData(graphId),
     transforms: [
-      {
-        type: "expanded-transform",
-        showArchive: graphStore.getGraph(graphId).showArchive,
-      },
+      "expanded-transform",
+      "collapsed-transform",
       {
         type: "archive-transform",
         key: "archive-transform",
         showArchive: graphStore.getGraph(graphId).showArchive,
-      },
-      {
-        type: "custom-transform",
-        graphId: graphId,
       },
     ],
     plugins: [
