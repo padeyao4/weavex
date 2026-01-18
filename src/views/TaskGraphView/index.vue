@@ -113,6 +113,7 @@ const drawerNode = reactive<PNode>(NodeUtil.createNode());
 let graph: Graph | undefined;
 
 const syncGraphData = function () {
+  if (animationPlaying.value) return;
   graph?.setData(graphStore.toGraphData(graphStore.allGraph[graphId]));
   graph?.render();
 };
@@ -346,8 +347,8 @@ onMounted(() => {
         badgePadding: [1, 3],
         port: false,
         ports: [
-          { key: "in", placement: "left", fill: "#7E92B5" },
-          { key: "out", placement: "right", fill: "#D580FF" },
+          { key: "in", placement: "left" },
+          { key: "out", placement: "right" },
         ],
         countChildren: (d?: NodeData) =>
           ((d?.data?.children as string[]) || []).length,
@@ -367,17 +368,6 @@ onMounted(() => {
           shadowColor: "#3B82F6",
           shadowBlur: 5,
         },
-      },
-      animation: {
-        enter: [
-          { fields: ["opacity"], duration: 50 },
-          {
-            fields: ["opacity"],
-            shape: "button-group",
-            duration: 1000,
-          },
-        ],
-        exit: false,
       },
     },
     // 边配置

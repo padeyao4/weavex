@@ -344,6 +344,10 @@ export const useGraphStore = defineStore("graph-storage", () => {
             id: generateEdgeId(node.id, targetId),
             source: node.id,
             target: targetId,
+            style: {
+              sourcePort: "out",
+              targetPort: "in",
+            },
           });
         }
       });

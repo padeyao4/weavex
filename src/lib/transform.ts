@@ -3,11 +3,12 @@ import {
   BaseTransform,
   BaseTransformOptions,
   DrawData,
+  EdgeData,
   ElementDatum,
   ElementType,
+  NodeData,
 } from "@antv/g6";
 import { DrawContext } from "@antv/g6/lib/runtime/element";
-import { CustomTransformOption } from "@antv/g6/lib/spec/transform";
 
 interface CustomTransformProps extends BaseTransformOptions {
   showArchive?: boolean;
@@ -46,93 +47,39 @@ export class ArchiveTransform extends BaseTransform<CustomTransformProps> {
         }
       });
     } else {
+      const nodesToRemove = new Map<string, NodeData>();
+      const edgesToRemove = new Map<string, EdgeData>();
       add.nodes.forEach((node) => {
         const nodeData = node.data as unknown as PNode;
         if (nodeData.isArchive) {
-          add.nodes.delete(node.id);
-          remove.nodes.set(node.id, node);
+          nodesToRemove.set(node.id, node);
         }
       });
       update.nodes.forEach((node) => {
         const nodeData = node.data as unknown as PNode;
         if (nodeData.isArchive) {
-          remove.nodes.set(node.id, node);
+          nodesToRemove.set(node.id, node);
         }
       });
-      remove.nodes.forEach((node) => {
-        model.getRelatedEdgesData(node.id).forEach((edge) => {
-          remove.edges.set(edge.id!, edge);
+
+      nodesToRemove.forEach((_, id) => {
+        model.getRelatedEdgesData(id).forEach((edge) => {
+          if (edge.id) {
+            add.edges.delete(edge.id);
+            update.edges.delete(edge.id);
+            remove.edges.set(edge.id, edge);
+          }
         });
+      });
+      nodesToRemove.forEach((node, id) => {
+        add.nodes.delete(id);
+        update.nodes.delete(id);
+        remove.nodes.set(id, node);
       });
     }
     return data;
   }
 }
-
-// export class ArchiveTransform extends BaseTransform<CustomTransformOption> {
-//   public beforeDraw(data: DrawData, _context: DrawContext): DrawData {
-//     const { showArchive = false } = this.options;
-//     const model = this.context.model;
-
-//     // === 第一步：收集所有归档节点 ID ===
-//     const archiveNodeIds = new Set<string>();
-//     [data.add, data.update, data.remove].forEach((task) => {
-//       task.nodes.forEach((node) => {
-//         const pnode = node.data as unknown as PNode;
-//         if (pnode?.isArchive) archiveNodeIds.add(node.id);
-//       });
-//     });
-
-//     if (archiveNodeIds.size === 0) return data;
-
-//     // === 第二步：根据 showArchive 决定节点和边的命运 ===
-//     if (showArchive) {
-//       // 显示归档节点：确保它们在 add/update，不在 remove
-//       archiveNodeIds.forEach((id) => {
-//         const node =
-//           data.add.nodes.get(id) ||
-//           data.update.nodes.get(id) ||
-//           data.remove.nodes.get(id);
-//         if (node && data.remove.nodes.has(id)) {
-//           // 从 remove 移回 update
-//           data.remove.nodes.delete(id);
-//           data.update.nodes.set(id, node);
-//         }
-//       });
-
-//       // 同时恢复关联边（如果边本身不是归档相关，可选择性恢复）
-//       // 这里我们只恢复那些两端都可见的边（简化逻辑）
-//       // 实际上 G6 会在 setData 时自动处理边的可见性，所以通常不需要主动 add 边
-//     } else {
-//       // 隐藏归档节点：移到 remove，并强制隐藏所有关联边
-//       archiveNodeIds.forEach((id) => {
-//         const node =
-//           data.add.nodes.get(id) ||
-//           data.update.nodes.get(id) ||
-//           data.remove.nodes.get(id);
-//         if (node && (data.add.nodes.has(id) || data.update.nodes.has(id))) {
-//           data.add.nodes.delete(id);
-//           data.update.nodes.delete(id);
-//           data.remove.nodes.set(id, node);
-//         }
-
-//         // 👇 关键：隐藏所有与该节点相关的边
-//         const relatedEdges = model.getRelatedEdgesData(id) as any[];
-//         relatedEdges.forEach((edge) => {
-//           if (!edge?.id) return;
-//           // 确保边被标记为 remove
-//           data.add.edges.delete(edge.id);
-//           data.update.edges.delete(edge.id);
-//           data.remove.edges.set(edge.id, edge);
-//         });
-//       });
-//     }
-
-//     console.info(data);
-
-//     return data;
-//   }
-// }
 
 /**
  * 重新分配绘制任务（自实现版）
