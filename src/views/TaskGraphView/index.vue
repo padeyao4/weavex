@@ -11,72 +11,32 @@
     <footer
       class="flex h-12 flex-row items-center justify-center gap-2 border-t border-gray-200"
     >
-      <!-- <div
-        class="flex h-10 w-10 items-center justify-center rounded-full transition-colors duration-200 hover:bg-gray-100"
-        @click="toggleGraphView"
-        title="切换视图"
-      >
-        <div class="relative h-6 w-6">
-          <icon-switch-button
-            theme="outline"
-            size="24"
-            fill="#333"
-            :strokeWidth="2"
-            strokeLinecap="square"
-            class="absolute"
-          />
-          <icon-switch-button
-            theme="two-tone"
-            size="24"
-            :fill="['#333', '#2F88FF']"
-            :strokeWidth="2"
-            strokeLinecap="square"
-            class="absolute"
-            :class="{
-              hidden: !currentGraph?.hideCompleted,
-            }"
-          />
-        </div>
-      </div> -->
       <el-button
         circle
-        :icon="View"
-        :type="currentGraph?.showArchive ? 'default' : 'primary'"
+        :icon="ArchiveIcon"
+        :type="currentGraph?.showArchive ? 'default' : 'info'"
         @click="toggleArchive"
         :loading="animationPlaying"
+        :color="currentGraph?.showArchive ? '#d1d5db' : '#f3f4f6'"
       />
-      <div
-        class="flex h-10 w-10 items-center justify-center rounded-full transition-colors duration-200 hover:bg-gray-100"
+      <el-button
+        circle
         @click="fitView()"
+        :loading="animationPlaying"
         title="适应画布大小"
+        :icon="FillIcon"
+        color="#f3f4f6"
       >
-        <div class="relative h-6 w-6">
-          <icon-fill
-            theme="outline"
-            size="24"
-            fill="#333"
-            :strokeWidth="2"
-            strokeLinecap="square"
-            class="absolute"
-          />
-        </div>
-      </div>
-      <div
-        class="flex h-10 w-10 items-center justify-center rounded-full transition-colors duration-200 hover:bg-gray-100"
+      </el-button>
+      <el-button
+        circle
         @click="fitCenter()"
+        :loading="animationPlaying"
         title="居中显示"
+        :icon="AimIcon"
+        color="#f3f4f6"
       >
-        <div class="relative h-6 w-6">
-          <icon-aiming
-            theme="outline"
-            size="24"
-            fill="#333"
-            :strokeWidth="2"
-            strokeLinecap="square"
-            class="absolute"
-          />
-        </div>
-      </div>
+      </el-button>
     </footer>
     <NodeDetailDrawer v-model="drawer" :node="drawerNode" @save="updateNode" />
   </div>
@@ -98,8 +58,10 @@ import { useRoute } from "vue-router";
 import { PNode } from "@/types";
 import { debug } from "@tauri-apps/plugin-log";
 import NodeDetailDrawer from "./NodeDetailDrawer.vue";
-import { View } from "@element-plus/icons-vue";
 import { debounce } from "lodash-es";
+import ArchiveIcon from "@/components/icons/ArchiveIcon.vue";
+import FillIcon from "@/components/icons/FillIcon.vue";
+import AimIcon from "@/components/icons/AimIcon.vue";
 
 const route = useRoute();
 const graphId = route.params.taskId as string;
@@ -363,6 +325,21 @@ onMounted(() => {
           shadowBlur: 5,
         },
       },
+      animation: {
+        exit: [
+          {
+            fields: ["opacity"],
+          },
+          {
+            fields: ["opacity"],
+            shape: "button-background",
+          },
+          {
+            fields: ["opacity"],
+            shape: "counter",
+          },
+        ],
+      },
     },
     // 边配置
     edge: {
@@ -389,7 +366,6 @@ onMounted(() => {
         key: "drag-canvas",
         sensitivity: 1, // 设置拖拽灵敏度
       },
-      "drag-element",
     ],
     layout: {
       type: "custom-layout",

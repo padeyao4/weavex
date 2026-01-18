@@ -1,0 +1,9 @@
+<template>
+  <icon-switch-button
+    theme="outline"
+    size="32"
+    fill="#333"
+    :strokeWidth="3"
+    strokeLinecap="square"
+  />
+</template>

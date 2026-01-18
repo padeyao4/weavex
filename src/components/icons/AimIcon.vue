@@ -1,0 +1,9 @@
+<template>
+  <icon-aiming
+    theme="outline"
+    size="32"
+    fill="#333"
+    :strokeWidth="2"
+    strokeLinecap="square"
+  />
+</template>
