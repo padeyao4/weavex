@@ -373,7 +373,9 @@ onMounted(() => {
       marginx: 0,
       marginy: 0,
     },
-    animation: configStore.config.graphAnimation,
+    animation: configStore.config.graphAnimation && {
+      duration: 200,
+    },
   });
   graph.on(NodeEvent.CLICK, (evt: IElementEvent & { target: Element }) => {
     const nodeId = evt.target.id;
