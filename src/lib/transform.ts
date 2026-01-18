@@ -34,7 +34,7 @@ export class ExpandedTransform extends BaseTransform<CustomTransformProps> {
  */
 export class ArchiveTransform extends BaseTransform<CustomTransformProps> {
   public beforeDraw(data: DrawData, _context: DrawContext): DrawData {
-    const { add, update, remove } = data;
+    const { add, update } = data;
     const model = this.context.model;
     if (this.options.showArchive) {
       update.nodes.forEach((node) => {
@@ -49,32 +49,30 @@ export class ArchiveTransform extends BaseTransform<CustomTransformProps> {
     } else {
       const nodesToRemove = new Map<string, NodeData>();
       const edgesToRemove = new Map<string, EdgeData>();
-      add.nodes.forEach((node) => {
-        const nodeData = node.data as unknown as PNode;
-        if (nodeData.isArchive) {
-          nodesToRemove.set(node.id, node);
-        }
-      });
-      update.nodes.forEach((node) => {
-        const nodeData = node.data as unknown as PNode;
-        if (nodeData.isArchive) {
-          nodesToRemove.set(node.id, node);
+
+      const allNodes = new Map([...add.nodes, ...update.nodes]);
+      allNodes.forEach((node, id) => {
+        const relatedEdges = model.getRelatedEdgesData(id);
+
+        relatedEdges.forEach((edge) => {
+          const every = model
+            .getNodeData([edge.source, edge.target])
+            .every((node) => !node.data?.isArchive); // 都不是归档的
+          if (!every && edge.id) {
+            edgesToRemove.set(edge.id, edge);
+          }
+        });
+
+        if (node.data?.isArchive) {
+          nodesToRemove.set(id, node);
         }
       });
 
-      nodesToRemove.forEach((_, id) => {
-        model.getRelatedEdgesData(id).forEach((edge) => {
-          if (edge.id) {
-            add.edges.delete(edge.id);
-            update.edges.delete(edge.id);
-            remove.edges.set(edge.id, edge);
-          }
-        });
+      edgesToRemove.forEach((edge) => {
+        reassignTo(data, "remove", "edge", edge);
       });
-      nodesToRemove.forEach((node, id) => {
-        add.nodes.delete(id);
-        update.nodes.delete(id);
-        remove.nodes.set(id, node);
+      nodesToRemove.forEach((node) => {
+        reassignTo(data, "remove", "node", node);
       });
     }
     return data;
@@ -85,6 +83,7 @@ export class ArchiveTransform extends BaseTransform<CustomTransformProps> {
  * 重新分配绘制任务（自实现版）
  * 将指定元素从当前所在的操作队列（add/update/remove）移动到目标操作队列，
  * 并确保它不会同时存在于多个队列中。
+ * 使用方法: reassignTo(data,"remove","edge",edge) 意思是将data中的edge移动到remove队列中
  *
  * @param input - 当前绘制任务数据
  * @param type - 目标操作类型：'add' | 'update' | 'remove'
