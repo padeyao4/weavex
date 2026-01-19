@@ -47,7 +47,7 @@ class SubGraph {
     const g = new dagre.graphlib.Graph();
     g.setGraph({ ...this.options });
     g.setDefaultEdgeLabel(() => ({}));
-    Array.from(this.nodeMap.values()).forEach((node) => {
+    this.nodeMap.forEach((node) => {
       const size = node.data?.expanded
         ? (node?.style?.size ?? defaultSize)
         : defaultSize;
@@ -62,7 +62,7 @@ class SubGraph {
     });
     dagre.layout(g);
 
-    Array.from(this.nodeMap.values()).forEach((node) => {
+    this.nodeMap.forEach((node) => {
       const data = g.node(node.id);
       const size = node.data?.expanded
         ? (node?.style?.size ?? defaultSize)
@@ -80,7 +80,7 @@ class SubGraph {
   }
 
   setOffset(offsetX: number, offsetY: number) {
-    Array.from(this.nodeMap.values()).forEach((node) => {
+    this.nodeMap.forEach((node) => {
       node.style = {
         ...node.style,
         x: (node.style?.x ?? 0) + offsetX,
@@ -152,7 +152,6 @@ export class DagreLayout extends BaseLayout<DagreLayoutOptions> {
     model: GraphData,
     options?: DagreLayoutOptions,
   ): Promise<GraphData> {
-    // const data = cloneDeep(model);
     await measureTime(() => {
       executeLayout(model, {
         ...options,
