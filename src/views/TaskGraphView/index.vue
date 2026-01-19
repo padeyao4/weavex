@@ -197,6 +197,7 @@ onMounted(() => {
               break;
             case "node:delete":
               graphStore.removeNode(graphId, current.id);
+              graphStore.debouncedSave();
               break;
             case "node:add-next":
               graphStore.appendNewNode(graphId, current.id, options);
