@@ -321,6 +321,7 @@ onMounted(() => {
         ],
         countChildren: (d?: NodeData) =>
           ((d?.data?.children as string[]) || []).length,
+        showExpandedButton: (d: NodeData) => d.data?.expanded,
         button: {
           r: 12,
           onClick: (id: string | undefined) => {

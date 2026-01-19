@@ -49,6 +49,15 @@ export class CustomNode extends Rect {
     // 设置按钮组的位置
     buttonGroup?.setLocalPosition(width / 2 - 5, -height / 2 + 5);
 
+    const show =
+      attributes.showExpandedButton || attributes.countChildren !== 0;
+
+    const baseStyle = {
+      interactive: show,
+      visibility: show ? "visible" : "hidden",
+      cursor: show ? "pointer" : "default",
+    };
+
     // 创建按钮背景（圆形）
     this.upsert(
       "button-background",
@@ -60,9 +69,7 @@ export class CustomNode extends Rect {
         lineWidth: 0.5,
         cx: 0, // 相对于组中心
         cy: 0, // 相对于组中心
-        interactive: attributes.countChildren !== 0,
-        visibility: attributes.countChildren !== 0 ? "visible" : "hidden",
-        cursor: attributes.countChildren !== 0 ? "pointer" : "default",
+        ...baseStyle,
       },
       buttonGroup,
     )!;
@@ -78,9 +85,7 @@ export class CustomNode extends Rect {
         y: 0,
         textAlign: "center",
         textBaseline: "middle",
-        interactive: attributes.countChildren !== 0,
-        visibility: attributes.countChildren !== 0 ? "visible" : "hidden",
-        cursor: attributes.countChildren !== 0 ? "pointer" : "default",
+        ...baseStyle,
       },
       buttonGroup,
     );
