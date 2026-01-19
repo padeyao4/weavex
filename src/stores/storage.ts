@@ -576,6 +576,48 @@ export const useGraphStore = defineStore("graph-storage", () => {
     return allGraph[graphId];
   };
 
+  /**
+   * 自动将完成的任务添加到archive中
+   * @param graphId
+   */
+  const autoArchive = function (graphId: string) {
+    const graph = allGraph[graphId];
+    if (!graph) return;
+    Object.values(graph.nodes).forEach((node) => {
+      if (node.completed) {
+        // 判断prevs是否都是archive
+        const prvesIsArchive = node.prevs
+          .map((prve) => graph.nodes[prve])
+          .every((e) => e.isArchive);
+        const childrenIsArchive = node.children
+          .map((id) => graph.nodes[id])
+          .every((e) => e.isArchive);
+        if (prvesIsArchive && childrenIsArchive) {
+          node.isArchive = true;
+        }
+      }
+    });
+    debouncedSave();
+  };
+
+  const canBeArchive = function (
+    graphId: string,
+    nodeId: string,
+    willCompleted?: boolean,
+  ): boolean {
+    const graph = allGraph[graphId];
+    if (!graph) return false;
+    const node = graph.nodes[nodeId];
+    const prvesIsArchive = node.prevs
+      .map((prve) => graph.nodes[prve])
+      .every((e) => e.isArchive);
+    const childrenIsArchive = node.children
+      .map((id) => graph.nodes[id])
+      .every((e) => e.isArchive);
+    const isComplated = willCompleted ?? node.completed;
+    return isComplated && prvesIsArchive && childrenIsArchive;
+  };
+
   const graphsMeta = computed(() => {
     return Object.values(allGraph).sort(
       (a, b) => (b.priority ?? 0) - (a.priority ?? 0),
@@ -611,5 +653,7 @@ export const useGraphStore = defineStore("graph-storage", () => {
     addNewChildNode,
     getGraph,
     setNodeExpanded,
+    autoArchive,
+    canBeArchive,
   };
 });

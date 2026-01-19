@@ -13,7 +13,7 @@
     >
       <el-button
         circle
-        :icon="ArchiveIcon"
+        icon="Open"
         :type="currentGraph?.showArchive ? 'default' : 'info'"
         @click="toggleArchive"
         :loading="animationPlaying"
@@ -24,7 +24,7 @@
         @click="fitView()"
         :loading="animationPlaying"
         title="适应画布大小"
-        :icon="FillIcon"
+        icon="FullScreen"
         color="#f3f4f6"
       >
       </el-button>
@@ -33,12 +33,25 @@
         @click="fitCenter()"
         :loading="animationPlaying"
         title="居中显示"
-        :icon="AimIcon"
+        icon="Aim"
         color="#f3f4f6"
       >
       </el-button>
+      <el-button
+        title="自动归档"
+        circle
+        color="#f3f4f6"
+        icon="Box"
+        @click="autoArchive()"
+        :loading="animationPlaying"
+      />
     </footer>
-    <NodeDetailDrawer v-model="drawer" :node="drawerNode" @save="updateNode" />
+    <NodeDetailDrawer
+      v-model="drawer"
+      :node="drawerNode"
+      :graphId="graphId"
+      @save="updateNode"
+    />
   </div>
 </template>
 <script setup lang="ts">
@@ -59,9 +72,6 @@ import { PNode } from "@/types";
 import { debug } from "@tauri-apps/plugin-log";
 import NodeDetailDrawer from "./NodeDetailDrawer.vue";
 import { debounce } from "lodash-es";
-import ArchiveIcon from "@/components/icons/ArchiveIcon.vue";
-import FillIcon from "@/components/icons/FillIcon.vue";
-import AimIcon from "@/components/icons/AimIcon.vue";
 
 const route = useRoute();
 const graphId = route.params.taskId as string;
@@ -90,6 +100,10 @@ watch([graphStore.allGraph], () => {
 
 const fitView = () => {
   graph?.fitView();
+};
+
+const autoArchive = () => {
+  graphStore.autoArchive(graphId);
 };
 
 const fitCenter = () => {

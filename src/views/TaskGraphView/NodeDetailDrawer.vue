@@ -64,7 +64,11 @@
         </el-form-item>
         <el-form-item label="归档">
           <div class="flex items-center space-x-2">
-            <el-switch v-model="localNode.isArchive" class="simple-switch" />
+            <el-switch
+              v-model="localNode.isArchive"
+              class="simple-switch"
+              :disabled="!enableArchive()"
+            />
             <span class="text-sm text-gray-500">
               {{ localNode.isArchive ? "已归档" : "未归档" }}
             </span>
@@ -96,10 +100,12 @@
 <script setup lang="ts">
 import { ref, watch } from "vue";
 import type { PNode } from "@/types";
+import { useGraphStore } from "@/stores";
 
 interface Props {
   modelValue: boolean;
   node: PNode;
+  graphId: string;
 }
 
 interface Emits {
@@ -112,6 +118,8 @@ const emit = defineEmits<Emits>();
 
 const localNode = ref<PNode>({ ...props.node });
 
+const graphStore = useGraphStore();
+
 watch(
   () => props.node,
   (newNode) => {
@@ -119,6 +127,14 @@ watch(
   },
   { deep: true },
 );
+
+const enableArchive = (): boolean => {
+  return graphStore.canBeArchive(
+    props.graphId,
+    props.node.id,
+    localNode.value.completed,
+  );
+};
 
 const handleSave = () => {
   emit("save", localNode.value);
