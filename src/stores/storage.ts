@@ -327,6 +327,7 @@ export const useGraphStore = defineStore("graph-storage", () => {
       nodes.push({
         id: node.id,
         data: { ...node },
+        style: {},
         states:
           node.isFollowed && !node.completed && !node.isArchive
             ? ["followed"]
@@ -339,7 +340,6 @@ export const useGraphStore = defineStore("graph-storage", () => {
     Object.values(nodeMap).forEach((node) => {
       node.nexts.forEach((targetId) => {
         if (nodeMap[targetId]) {
-          // ← 关键：只加存在的目标
           edges.push({
             id: generateEdgeId(node.id, targetId),
             source: node.id,
