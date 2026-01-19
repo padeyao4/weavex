@@ -324,10 +324,16 @@ export const useGraphStore = defineStore("graph-storage", () => {
 
     //  直接遍历所有节点（保证完整性）
     Object.values(nodeMap).forEach((node) => {
+      const childrenTodoNum = node.children
+        .map((childId) => nodeMap[childId])
+        .filter((child) => !child.completed).length;
+
       nodes.push({
         id: node.id,
         data: { ...node },
-        style: {},
+        style: {
+          childrenTodoNum, // 待完成的子任务数量
+        },
         states:
           node.isFollowed && !node.completed && !node.isArchive
             ? ["followed"]

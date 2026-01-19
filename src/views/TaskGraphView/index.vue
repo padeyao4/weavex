@@ -56,7 +56,7 @@
 </template>
 <script setup lang="ts">
 import { useConfigStore, useGraphStore } from "@/stores";
-import { NodeUtil } from "@/utils";
+import { measureTime, NodeUtil } from "@/utils";
 import {
   EdgeData,
   Element,
@@ -84,9 +84,12 @@ const drawerNode = reactive<PNode>(NodeUtil.createNode());
 
 let graph: Graph | undefined;
 
-const syncGraphData = function () {
+const syncGraphData = async function () {
   if (animationPlaying.value) return;
-  graph?.setData(graphStore.toGraphData(graphStore.allGraph[graphId]));
+  const { result } = await measureTime(() => {
+    return graphStore.toGraphData(graphStore.allGraph[graphId]);
+  }, "to graph data cost time");
+  graph?.setData(result);
   graph?.render();
 };
 
@@ -94,9 +97,13 @@ const debounceSyncData = debounce(() => {
   syncGraphData();
 }, 50);
 
-watch([graphStore.allGraph], () => {
-  debounceSyncData();
-});
+watch(
+  [graphStore.allGraph],
+  () => {
+    debounceSyncData();
+  },
+  { immediate: true },
+);
 
 const fitView = () => {
   graph?.fitView();
@@ -127,7 +134,6 @@ onMounted(() => {
   graph = new Graph({
     container: "container",
     autoResize: true,
-    data: graphStore.toGraphData(graphId),
     transforms: [
       "collapsed-transform",
       {

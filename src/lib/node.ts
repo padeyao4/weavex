@@ -5,6 +5,7 @@ import { Rect, RectStyleProps } from "@antv/g6";
 export interface CustomNodeProps extends Required<RectStyleProps> {
   showExpandedButton: boolean;
   countChildren: number;
+  childrenTodoNum: number;
   button?: {
     r: number;
     onClick: (id: string | undefined) => void;
@@ -78,7 +79,7 @@ export class CustomNode extends Rect {
       "counter",
       "text",
       {
-        text: `${attributes.countChildren}`,
+        text: `${attributes.childrenTodoNum}/${attributes.countChildren}`,
         fontSize: 12,
         fill: "#33333380",
         x: 0,
