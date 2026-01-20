@@ -1,7 +1,7 @@
 # Weavex
 Weavex — DAG-driven tasks & notes
 
-Weavex（织事）是一款基于有向无环图（DAG）的桌面应用，用于以图的方式组织和管理你的 todo 列表，同时支持将笔记关联到 DAG 中的节点上，实现任务与知识的可视化、结构化管理。该项目基于 Vue 3 + Vite 构建，并使用 Tauri 打包为跨平台桌面应用。
+Weavex 是一款基于有向无环图（DAG）的桌面应用，用于以图的方式组织和管理你的 todo 列表，同时支持将笔记关联到 DAG 中的节点上，实现任务与知识的可视化、结构化管理。该项目基于 Vue 3 + Vite 构建，并使用 Tauri 打包为跨平台桌面应用。
 
 主要功能
 - 使用 DAG（有向无环图）组织任务（todo），支持任务依赖与层级关系的可视化。  
@@ -46,6 +46,3 @@ Weavex（织事）是一款基于有向无环图（DAG）的桌面应用，用�
 - 项目位于本仓库（当前为本地开发仓库）。如需我替你统一替换 `package.json` / `tauri.conf.json` / `README` 中的名称并提交修改，请明确要使用的 bundle identifier（例如 `com.yourname.weavex`），或告诉我要替换哪些字段。
 
 许可证
-- 本项目的许可证文件位于仓库根目录（请根据需要添加或确认 `LICENSE`）。
-
-谢谢使用 Weavex — 如果你希望我现在把 `package.json` 与 `src-tauri/tauri.conf.json` 中的名称替换为 `weavex` / `Weavex`，告诉我你要用的 bundle identifier（例如 `com.alice.weavex`），我会继续为你修改项目文件。
