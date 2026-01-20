@@ -22,15 +22,17 @@ const clickNoteItem = function (noteId: string) {
 
 <template>
   <div class="flex h-full w-full flex-row">
-    <menu-frame class="flex shrink-0 flex-col px-1 pt-7.5">
-      <div class="my-2 flex flex-row gap-0.5 bg-red-100">
+    <menu-frame class="flex shrink-0 flex-col pt-7.5 pb-2">
+      <div class="my-2 flex flex-row gap-1 px-1">
         <el-input />
         <el-button icon="Plus" @click="handleAddNote"></el-button>
       </div>
-      <div class="flex h-full flex-col gap-1 bg-amber-200 select-none">
+      <div
+        class="flex h-full flex-col gap-1 overflow-y-auto border-t border-gray-200 px-1 pt-1 select-none"
+      >
         <div
           v-for="item in metaList"
-          class="flex h-10 items-center justify-center bg-amber-100"
+          class="flex h-10 shrink-0 items-center justify-center rounded-lg bg-amber-100"
           @click="clickNoteItem(item.id)"
         >
           {{ item.title }}

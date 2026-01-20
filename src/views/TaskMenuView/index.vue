@@ -26,6 +26,7 @@
               我的一天
             </div>
             <div
+              v-if="taskStore.importantTasks.length > 0"
               class="ml-auto flex h-6 w-6 items-center justify-center rounded-full bg-[#00000020] text-xs font-light"
             >
               {{ taskStore.importantTasks.length }}
@@ -65,7 +66,7 @@
                       :strokeWidth="2"
                     />
                     <div
-                      class="mr-auto pl-3 text-sm font-normal text-gray-700 select-none"
+                      class="min-w-0 flex-1 overflow-hidden pl-3 text-sm font-normal text-ellipsis whitespace-nowrap text-gray-700 select-none"
                     >
                       {{ item.name }}
                     </div>
