@@ -333,7 +333,6 @@ onMounted(() => {
           onClick: (id: string | undefined) => {
             if (animationPlaying.value || !id) return;
             graphStore.toggleNodeExpanded(graphId, id);
-            // todo
           },
         },
       },
