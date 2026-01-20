@@ -9,6 +9,7 @@ import piniaPluginPersistedstate from "pinia-plugin-persistedstate";
 import { install } from "@icon-park/vue-next/es/all";
 import "@icon-park/vue-next/styles/index.css";
 import { register, ExtensionCategory } from "@antv/g6";
+import "vditor/dist/index.css";
 import {
   DagreLayout,
   CustomNode,

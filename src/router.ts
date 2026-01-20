@@ -1,7 +1,7 @@
 import { createRouter, createWebHashHistory } from "vue-router";
 import HomeView from "./views/HomeView/index.vue";
 import SettingsView from "./views/SettingsView/index.vue";
-import NoteView from "./views/NoteView.vue";
+import NoteMenuView from "./views/NoteMenuView.vue";
 import TaskGraphView from "./views/TaskGraphView/index.vue";
 import TaskMenuView from "./views/TaskMenuView/index.vue";
 import TaskSummaryView from "./views/TaskSummaryView/index.vue";
@@ -11,6 +11,7 @@ import GitFormView from "./views/GitFormView.vue";
 import LaunchView from "./views/LaunchView.vue";
 import LoadingView from "./views/LoadingView.vue";
 import { debug } from "@tauri-apps/plugin-log";
+import NoteEditor from "./views/NoteEditor.vue";
 
 const router = createRouter({
   history: createWebHashHistory(),
@@ -40,8 +41,15 @@ const router = createRouter({
         },
         {
           path: "note",
-          name: "note",
-          component: NoteView,
+          name: "noteMenu",
+          component: NoteMenuView,
+          children: [
+            {
+              path: "editor/:noteId",
+              name: "noteEditor",
+              component: NoteEditor,
+            },
+          ],
         },
         {
           path: "test-page",

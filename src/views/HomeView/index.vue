@@ -5,7 +5,7 @@
         class="flex h-screen w-14 shrink-0 flex-col items-center pt-9 pb-1"
       >
         <NavItem route-name="taskMenu" :icon-component="'icon-list-success'" />
-        <NavItem route-name="note" :icon-component="'icon-notebook'" />
+        <NavItem route-name="noteMenu" :icon-component="'icon-notebook'" />
         <NavItem
           v-if="configStore.config.testMode"
           route-name="testPage"
