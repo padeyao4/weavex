@@ -1,117 +1,115 @@
 <template>
-  <div @click="handleClickOutside" class="flex h-screen w-full flex-row">
-    <menu
-      class="flex h-full w-64 shrink-0 flex-col border-r border-gray-200 pt-8 select-none"
-      @contextmenu.prevent
-    >
-      <div class="border-b border-gray-200">
-        <router-link
-          :to="{ name: 'taskSummary' }"
-          custom
-          replace
-          v-slot="{ navigate, isActive }"
+  <frame-page>
+    <div @click="handleClickOutside" class="flex h-full w-full flex-row">
+      <menu-frame
+        class="flex shrink-0 flex-col pt-7.5 select-none"
+        @contextmenu.prevent
+      >
+        <div class="border-b border-gray-200">
+          <router-link
+            :to="{ name: 'taskSummary' }"
+            custom
+            replace
+            v-slot="{ navigate, isActive }"
+          >
+            <div
+              class="m-1 flex h-10 flex-row items-center rounded-md pr-2 pl-3 transition-colors duration-200 hover:bg-[#eee]"
+              @click="navigate"
+              :class="isActive ? 'rounded-md bg-[#eee]' : ''"
+            >
+              <icon-sun-one
+                theme="outline"
+                size="18"
+                fill="#6b7280"
+                :strokeWidth="2"
+              />
+              <div class="ml-3 text-sm font-normal text-gray-700 select-none">
+                我的一天
+              </div>
+              <div
+                class="ml-auto flex h-6 w-6 items-center justify-center rounded-full bg-[#00000020] text-xs font-light"
+              >
+                {{ taskStore.importantTasks.length }}
+              </div>
+            </div>
+          </router-link>
+        </div>
+
+        <div class="flex min-h-0 flex-1 flex-col">
+          <div class="mt-1 flex-1 overflow-y-auto">
+            <div class="flex flex-col gap-1">
+              <SortableList
+                :list="graphsStore.graphsMeta"
+                :update="debounceHandleGraphDrag"
+              >
+                <template #default="{ item }">
+                  <router-link
+                    :to="{
+                      name: 'taskGraph',
+                      params: { taskId: item.id },
+                    }"
+                    custom
+                    v-slot="{ navigate, isActive }"
+                  >
+                    <div
+                      @click="navigate"
+                      :class="{
+                        'rounded-md bg-[#eee]': isActive,
+                      }"
+                      class="group mr-1 ml-1 flex h-9 cursor-default flex-row items-center pl-3 transition-colors duration-200 hover:rounded-md hover:bg-[#eee]"
+                      :data-draggable-move="item.id"
+                    >
+                      <icon-chart-graph
+                        theme="outline"
+                        size="18"
+                        fill="#6b7280"
+                        :strokeWidth="2"
+                      />
+                      <div
+                        class="mr-auto pl-3 text-sm font-normal text-gray-700 select-none"
+                      >
+                        {{ item.name }}
+                      </div>
+                      <div
+                        class="m-2 flex h-6 w-6 cursor-pointer items-center justify-center rounded-sm opacity-0 transition-opacity duration-200 group-hover:opacity-100 hover:bg-gray-300"
+                        @click.stop="
+                          showContextMenu($event, item.id, item.name)
+                        "
+                      >
+                        <el-icon :size="14">
+                          <icon-more />
+                        </el-icon>
+                      </div>
+                    </div>
+                  </router-link>
+                </template>
+              </SortableList>
+            </div>
+          </div>
+        </div>
+        <div
+          class="flex h-12 items-center justify-center border-t border-gray-200 p-1"
         >
           <div
-            class="m-1 flex h-10 flex-row items-center rounded-md pr-2 pl-3 transition-colors duration-200 hover:bg-[#eee]"
-            @click="navigate"
-            :class="isActive ? 'rounded-md bg-[#eee]' : ''"
+            @click="formData.visible = true"
+            class="flex h-full w-full flex-row items-center rounded-md p-1 pl-3 transition-colors duration-200 hover:rounded-md hover:bg-gray-100"
           >
-            <icon-sun-one
+            <icon-plus
               theme="outline"
               size="18"
               fill="#6b7280"
               :strokeWidth="2"
             />
             <div class="ml-3 text-sm font-normal text-gray-700 select-none">
-              我的一天
-            </div>
-            <div
-              class="ml-auto flex h-6 w-6 items-center justify-center rounded-full bg-[#00000020] text-xs font-light"
-            >
-              {{ taskStore.importantTasks.length }}
+              创建项目
             </div>
           </div>
-        </router-link>
-      </div>
-
-      <div class="flex min-h-0 flex-1 flex-col">
-        <div class="mt-1 flex-1 overflow-y-auto">
-          <div class="flex flex-col gap-1">
-            <SortableList
-              :list="graphsStore.graphsMeta"
-              :update="debounceHandleGraphDrag"
-            >
-              <template #default="{ item }">
-                <router-link
-                  :to="{
-                    name: 'taskGraph',
-                    params: { taskId: item.id },
-                  }"
-                  custom
-                  v-slot="{ navigate, isActive }"
-                >
-                  <div
-                    @click="navigate"
-                    :class="{
-                      'rounded-md bg-[#eee]': isActive,
-                    }"
-                    class="group mr-1 ml-1 flex h-9 cursor-default flex-row items-center pl-3 transition-colors duration-200 hover:rounded-md hover:bg-[#eee]"
-                    :data-draggable-move="item.id"
-                  >
-                    <icon-chart-graph
-                      theme="outline"
-                      size="18"
-                      fill="#6b7280"
-                      :strokeWidth="2"
-                    />
-                    <div
-                      class="mr-auto pl-3 text-sm font-normal text-gray-700 select-none"
-                    >
-                      {{ item.name }}
-                    </div>
-                    <div
-                      class="m-2 flex h-6 w-6 cursor-pointer items-center justify-center rounded-sm opacity-0 transition-opacity duration-200 group-hover:opacity-100 hover:bg-gray-300"
-                      @click.stop="showContextMenu($event, item.id, item.name)"
-                    >
-                      <el-icon :size="14">
-                        <icon-more />
-                      </el-icon>
-                    </div>
-                  </div>
-                </router-link>
-              </template>
-            </SortableList>
-          </div>
         </div>
-      </div>
-      <div
-        class="flex h-12 items-center justify-center border-t border-gray-200 p-1"
-      >
-        <div
-          @click="formData.visible = true"
-          class="flex h-full w-full flex-row items-center rounded-md p-1 pl-3 transition-colors duration-200 hover:rounded-md hover:bg-gray-100"
-        >
-          <icon-plus
-            theme="outline"
-            size="18"
-            fill="#6b7280"
-            :strokeWidth="2"
-          />
-          <div class="ml-3 text-sm font-normal text-gray-700 select-none">
-            创建项目
-          </div>
-        </div>
-      </div>
-    </menu>
-    <router-view :key="$route.fullPath" class="min-h-0 min-w-0 flex-1" />
-
-    <!-- 创建项目对话框组件 -->
-    <CreateProjectDialog
-      :visible="formData.visible"
-      @update:visible="(value) => (formData.visible = value)"
-      @confirm="createTaskGraph"
-    />
-
+      </menu-frame>
+      <router-view :key="$route.fullPath" class="min-h-0 min-w-0 flex-1" />
+    </div>
+  </frame-page>
+  <Teleport to="body">
     <!-- 右键菜单组件 -->
     <ContextMenu
       :visible="contextMenu.visible"
@@ -133,18 +131,27 @@
       @update:name="(value) => (renameDialog.name = value)"
       @confirm="renameGraph"
     />
-  </div>
+
+    <!-- 创建项目对话框组件 -->
+    <CreateProjectDialog
+      :visible="formData.visible"
+      @update:visible="(value) => (formData.visible = value)"
+      @confirm="createTaskGraph"
+    />
+  </Teleport>
 </template>
 
 <script setup lang="ts">
 import { useGraphStore, useTaskStore } from "@/stores";
 import { GraphUtils } from "@/utils";
-import { reactive, onMounted } from "vue";
+import { reactive, onMounted, Teleport } from "vue";
 import router from "@/router";
 import ContextMenu from "./ContextMenu.vue";
 import RenameDialog from "./RenameDialog.vue";
 import SortableList from "@/components/SortableList.vue";
 import CreateProjectDialog from "./CreateProjectDialog.vue";
+import MenuFrame from "@/components/MenuFrame.vue";
+import FramePage from "@/components/FramePage.vue";
 import { PGraph } from "@/types";
 import { debounce } from "lodash-es";
 

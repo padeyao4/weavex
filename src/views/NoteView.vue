@@ -1,5 +1,9 @@
+<script setup lang="ts">
+import FramePage from "@/components/FramePage.vue";
+</script>
+
 <template>
-  <div class="flex h-screen w-screen items-center justify-center">
+  <FramePage>
     <el-empty description="todo" />
-  </div>
+  </FramePage>
 </template>

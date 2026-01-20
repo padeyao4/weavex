@@ -1,6 +1,6 @@
 <template>
-  <div class="flex flex-col pt-6">
-    <div class="flex h-14 items-center pl-4 font-sans text-xl select-none">
+  <div class="flex flex-col pt-7.5">
+    <div class="flex h-12 items-center pl-4 font-sans text-xl select-none">
       {{ currentGraph?.name }}
     </div>
     <div
