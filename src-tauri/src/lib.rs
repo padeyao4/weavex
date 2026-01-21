@@ -9,6 +9,43 @@ use std::path::Path;
 use std::process::Command;
 
 #[tauri::command]
+fn get_os_type() -> String {
+    let os_type = if cfg!(target_os = "windows") {
+        "windows"
+    } else if cfg!(target_os = "linux") {
+        "linux"
+    } else if cfg!(target_os = "macos") {
+        "macos"
+    } else if cfg!(target_os = "android") {
+        "android"
+    } else if cfg!(target_os = "ios") {
+        "ios"
+    } else {
+        "unknown"
+    };
+    os_type.into()
+}
+
+#[tauri::command]
+fn detect_compositor() -> String {
+    // 检测合成器类型
+    // 只判断是否是 niri 合成器
+    if cfg!(target_os = "linux") {
+        // 检查 NIRI_SOCKET 环境变量来判断是否是 niri 合成器
+        if std::env::var("NIRI_SOCKET").is_ok() {
+            return "niri".into();
+        }
+        return "other".into();
+    } else if cfg!(target_os = "windows") {
+        return "windows".into();
+    } else if cfg!(target_os = "macos") {
+        return "macos".into();
+    } else {
+        return "unknown".into();
+    }
+}
+
+#[tauri::command]
 fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
 }
@@ -322,6 +359,8 @@ pub fn run() {
         .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
+            get_os_type,
+            detect_compositor,
             greet,
             check_git_repository,
             git_clone,
@@ -334,4 +373,21 @@ pub fn run() {
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{detect_compositor, get_os_type};
+
+    #[test]
+    fn test_get_os_type() {
+        let os_type = get_os_type();
+        println!("os type {}", os_type);
+    }
+
+    #[test]
+    fn test_detect_compositor() {
+        let compositor = detect_compositor();
+        println!("compositor : {}", compositor)
+    }
 }
