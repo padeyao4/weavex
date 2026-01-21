@@ -36,9 +36,9 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="flex h-full min-h-0 w-full min-w-0 flex-col px-2 pt-7.5 pb-2">
+  <div class="flex h-full min-h-0 w-full min-w-0 flex-col px-4 pt-7.5 pb-2">
     <div
-      class="flex h-12 shrink-0 items-center justify-start font-sans text-xl"
+      class="flex h-12 min-w-0 shrink-0 items-center justify-start overflow-hidden font-sans text-xl text-ellipsis whitespace-nowrap"
     >
       {{ noteTitle }}
     </div>
@@ -46,4 +46,10 @@ onBeforeUnmount(() => {
   </div>
 </template>
 
-<style lang="css" scoped></style>
+<style lang="css" scoped>
+/* 修改编辑区域的圆角 */
+.vditor {
+  border-radius: 6px !important;
+  overflow: hidden; /* 防止内部元素溢出破坏圆角效果 */
+}
+</style>

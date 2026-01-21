@@ -1,7 +1,7 @@
 import { createRouter, createWebHashHistory } from "vue-router";
 import HomeView from "./views/HomeView/index.vue";
 import SettingsView from "./views/SettingsView/index.vue";
-import NoteMenuView from "./views/NoteMenuView.vue";
+import NoteMenuView from "./views/NoteMenuView/index.vue";
 import TaskGraphView from "./views/TaskGraphView/index.vue";
 import TaskMenuView from "./views/TaskMenuView/index.vue";
 import TaskSummaryView from "./views/TaskSummaryView/index.vue";
