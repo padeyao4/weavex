@@ -1,7 +1,11 @@
 <template>
   <div class="flex flex-col pt-7.5">
-    <div class="flex h-12 items-center pl-4 font-sans text-xl select-none">
-      {{ currentGraph?.name }}
+    <div class="flex h-12 items-center pl-4 select-none">
+      <div
+        class="overflow-hidden font-sans text-xl text-ellipsis whitespace-nowrap"
+      >
+        {{ currentGraph?.name }}
+      </div>
     </div>
     <div
       id="container"

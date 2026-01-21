@@ -38,9 +38,11 @@ onBeforeUnmount(() => {
 <template>
   <div class="flex h-full min-h-0 w-full min-w-0 flex-col px-4 pt-7.5 pb-2">
     <div
-      class="flex h-12 min-w-0 shrink-0 items-center justify-start overflow-hidden font-sans text-xl text-ellipsis whitespace-nowrap"
+      class="flex h-12 min-w-0 shrink-0 items-center justify-start font-sans text-xl"
     >
-      {{ noteTitle }}
+      <div class="overflow-hidden text-ellipsis whitespace-nowrap">
+        {{ noteTitle }}
+      </div>
     </div>
     <div id="vditor" ref="vditorRef" class="min-h-0 min-w-0 flex-1"></div>
   </div>

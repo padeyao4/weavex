@@ -37,14 +37,16 @@ const clickNoteItem = function (noteId: string) {
         <el-button icon="Plus" @click="handleAddNote"></el-button>
       </div>
       <div
-        class="flex min-w-0 flex-1 flex-col gap-1 overflow-y-auto border-t border-gray-200 bg-red-200 px-1 pt-1 select-none"
+        class="flex min-w-0 flex-1 flex-col gap-1 overflow-y-auto border-t border-gray-200 px-1 pt-1 select-none"
       >
         <div
           v-for="item in metaList"
-          class="flex h-10 items-center justify-start overflow-hidden rounded-lg bg-amber-100 text-ellipsis whitespace-nowrap"
+          class="flex h-10 items-center justify-start rounded-lg bg-amber-100"
           @click="clickNoteItem(item.id)"
         >
-          {{ item.title }}
+          <div class="overflow-hidden text-ellipsis whitespace-nowrap">
+            {{ item.title }}
+          </div>
         </div>
       </div>
     </menu-frame>
