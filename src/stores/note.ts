@@ -5,7 +5,7 @@ import { useContextStore } from "./context";
 import { resolve } from "@tauri-apps/api/path";
 import { readFile, writeFile } from "@/utils";
 import { debounce } from "lodash-es";
-import { debug } from "@tauri-apps/plugin-log";
+import { debug, error } from "@tauri-apps/plugin-log";
 
 const NOTE_DIR = "notes";
 const NOTE_META_FILE = "note-meta.json";
@@ -63,13 +63,17 @@ export const useNodeStore = defineStore("notes", () => {
   };
 
   const loadNoteMeta = async function () {
-    const contextStore = useContextStore();
-    const path = await resolve(contextStore.context.workDir!, NOTE_META_FILE);
-    const content = await readFile(path);
-    const obj = JSON.parse(content) ?? {};
-    Object.keys(obj).forEach((key) => {
-      noteMeta[key] = obj[key];
-    });
+    try {
+      const contextStore = useContextStore();
+      const path = await resolve(contextStore.context.workDir!, NOTE_META_FILE);
+      const content = await readFile(path);
+      const obj = JSON.parse(content) ?? {};
+      Object.keys(obj).forEach((key) => {
+        noteMeta[key] = obj[key];
+      });
+    } catch (e) {
+      error(`read note meta failed, error is ${JSON.stringify(e)}`);
+    }
   };
 
   const clear = function () {
