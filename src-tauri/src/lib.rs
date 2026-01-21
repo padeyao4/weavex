@@ -280,11 +280,12 @@ fn write_file(path: &str, content: &str) -> Result<(), String> {
     let file_path = Path::new(path);
     if let Some(parent_dir) = file_path.parent() {
         if !parent_dir.exists() {
-            debug!("Directory does not exist: {}", parent_dir.display());
-            return Err(format!(
-                "Directory does not exist: {}",
+            debug!(
+                "Directory does not exist, creating: {}",
                 parent_dir.display()
-            ));
+            );
+            fs::create_dir_all(parent_dir)
+                .map_err(|e| format!("Failed to create directory: {}", e))?;
         }
     }
     debug!("rust write file, path: {}", path);

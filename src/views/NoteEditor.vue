@@ -9,28 +9,26 @@ const route = useRoute();
 const noteId = route.params.noteId as string;
 const noteStore = useNodeStore();
 
-const noteTitle = computed(() => {
-  return noteStore.noteMeta[noteId].title;
-});
+const noteTitle = computed(() => noteStore.noteMeta[noteId].title);
 
 const vditorRef = ref();
 const vditorContent = ref();
 
-watch(vditorContent.value, () => {
-  debug(`${vditorContent.value}`);
+watch(vditorContent, () => {
+  noteStore.saveNote(noteId, vditorContent.value);
 });
 
 let vditor: Vditor;
 
-onMounted(() => {
+onMounted(async () => {
   vditor = new Vditor(vditorRef.value, {
     height: "100%",
     width: "100%",
     after: () => {
       debug("vditor loaded");
     },
+    value: await noteStore.loadNote(noteId),
     input: (value) => {
-      console.info("input", value);
       vditorContent.value = value;
     },
     cache: {

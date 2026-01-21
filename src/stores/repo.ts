@@ -5,6 +5,7 @@ import router from "@/router";
 import { debug, info } from "@tauri-apps/plugin-log";
 import { useGraphStore } from "./storage";
 import { invoke } from "@tauri-apps/api/core";
+import { useNodeStore } from "./note";
 
 export type State = "idle" | "loading" | "no_repo" | "has_repo";
 
@@ -59,27 +60,38 @@ export const useRepoStore = defineStore("repo", () => {
     const workDirExists = await contextStore.check_work_dir();
     setState(workDirExists ? "has_repo" : "no_repo");
     if (repo.state === "has_repo") {
+      // 加载graph
       const graphStore = useGraphStore();
       await graphStore.loadGraphs();
+      // 加载note
+      const noteStore = useNodeStore();
+      await noteStore.loadNoteMeta();
     }
   };
 
   const switchRepo = function () {
     const contextStore = useContextStore();
     contextStore.clear();
+    // 清理graph
     const graphStore = useGraphStore();
     graphStore.clear();
+    // 清理note
+    const noteStore = useNodeStore();
+    noteStore.clear();
     setState("no_repo");
   };
 
-  const loadRepo = function (
+  const loadRepo = async function (
     params: Partial<ContextInfo> & Pick<ContextInfo, "workDir">,
     options?: { persist?: boolean },
   ) {
     const contextStore = useContextStore();
     contextStore.switchWorkspace(params, options);
     const graphStore = useGraphStore();
-    graphStore.loadGraphs();
+    await graphStore.loadGraphs();
+
+    const noteStore = useNodeStore();
+    await noteStore.loadNoteMeta();
     setState("has_repo");
   };
 
