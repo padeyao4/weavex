@@ -18,7 +18,9 @@
           :is-last="true"
         />
       </aside>
-      <router-view class="flex-1 rounded-tl-lg border-l border-gray-200" />
+      <router-view
+        class="min-w-0 flex-1 rounded-tl-lg border-l border-gray-200"
+      />
     </div>
   </FramePage>
 </template>
