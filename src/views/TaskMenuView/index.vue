@@ -105,7 +105,7 @@
       </div>
     </menu-frame>
     <router-view :key="$route.fullPath" class="min-h-0 min-w-0 flex-1" />
-    <Teleport to="body">
+    <teleport to="body">
       <!-- 右键菜单组件 -->
       <ContextMenu
         :visible="contextMenu.visible"
@@ -134,14 +134,14 @@
         @update:visible="(value) => (formData.visible = value)"
         @confirm="createTaskGraph"
       />
-    </Teleport>
+    </teleport>
   </div>
 </template>
 
 <script setup lang="ts">
 import { useGraphStore, useTaskStore } from "@/stores";
 import { GraphUtils } from "@/utils";
-import { reactive, onMounted, Teleport } from "vue";
+import { reactive, onMounted } from "vue";
 import router from "@/router";
 import ContextMenu from "./ContextMenu.vue";
 import RenameDialog from "./RenameDialog.vue";
