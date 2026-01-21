@@ -34,66 +34,68 @@ const debounceUpdate = debounce(onUpdate, 10);
 </script>
 
 <template>
-  <main class="flex flex-col px-4 select-none">
+  <main class="flex flex-col select-none">
     <div class="mt-7.5 flex min-h-0 flex-1 flex-col">
-      <div class="flex h-10 items-center text-xl select-none">任务列表</div>
-      <div
-        class="my-2 flex min-h-0 min-w-0 flex-1 flex-col gap-3 overflow-y-auto"
-      >
-        <SortableList
-          :list="taskStore.importantTasks"
-          :update="debounceUpdate"
-          class="flex min-w-0 flex-1"
-        >
-          <template #default="{ item }">
-            <TaskItem
-              :task="item"
-              :data-draggable-move="item.id"
-              @toggle-task-completed="toggleTaskCompleted"
-              @toggle-task-followed="toggleTaskFollowed"
-            />
-          </template>
-        </SortableList>
-        <div
-          class="flex h-8 w-fit shrink-0 items-center justify-center rounded-md border border-gray-200 bg-gray-50 px-2 text-sm select-none hover:bg-gray-200"
-          @click="showOthers = !showOthers"
-        >
-          <span v-if="showOthers" class="flex items-center justify-center">
-            <icon-down
-              theme="outline"
-              size="24"
-              fill="#333"
-              :strokeWidth="2"
-              strokeLinecap="square"
-            />
-          </span>
-          <span v-else class="flex items-center justify-center">
-            <icon-right
-              theme="outline"
-              size="24"
-              fill="#333"
-              :strokeWidth="2"
-              strokeLinecap="square"
-            />
-          </span>
-          次要任务
-          <span class="text-gray-400"
-            >（{{ taskStore.lowPriorityTasks.length }}）</span
+      <div class="flex h-12 items-center px-4 text-xl select-none">
+        任务列表
+      </div>
+      <div class="min-h-0 min-w-0 flex-1 overflow-y-auto px-4">
+        <div class="my-2 flex min-h-0 min-w-0 flex-1 flex-col gap-3">
+          <SortableList
+            :list="taskStore.importantTasks"
+            :update="debounceUpdate"
+            class="flex min-w-0 flex-1"
           >
+            <template #default="{ item }">
+              <TaskItem
+                :task="item"
+                :data-draggable-move="item.id"
+                @toggle-task-completed="toggleTaskCompleted"
+                @toggle-task-followed="toggleTaskFollowed"
+              />
+            </template>
+          </SortableList>
+          <div
+            class="flex h-8 w-fit shrink-0 items-center justify-center rounded-md border border-gray-200 bg-gray-50 px-2 text-sm select-none hover:bg-gray-200"
+            @click="showOthers = !showOthers"
+          >
+            <span v-if="showOthers" class="flex items-center justify-center">
+              <icon-down
+                theme="outline"
+                size="24"
+                fill="#333"
+                :strokeWidth="2"
+                strokeLinecap="square"
+              />
+            </span>
+            <span v-else class="flex items-center justify-center">
+              <icon-right
+                theme="outline"
+                size="24"
+                fill="#333"
+                :strokeWidth="2"
+                strokeLinecap="square"
+              />
+            </span>
+            次要任务
+            <span class="text-gray-400"
+              >（{{ taskStore.lowPriorityTasks.length }}）</span
+            >
+          </div>
+          <SortableList
+            :list="showOthers ? taskStore.lowPriorityTasks : []"
+            :update="debounceUpdate"
+          >
+            <template #default="{ item }">
+              <TaskItem
+                :task="item"
+                :data-draggable-move="item.id"
+                @toggle-task-completed="toggleTaskCompleted"
+                @toggle-task-followed="toggleTaskFollowed"
+              />
+            </template>
+          </SortableList>
         </div>
-        <SortableList
-          :list="showOthers ? taskStore.lowPriorityTasks : []"
-          :update="debounceUpdate"
-        >
-          <template #default="{ item }">
-            <TaskItem
-              :task="item"
-              :data-draggable-move="item.id"
-              @toggle-task-completed="toggleTaskCompleted"
-              @toggle-task-followed="toggleTaskFollowed"
-            />
-          </template>
-        </SortableList>
       </div>
     </div>
   </main>
