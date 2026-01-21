@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import Vditor from "vditor";
 import { debug } from "@tauri-apps/plugin-log";
@@ -14,6 +14,11 @@ const noteTitle = computed(() => {
 });
 
 const vditorRef = ref();
+const vditorContent = ref();
+
+watch(vditorContent.value, () => {
+  debug(`${vditorContent.value}`);
+});
 
 let vditor: Vditor;
 
@@ -23,6 +28,10 @@ onMounted(() => {
     width: "100%",
     after: () => {
       debug("vditor loaded");
+    },
+    input: (value) => {
+      console.info("input", value);
+      vditorContent.value = value;
     },
     cache: {
       enable: false,

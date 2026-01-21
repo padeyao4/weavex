@@ -44,7 +44,6 @@ const debounceUpdate = debounce(onUpdate, 10);
           <SortableList
             :list="taskStore.importantTasks"
             :update="debounceUpdate"
-            class="flex min-w-0 flex-1"
           >
             <template #default="{ item }">
               <TaskItem
