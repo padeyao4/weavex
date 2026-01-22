@@ -1,27 +1,30 @@
 <script setup lang="ts">
 import { useTaskStore } from "@/stores";
-import { PNode } from "@/types";
+
 import { ref } from "vue";
 import TaskItem from "./TaskItem.vue";
 import SortableList from "@/components/SortableList.vue";
 import { debounce } from "lodash-es";
 import { debug } from "@tauri-apps/plugin-log";
+import NodeDetailForm from "@/components/NodeDetailForm.vue";
+import type { TaskNode } from "@/stores/task";
 
 const taskStore = useTaskStore();
 // 每次打开这个页面启动清理无效的任务
 
-const toggleTaskCompleted = (task: PNode) => {
+const selectedTask = ref<TaskNode | null>(null);
+const showOthers = ref(false);
+
+const toggleTaskCompleted = (task: TaskNode) => {
   task.completed = !task.completed;
 };
 
-const toggleTaskFollowed = (task: PNode) => {
+const toggleTaskFollowed = (task: TaskNode) => {
   task.isFollowed = !task.isFollowed;
   task.priority || (task.priority = Date.now());
 };
 
-const showOthers = ref(false);
-
-function onUpdate(current: PNode, other: PNode) {
+function onUpdate(current: TaskNode, other: TaskNode) {
   if (current.priority === other.priority) {
     current.priority = (current.priority ?? 0) + Math.random() * 100;
     other.priority = (other.priority ?? 0) + Math.random() * 100;
@@ -31,6 +34,25 @@ function onUpdate(current: PNode, other: PNode) {
 }
 
 const debounceUpdate = debounce(onUpdate, 10);
+
+const handleTaskClick = (task: TaskNode) => {
+  if (selectedTask.value?.id === task.id) {
+    // 点击同一个任务，关闭弹窗
+    selectedTask.value = null;
+  } else {
+    // 点击不同任务，打开弹窗
+    selectedTask.value = task;
+  }
+};
+
+const handleSave = () => {
+  // 保存节点更新
+  selectedTask.value = null;
+};
+
+const handleCancel = () => {
+  selectedTask.value = null;
+};
 </script>
 
 <template>
@@ -46,12 +68,17 @@ const debounceUpdate = debounce(onUpdate, 10);
             :update="debounceUpdate"
           >
             <template #default="{ item }">
-              <TaskItem
-                :task="item"
-                :data-draggable-move="item.id"
-                @toggle-task-completed="toggleTaskCompleted"
-                @toggle-task-followed="toggleTaskFollowed"
-              />
+              <div
+                @click="handleTaskClick(item)"
+                :class="{ 'selected-task': selectedTask?.id === item.id }"
+              >
+                <TaskItem
+                  :task="item"
+                  :data-draggable-move="item.id"
+                  @toggle-task-completed="toggleTaskCompleted"
+                  @toggle-task-followed="toggleTaskFollowed"
+                />
+              </div>
             </template>
           </SortableList>
           <div
@@ -86,16 +113,42 @@ const debounceUpdate = debounce(onUpdate, 10);
             :update="debounceUpdate"
           >
             <template #default="{ item }">
-              <TaskItem
-                :task="item"
-                :data-draggable-move="item.id"
-                @toggle-task-completed="toggleTaskCompleted"
-                @toggle-task-followed="toggleTaskFollowed"
-              />
+              <div
+                @click="handleTaskClick(item)"
+                :class="{ 'selected-task': selectedTask?.id === item.id }"
+              >
+                <TaskItem
+                  :task="item"
+                  :data-draggable-move="item.id"
+                  @toggle-task-completed="toggleTaskCompleted"
+                  @toggle-task-followed="toggleTaskFollowed"
+                />
+              </div>
             </template>
           </SortableList>
         </div>
       </div>
     </div>
+    <NodeDetailForm
+      v-if="selectedTask"
+      :node="selectedTask"
+      :graphId="selectedTask.graphId"
+      @save="handleSave"
+      @cancel="handleCancel"
+      class="w-80 border-l border-gray-200"
+    />
   </main>
 </template>
+
+<style scoped>
+.selected-task {
+  border-radius: 6px;
+  background-color: #f0f9ff;
+  border: 1px solid #3b82f6;
+}
+
+.selected-task .task-item {
+  border-color: transparent;
+  background-color: transparent;
+}
+</style>
