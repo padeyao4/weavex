@@ -10,7 +10,6 @@ import NodeDetailForm from "@/components/NodeDetailForm.vue";
 import type { TaskNode } from "@/stores/task";
 
 const taskStore = useTaskStore();
-// 每次打开这个页面启动清理无效的任务
 
 const selectedTask = ref<TaskNode | null>(null);
 const showOthers = ref(false);
