@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import MenuFrame from "@/components/MenuFrame.vue";
-import router from "@/router";
 import { useNodeStore } from "@/stores";
 import { computed, ref } from "vue";
 import CreateNoteDialog from "./CreateNoteDialog.vue";
@@ -24,30 +23,41 @@ const handleCreateNoteConfirm = function (title: string) {
   noteStore.addNoteMeta(title);
 };
 
-const clickNoteItem = function (noteId: string) {
-  router.push({ name: "noteEditor", params: { noteId } });
-};
+// const clickNoteItem = function (noteId: string) {
+//   router.push({ name: "noteEditor", params: { noteId } });
+// };
 </script>
 
 <template>
   <div class="flex flex-row">
     <menu-frame class="flex shrink-0 flex-col pt-7.5 pb-2">
-      <div class="my-2 flex flex-row gap-1 px-1">
+      <div class="my-2 flex flex-row gap-1 px-4">
         <el-input />
         <el-button icon="Plus" @click="handleAddNote"></el-button>
       </div>
       <div
         class="flex min-w-0 flex-1 flex-col gap-1 overflow-y-auto border-t border-gray-200 px-1 pt-1 select-none"
       >
-        <div
+        <router-link
           v-for="item in metaList"
-          class="flex h-10 items-center justify-start rounded-lg bg-amber-100"
-          @click="clickNoteItem(item.id)"
+          :to="{ name: 'noteEditor', params: { noteId: item.id } }"
+          custom
+          v-slot="{ navigate, isActive }"
         >
-          <div class="overflow-hidden text-ellipsis whitespace-nowrap">
-            {{ item.title }}
+          <div
+            @click="navigate"
+            :class="{
+              'rounded-md bg-[#eee]': isActive,
+            }"
+            class="flex h-10 cursor-pointer items-center justify-start rounded-lg px-3 hover:bg-[#eee]"
+          >
+            <div
+              class="overflow-hidden text-sm font-normal text-ellipsis whitespace-nowrap"
+            >
+              {{ item.title }}
+            </div>
           </div>
-        </div>
+        </router-link>
       </div>
     </menu-frame>
     <router-view :key="$route.fullPath"></router-view>

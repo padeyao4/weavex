@@ -11,4 +11,5 @@
   --color-muted: #6b7280;       /* 中灰文字 */
   --color-border: #e6e7ea;
   --color-overlay: rgba(10,15,20,0.06);   /* 轻遮罩，避免纯黑 */
+  --color-hover: rgba(0, 0, 0, 0.06); /* 基于浅色背景的深色悬停 */
 }
