@@ -1,0 +1,15 @@
+/* 亮色模式（默认） */
+@theme {
+  --color-primary: #2b6df6;     /* 极简蓝 */
+  --color-secondary: #8b5e3c;   /* 温和暖褐 */
+  --color-success: #16a34a;
+  --color-warning: #d97706;
+  --color-danger: #ef4444;
+
+  --color-base: #f7f8fa;        /* 极浅灰，非纯白 */
+  --color-surface: #fbfdff;     /* 近白但非纯白 */
+  --color-muted: #6b7280;       /* 中灰文字 */
+  --color-border: #e6e7ea;
+  --color-overlay: rgba(10,15,20,0.06);   /* 轻遮罩，避免纯黑 */
+  --color-hover: rgba(0, 0, 0, 0.06); /* 基于浅色背景的深色悬停 */
+}

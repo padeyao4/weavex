@@ -4,7 +4,7 @@
   >
     <div
       class="checkbox-container-group relative flex h-5 w-5 shrink-0 items-center"
-      @click="handleToggleTask"
+      @click.stop="handleToggleTask"
     >
       <icon-round
         theme="outline"
@@ -31,7 +31,7 @@
     </div>
     <div
       class="task-item:hover:opacity-100 m-2 h-5 w-5 shrink-0 opacity-0 transition-opacity duration-200"
-      @click="handleTogglePriority"
+      @click.stop="handleTogglePriority"
     >
       <icon-star
         v-if="task.isFollowed"
@@ -54,16 +54,16 @@
 </template>
 
 <script setup lang="ts">
-import { PNode } from "@/types";
+import type { TaskNode } from "@/stores/task";
 
 interface Props {
-  task: PNode;
+  task: TaskNode;
 }
 
 const props = defineProps<Props>();
 const emit = defineEmits<{
-  toggleTaskCompleted: [task: PNode];
-  toggleTaskFollowed: [task: PNode];
+  toggleTaskCompleted: [task: TaskNode];
+  toggleTaskFollowed: [task: TaskNode];
 }>();
 
 function handleToggleTask() {

@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-col pt-7.5">
-    <div class="flex h-12 items-center pl-4 select-none">
+    <div class="flex h-12 items-center pl-4 select-none" data-tauri-drag-region>
       <div
         class="overflow-hidden font-sans text-xl text-ellipsis whitespace-nowrap"
       >
