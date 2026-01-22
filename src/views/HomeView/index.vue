@@ -1,6 +1,6 @@
 <template>
   <FramePage>
-    <div class="flex h-screen w-screen overflow-hidden bg-[#f7f7f7]">
+    <div class="bg-canvas flex h-screen w-screen overflow-hidden">
       <aside
         class="flex h-screen w-14 shrink-0 flex-col items-center pt-9 pb-1"
       >
