@@ -1,18 +1,33 @@
 <script setup lang="ts">
 import { useTaskStore } from "@/stores";
 
-import { ref } from "vue";
+import { ref, onMounted, onUnmounted } from "vue";
 import TaskItem from "./TaskItem.vue";
 import SortableList from "@/components/SortableList.vue";
 import { debounce } from "lodash-es";
 import { debug } from "@tauri-apps/plugin-log";
 import NodeDetailForm from "@/components/NodeDetailForm.vue";
+import { ElDrawer } from "element-plus";
 import type { TaskNode } from "@/stores/task";
 
 const taskStore = useTaskStore();
 
 const selectedTask = ref<TaskNode | null>(null);
 const showOthers = ref(false);
+const isMobile = ref(false);
+
+const checkScreenWidth = () => {
+  isMobile.value = window.innerWidth < 1000;
+};
+
+onMounted(() => {
+  checkScreenWidth();
+  window.addEventListener("resize", checkScreenWidth,{});
+});
+
+onUnmounted(() => {
+  window.removeEventListener("resize", checkScreenWidth);
+});
 
 const toggleTaskCompleted = (task: TaskNode) => {
   task.completed = !task.completed;
@@ -128,14 +143,38 @@ const handleCancel = () => {
         </div>
       </div>
     </div>
-    <NodeDetailForm
-      v-if="selectedTask"
-      :node="selectedTask"
-      :graphId="selectedTask.graphId"
-      @save="handleSave"
-      @cancel="handleCancel"
-      class="w-80 border-l border-gray-200"
-    />
+    <template v-if="!isMobile">
+      <NodeDetailForm
+        v-if="selectedTask"
+        :node="selectedTask"
+        :graphId="selectedTask.graphId"
+        @save="handleSave"
+        @cancel="handleCancel"
+        class="w-90 border-l border-gray-200"
+      />
+    </template>
+    <teleport to="body" v-else>
+      <ElDrawer
+        :model-value="!!selectedTask"
+        direction="rtl"
+        :with-header="false"
+        size="360px"
+        @update:model-value="
+          (val) => {
+            if (!val) handleCancel();
+          }
+        "
+        @close="handleCancel"
+      >
+        <NodeDetailForm
+          v-if="selectedTask"
+          :node="selectedTask"
+          :graphId="selectedTask.graphId"
+          @save="handleSave"
+          @cancel="handleCancel"
+        />
+      </ElDrawer>
+    </teleport>
   </main>
 </template>
 

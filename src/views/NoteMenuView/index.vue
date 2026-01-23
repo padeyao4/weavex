@@ -22,10 +22,6 @@ const handleCreateNoteConfirm = function (title: string) {
   // 使用用户输入的标题创建笔记
   noteStore.addNoteMeta(title);
 };
-
-// const clickNoteItem = function (noteId: string) {
-//   router.push({ name: "noteEditor", params: { noteId } });
-// };
 </script>
 
 <template>

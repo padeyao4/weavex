@@ -3,7 +3,7 @@
     :model-value="modelValue"
     @update:model-value="$emit('update:modelValue', $event)"
     :with-header="false"
-    size="380px"
+    size="360px"
     class="minimalist-drawer"
   >
     <NodeDetailForm
