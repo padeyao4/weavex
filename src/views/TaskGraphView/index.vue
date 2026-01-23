@@ -13,6 +13,7 @@
       </div>
       <div
         id="container"
+        ref="containerRef"
         @contextmenu.prevent
         class="min-h-0 min-w-0 flex-1 border-t border-gray-200"
       />
@@ -88,14 +89,23 @@ import {
   NodeData,
   NodeEvent,
 } from "@antv/g6";
-import { onMounted, ref, onUnmounted, computed, watch } from "vue";
+import {
+  onMounted,
+  ref,
+  onUnmounted,
+  computed,
+  watch,
+  useTemplateRef,
+} from "vue";
 import { useRoute } from "vue-router";
 import { PNode } from "@/types";
 import { debug } from "@tauri-apps/plugin-log";
 import NodeDetailDrawer from "./NodeDetailDrawer.vue";
 import NodeDetailForm from "@/components/NodeDetailForm.vue";
 import { debounce } from "lodash-es";
+import { useResizeObserver } from "@vueuse/core";
 
+const containerRef = useTemplateRef("containerRef");
 const route = useRoute();
 const graphId = route.params.taskId as string;
 const graphStore = useGraphStore();
@@ -172,7 +182,7 @@ onMounted(() => {
 
   graph = new Graph({
     container: "container",
-    autoResize: true,
+    autoResize: false,
     transforms: [
       "collapsed-transform",
       {
@@ -448,6 +458,10 @@ onMounted(() => {
   });
 
   graph.render();
+});
+
+useResizeObserver(containerRef, () => {
+  graph?.resize();
 });
 
 onUnmounted(() => {
