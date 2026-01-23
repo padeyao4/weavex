@@ -55,7 +55,7 @@
         />
       </footer>
     </div>
-    <template v-if="!isMobile && drawer">
+    <template v-if="!isMobile && drawerNode">
       <NodeDetailForm
         :node="drawerNode"
         :graphId="graphId"
@@ -65,11 +65,12 @@
         class="w-90 border-l border-gray-200"
       />
     </template>
-    <teleport to="body" v-else>
+    <teleport to="body" v-else-if="drawerNode">
       <NodeDetailDrawer
-        v-model="drawer"
+        :model-value="true"
         :node="drawerNode"
         :graphId="graphId"
+        @update:model-value="handleDrawerClose"
         @save="updateNode"
       />
     </teleport>
@@ -77,7 +78,7 @@
 </template>
 <script setup lang="ts">
 import { useConfigStore, useGraphStore } from "@/stores";
-import { measureTime, NodeUtil } from "@/utils";
+import { measureTime } from "@/utils";
 import {
   EdgeData,
   Element,
@@ -87,7 +88,7 @@ import {
   NodeData,
   NodeEvent,
 } from "@antv/g6";
-import { onMounted, ref, reactive, onUnmounted, computed, watch } from "vue";
+import { onMounted, ref, onUnmounted, computed, watch } from "vue";
 import { useRoute } from "vue-router";
 import { PNode } from "@/types";
 import { debug } from "@tauri-apps/plugin-log";
@@ -101,8 +102,7 @@ const graphStore = useGraphStore();
 const configStore = useConfigStore();
 const currentGraph = computed(() => graphStore.getGraph(graphId));
 
-const drawer = ref(false);
-const drawerNode = reactive<PNode>(NodeUtil.createNode());
+const drawerNode = ref<PNode | null>(null);
 const isMobile = ref(false);
 
 const checkScreenWidth = () => {
@@ -110,7 +110,12 @@ const checkScreenWidth = () => {
 };
 
 const enableArchive = computed(() => {
-  return graphStore.canBeArchive(graphId, drawerNode.id, drawerNode.completed);
+  if (!drawerNode.value) return false;
+  return graphStore.canBeArchive(
+    graphId,
+    drawerNode.value.id,
+    drawerNode.value.completed,
+  );
 });
 
 let graph: Graph | undefined;
@@ -433,11 +438,7 @@ onMounted(() => {
   graph.on(NodeEvent.CLICK, (evt: IElementEvent & { target: Element }) => {
     const nodeId = evt.target.id;
     const node = currentGraph.value.nodes[nodeId];
-    Object.keys(drawerNode).forEach(
-      (key) => delete drawerNode[key as keyof PNode],
-    );
-    Object.assign(drawerNode, node ?? {});
-    drawer.value = true;
+    drawerNode.value = node ? { ...node } : null;
   });
   graph.on(GraphEvent.BEFORE_ANIMATE, () => {
     animationPlaying.value = true;
@@ -473,7 +474,7 @@ function updateNode(node: PNode) {
     update: true,
   });
   graph?.draw();
-  drawer.value = false;
+  drawerNode.value = null;
 }
 
 function handleSave(node: PNode) {
@@ -481,6 +482,10 @@ function handleSave(node: PNode) {
 }
 
 function handleCancel() {
-  drawer.value = false;
+  drawerNode.value = null;
+}
+
+function handleDrawerClose() {
+  drawerNode.value = null;
 }
 </script>
