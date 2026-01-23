@@ -1,5 +1,5 @@
 <template>
-  <div class="flex min-w-0 flex-1 flex-row">
+  <div class="flex min-w-0 flex-1 flex-row" ref="containerRef">
     <div class="flex min-w-0 flex-1 flex-col pt-7.5">
       <div
         class="flex h-12 items-center pl-4 select-none"
@@ -12,10 +12,10 @@
         </div>
       </div>
       <div
-        id="container"
-        ref="containerRef"
+        id="canvas"
+        ref="canvasRef"
         @contextmenu.prevent
-        class="min-h-0 min-w-0 flex-1 border-t border-gray-200"
+        class="min-h-0 min-w-0 flex-1 overflow-hidden border-t border-gray-200"
       />
       <footer
         class="flex h-12 flex-row items-center justify-center gap-2 border-t border-gray-200"
@@ -103,9 +103,10 @@ import { debug } from "@tauri-apps/plugin-log";
 import NodeDetailDrawer from "./NodeDetailDrawer.vue";
 import NodeDetailForm from "@/components/NodeDetailForm.vue";
 import { debounce } from "lodash-es";
-import { useResizeObserver } from "@vueuse/core";
+import { useEventListener, useResizeObserver } from "@vueuse/core";
 
 const containerRef = useTemplateRef("containerRef");
+const canvasRef = useTemplateRef("canvasRef");
 const route = useRoute();
 const graphId = route.params.taskId as string;
 const graphStore = useGraphStore();
@@ -176,12 +177,13 @@ const toggleArchive = () => {
   });
 };
 
+useEventListener("resize", checkScreenWidth);
+
 onMounted(() => {
   checkScreenWidth();
-  window.addEventListener("resize", checkScreenWidth);
 
   graph = new Graph({
-    container: "container",
+    container: "canvas",
     autoResize: false,
     transforms: [
       "collapsed-transform",
@@ -392,6 +394,10 @@ onMounted(() => {
           shadowColor: "#3B82F6",
           shadowBlur: 5,
         },
+        chosen: {
+          lineWidth: 1,
+          shadowBlur: 10,
+        },
       },
       animation: {
         exit: [
@@ -460,12 +466,38 @@ onMounted(() => {
   graph.render();
 });
 
-useResizeObserver(containerRef, () => {
-  graph?.resize();
+useResizeObserver([containerRef, canvasRef], (entries) => {
+  if (entries[0].target == containerRef.value) {
+    graph?.resize();
+  } else {
+    !drawerNode.value && graph?.resize();
+  }
 });
 
+watch(drawerNode, (v, ov) => {
+  if (ov) {
+    clearNodeStatus(ov.id!, "chosen");
+  }
+  if (v) {
+    setNodeStatus(v.id!, "chosen");
+  }
+});
+
+const setNodeStatus = function (nodeId: string, state: string) {
+  const states = graph?.getElementState(nodeId) ?? [];
+  const set = new Set(states);
+  set.add(state);
+  graph?.setElementState(nodeId, Array.from(set));
+};
+
+const clearNodeStatus = function (nodeId: string, state: string) {
+  const states = graph?.getElementState(nodeId) ?? [];
+  const set = new Set(states);
+  set.delete(state);
+  graph?.setElementState(nodeId, Array.from(set));
+};
+
 onUnmounted(() => {
-  window.removeEventListener("resize", checkScreenWidth);
   graph?.destroy();
 });
 
