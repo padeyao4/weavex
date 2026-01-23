@@ -1,61 +1,78 @@
 <template>
-  <div class="flex flex-col pt-7.5">
-    <div class="flex h-12 items-center pl-4 select-none" data-tauri-drag-region>
+  <div class="flex min-w-0 flex-1 flex-row">
+    <div class="flex min-w-0 flex-1 flex-col pt-7.5">
       <div
-        class="overflow-hidden font-sans text-xl text-ellipsis whitespace-nowrap"
+        class="flex h-12 items-center pl-4 select-none"
+        data-tauri-drag-region
       >
-        {{ currentGraph?.name }}
+        <div
+          class="overflow-hidden font-sans text-xl text-ellipsis whitespace-nowrap"
+        >
+          {{ currentGraph?.name }}
+        </div>
       </div>
+      <div
+        id="container"
+        @contextmenu.prevent
+        class="min-h-0 min-w-0 flex-1 border-t border-gray-200"
+      />
+      <footer
+        class="flex h-12 flex-row items-center justify-center gap-2 border-t border-gray-200"
+      >
+        <el-button
+          circle
+          icon="Open"
+          :type="currentGraph?.showArchive ? 'default' : 'info'"
+          @click="toggleArchive"
+          :loading="animationPlaying"
+          :color="currentGraph?.showArchive ? '#d1d5db' : '#f3f4f6'"
+        />
+        <el-button
+          circle
+          @click="fitView()"
+          :loading="animationPlaying"
+          title="适应画布大小"
+          icon="FullScreen"
+          color="#f3f4f6"
+        >
+        </el-button>
+        <el-button
+          circle
+          @click="fitCenter()"
+          :loading="animationPlaying"
+          title="居中显示"
+          icon="Aim"
+          color="#f3f4f6"
+        >
+        </el-button>
+        <el-button
+          title="自动归档"
+          circle
+          color="#f3f4f6"
+          icon="Box"
+          @click="autoArchive()"
+          :loading="animationPlaying"
+        />
+      </footer>
     </div>
-    <div
-      id="container"
-      @contextmenu.prevent
-      class="min-h-0 min-w-0 flex-1 border-t border-gray-200"
-    />
-    <footer
-      class="flex h-12 flex-row items-center justify-center gap-2 border-t border-gray-200"
-    >
-      <el-button
-        circle
-        icon="Open"
-        :type="currentGraph?.showArchive ? 'default' : 'info'"
-        @click="toggleArchive"
-        :loading="animationPlaying"
-        :color="currentGraph?.showArchive ? '#d1d5db' : '#f3f4f6'"
+    <template v-if="!isMobile && drawer">
+      <NodeDetailForm
+        :node="drawerNode"
+        :graphId="graphId"
+        :enableArchive="enableArchive"
+        @save="handleSave"
+        @cancel="handleCancel"
+        class="w-90 border-l border-gray-200"
       />
-      <el-button
-        circle
-        @click="fitView()"
-        :loading="animationPlaying"
-        title="适应画布大小"
-        icon="FullScreen"
-        color="#f3f4f6"
-      >
-      </el-button>
-      <el-button
-        circle
-        @click="fitCenter()"
-        :loading="animationPlaying"
-        title="居中显示"
-        icon="Aim"
-        color="#f3f4f6"
-      >
-      </el-button>
-      <el-button
-        title="自动归档"
-        circle
-        color="#f3f4f6"
-        icon="Box"
-        @click="autoArchive()"
-        :loading="animationPlaying"
+    </template>
+    <teleport to="body" v-else>
+      <NodeDetailDrawer
+        v-model="drawer"
+        :node="drawerNode"
+        :graphId="graphId"
+        @save="updateNode"
       />
-    </footer>
-    <NodeDetailDrawer
-      v-model="drawer"
-      :node="drawerNode"
-      :graphId="graphId"
-      @save="updateNode"
-    />
+    </teleport>
   </div>
 </template>
 <script setup lang="ts">
@@ -75,6 +92,7 @@ import { useRoute } from "vue-router";
 import { PNode } from "@/types";
 import { debug } from "@tauri-apps/plugin-log";
 import NodeDetailDrawer from "./NodeDetailDrawer.vue";
+import NodeDetailForm from "@/components/NodeDetailForm.vue";
 import { debounce } from "lodash-es";
 
 const route = useRoute();
@@ -85,6 +103,15 @@ const currentGraph = computed(() => graphStore.getGraph(graphId));
 
 const drawer = ref(false);
 const drawerNode = reactive<PNode>(NodeUtil.createNode());
+const isMobile = ref(false);
+
+const checkScreenWidth = () => {
+  isMobile.value = window.innerWidth < 1000;
+};
+
+const enableArchive = computed(() => {
+  return graphStore.canBeArchive(graphId, drawerNode.id, drawerNode.completed);
+});
 
 let graph: Graph | undefined;
 
@@ -135,6 +162,9 @@ const toggleArchive = () => {
 };
 
 onMounted(() => {
+  checkScreenWidth();
+  window.addEventListener("resize", checkScreenWidth);
+
   graph = new Graph({
     container: "container",
     autoResize: true,
@@ -418,6 +448,12 @@ onMounted(() => {
 
   graph.render();
 });
+
+onUnmounted(() => {
+  window.removeEventListener("resize", checkScreenWidth);
+  graph?.destroy();
+});
+
 /**
  * 更新节点
  * @param node
@@ -437,9 +473,14 @@ function updateNode(node: PNode) {
     update: true,
   });
   graph?.draw();
+  drawer.value = false;
 }
 
-onUnmounted(() => {
-  graph?.destroy();
-});
+function handleSave(node: PNode) {
+  updateNode(node);
+}
+
+function handleCancel() {
+  drawer.value = false;
+}
 </script>
