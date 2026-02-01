@@ -63,7 +63,7 @@
         :enableArchive="enableArchive"
         @save="handleSave"
         @cancel="handleCancel"
-        class="w-90 border-l border-gray-200"
+        class="w-90 border-l border-gray-300"
       />
     </template>
     <teleport to="body" v-else-if="drawerNode">

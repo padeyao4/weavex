@@ -22,7 +22,7 @@ const checkScreenWidth = () => {
 
 onMounted(() => {
   checkScreenWidth();
-  window.addEventListener("resize", checkScreenWidth,{});
+  window.addEventListener("resize", checkScreenWidth, {});
 });
 
 onUnmounted(() => {
@@ -150,7 +150,7 @@ const handleCancel = () => {
         :graphId="selectedTask.graphId"
         @save="handleSave"
         @cancel="handleCancel"
-        class="w-90 border-l border-gray-200"
+        class="w-90 border-l border-gray-300"
       />
     </template>
     <teleport to="body" v-else>
