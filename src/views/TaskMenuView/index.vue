@@ -74,9 +74,13 @@
                       class="m-2 flex h-6 w-6 cursor-pointer items-center justify-center rounded-sm opacity-0 transition-opacity duration-200 group-hover:opacity-100 hover:bg-gray-300"
                       @click.stop="showContextMenu($event, item.id, item.name)"
                     >
-                      <el-icon :size="14">
-                        <icon-more />
-                      </el-icon>
+                      <icon-more-one
+                        theme="outline"
+                        size="16"
+                        fill="#333"
+                        :strokeWidth="2"
+                        strokeLinecap="square"
+                      />
                     </div>
                   </div>
                 </router-link>
