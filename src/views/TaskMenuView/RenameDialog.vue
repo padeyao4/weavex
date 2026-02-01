@@ -26,7 +26,7 @@
     >
       <!-- 标题栏 -->
       <div class="flex items-center justify-between px-4 py-3">
-        <h3 class="font-medium text-base">重命名项目</h3>
+        <h3 class="font-medium">重命名项目</h3>
         <div
           @click="handleClose"
           class="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-gray-100"
@@ -58,9 +58,9 @@
               :maxlength="50"
               type="text"
               placeholder="请输入项目名称"
-              class="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-gray-900 placeholder-gray-400 transition-all duration-200 focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              class="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm font-light text-gray-500 placeholder-gray-400 transition-all duration-200 focus:border-gray-300 focus:outline-none"
               :class="{
-                'border-red-300 focus:ring-red-500':
+                'border-red-300 focus:border-red-300':
                   showError && !localName.trim(),
               }"
               autofocus
