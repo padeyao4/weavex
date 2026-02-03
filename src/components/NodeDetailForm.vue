@@ -1,25 +1,19 @@
 <template>
-  <div class="p-6">
-    <div class="mb-6">
-      <h3 class="text-lg text-gray-900">节点详情</h3>
-      <p class="mt-1 text-sm text-gray-400">编辑节点信息</p>
-    </div>
-
-    <el-form
-      :model="localNode"
-      label-position="top"
-      class="space-y-5"
-      @submit.prevent
-    >
-      <el-form-item label="节点名称" required>
-        <el-input
-          v-model="localNode.name"
-          placeholder="输入节点名称"
-          class="simple-input"
-        />
-      </el-form-item>
-
-      <el-form-item label="描述">
+  <div class="flex flex-col">
+    <header class="flex flex-col px-6 pt-7.5">
+      <el-input
+        v-model="localNode.name"
+        placeholder="输入节点名称"
+        class="simple-input"
+      />
+    </header>
+    <main class="flex-1 overflow-y-auto p-6">
+      <el-form
+        :model="localNode"
+        label-position="top"
+        class="space-y-5"
+        @submit.prevent
+      >
         <el-input
           v-model="localNode.description"
           type="textarea"
@@ -27,9 +21,7 @@
           placeholder="简要描述"
           class="simple-textarea"
         />
-      </el-form-item>
 
-      <el-form-item label="详细记录">
         <el-input
           v-model="localNode.record"
           type="textarea"
@@ -37,55 +29,53 @@
           placeholder="详细记录"
           class="simple-textarea"
         />
-      </el-form-item>
 
-      <el-form-item label="完成状态">
-        <div class="flex items-center space-x-2">
-          <el-switch v-model="localNode.completed" class="simple-switch" />
-          <span class="text-sm text-gray-500">
-            {{ localNode.completed ? "已完成" : "未完成" }}
-          </span>
-        </div>
-      </el-form-item>
-      <el-form-item label="关注状态">
-        <div class="flex items-center space-x-2">
-          <el-switch v-model="localNode.isFollowed" class="simple-switch" />
-          <span class="text-sm text-gray-500">
-            {{ localNode.isFollowed ? "已关注" : "未关注" }}
-          </span>
-        </div>
-      </el-form-item>
-      <el-form-item label="归档">
-        <div class="flex items-center space-x-2">
-          <el-switch
-            v-model="localNode.isArchive"
-            class="simple-switch"
-            :disabled="!enableArchive"
-          />
-          <span class="text-sm text-gray-500">
-            {{ localNode.isArchive ? "已归档" : "未归档" }}
-          </span>
-        </div>
-      </el-form-item>
-
-      <div class="border-t border-gray-100 pt-4">
-        <div class="flex space-x-3">
-          <el-button
-            type="primary"
-            @click="handleSave"
-            class="simple-button flex-1"
-          >
-            保存
-          </el-button>
-          <el-button
-            @click="handleCancel"
-            class="simple-button secondary flex-1"
-          >
-            取消
-          </el-button>
-        </div>
+        <el-form-item label="完成状态">
+          <div class="flex items-center space-x-2">
+            <el-switch v-model="localNode.completed" class="simple-switch" />
+            <span class="text-sm text-gray-500">
+              {{ localNode.completed ? "已完成" : "未完成" }}
+            </span>
+          </div>
+        </el-form-item>
+        <el-form-item label="关注状态">
+          <div class="flex items-center space-x-2">
+            <el-switch v-model="localNode.isFollowed" class="simple-switch" />
+            <span class="text-sm text-gray-500">
+              {{ localNode.isFollowed ? "已关注" : "未关注" }}
+            </span>
+          </div>
+        </el-form-item>
+        <el-form-item label="归档">
+          <div class="flex items-center space-x-2">
+            <el-switch
+              v-model="localNode.isArchive"
+              class="simple-switch"
+              :disabled="!enableArchive"
+            />
+            <span class="text-sm text-gray-500">
+              {{ localNode.isArchive ? "已归档" : "未归档" }}
+            </span>
+          </div>
+        </el-form-item>
+      </el-form>
+    </main>
+    <footer
+      class="flex h-12 shrink-0 items-center justify-center border-t border-gray-200"
+    >
+      <div class="flex space-x-3">
+        <el-button
+          type="primary"
+          @click="handleSave"
+          class="simple-button flex-1"
+        >
+          保存
+        </el-button>
+        <el-button @click="handleCancel" class="simple-button secondary flex-1">
+          取消
+        </el-button>
       </div>
-    </el-form>
+    </footer>
   </div>
 </template>
 

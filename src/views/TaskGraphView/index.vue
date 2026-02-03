@@ -396,7 +396,7 @@ onMounted(() => {
         },
         chosen: {
           lineWidth: 1,
-          shadowBlur: 10,
+          shadowBlur: 5,
         },
       },
       animation: {
