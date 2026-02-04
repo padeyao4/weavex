@@ -159,11 +159,6 @@ const handleCancel = () => {
   transition: all 0.2s;
 }
 
-.simple-button:hover {
-  border-color: #d1d5db;
-  background-color: #f9fafb;
-}
-
 .simple-button:deep(.el-button) {
   border: 1px solid #e5e7eb;
   background-color: white;

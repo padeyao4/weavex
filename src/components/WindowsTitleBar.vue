@@ -3,25 +3,25 @@
     class="windows-title-bar flex items-center justify-between"
     data-tauri-drag-region
   >
-    <div class="title-bar-buttons ml-auto flex">
+    <div class="ml-auto flex">
       <button
-        class="title-bar-button flex h-8 w-10 items-center justify-center hover:bg-gray-300"
+        class="flex h-8 w-10 items-center justify-center hover:bg-gray-300"
         id="min-button"
         @click="minimizeWindow()"
         title="最小化"
-      ></button>
+      />
       <button
-        class="title-bar-button flex h-8 w-10 items-center justify-center hover:bg-gray-300"
+        class="flex h-8 w-10 items-center justify-center hover:bg-gray-300"
         @click="toggleMaximizeWindow()"
         :id="isMaximized ? 'restore-button' : 'max-button'"
         :title="isMaximized ? '还原' : '最大化'"
-      ></button>
+      />
       <button
-        class="title-bar-button flex h-8 w-10 items-center justify-center hover:bg-red-500 hover:text-white"
+        class="flex h-8 w-10 items-center justify-center hover:bg-red-500 hover:text-white"
         @click="closeWindow()"
         title="关闭"
         id="close-button"
-      ></button>
+      />
     </div>
   </div>
 </template>
@@ -89,25 +89,25 @@ const closeWindow = () => {
 #close-button::before {
   font-family: "Segoe MDL2 Assets";
   content: "\E8BB";
-  font-size: 12px;
-  font-weight: 100;
+  font-size: 10px;
+  font-weight: 50;
 }
 #min-button::before {
   font-family: "Segoe MDL2 Assets";
   content: "\E921";
-  font-size: 12px;
-  font-weight: 100;
+  font-size: 10px;
+  font-weight: 50;
 }
 #max-button::before {
   font-family: "Segoe MDL2 Assets";
   content: "\E922";
-  font-size: 12px;
-  font-weight: 100;
+  font-size: 10px;
+  font-weight: 50;
 }
 #restore-button::before {
   font-family: "Segoe MDL2 Assets";
   content: "\E923";
-  font-size: 12px;
-  font-weight: 100;
+  font-size: 10px;
+  font-weight: 50;
 }
 </style>
