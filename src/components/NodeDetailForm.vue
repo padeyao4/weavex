@@ -1,13 +1,13 @@
 <template>
   <div class="flex flex-col">
-    <header class="flex flex-col px-6 pt-7.5">
+    <header class="mt-7.5 flex h-12 flex-col px-4">
       <el-input
         v-model="localNode.name"
         placeholder="输入节点名称"
         class="simple-input"
       />
     </header>
-    <main class="flex-1 overflow-y-auto p-6">
+    <main class="flex-1 overflow-y-auto border-t border-gray-200 p-4">
       <el-form
         :model="localNode"
         label-position="top"
@@ -30,22 +30,24 @@
           class="simple-textarea"
         />
 
-        <div class="flex items-center space-x-2">
-          <div class="mr-auto text-sm text-gray-500">当前任务状态</div>
-          <el-switch v-model="localNode.completed" class="simple-switch" />
-        </div>
-        <div class="flex items-center space-x-2">
-          <div class="mr-auto text-sm text-gray-500">关注状态</div>
-          <el-switch v-model="localNode.isFollowed" class="simple-switch" />
-        </div>
-        <div class="flex items-center space-x-2">
-          <div class="mr-auto text-sm text-gray-500">归档</div>
-          <el-switch
-            v-model="localNode.isArchive"
-            class="simple-switch"
-            :disabled="!enableArchive"
-          />
-        </div>
+        <el-card shadow="never">
+          <div class="flex items-center space-x-2">
+            <div class="mr-auto text-sm text-gray-500">任务状态</div>
+            <el-switch v-model="localNode.completed" class="simple-switch" />
+          </div>
+          <div class="flex items-center space-x-2">
+            <div class="mr-auto text-sm text-gray-500">关注状态</div>
+            <el-switch v-model="localNode.isFollowed" class="simple-switch" />
+          </div>
+          <div class="flex items-center space-x-2">
+            <div class="mr-auto text-sm text-gray-500">归档状态</div>
+            <el-switch
+              v-model="localNode.isArchive"
+              class="simple-switch"
+              :disabled="!enableArchive"
+            />
+          </div>
+        </el-card>
       </el-form>
     </main>
     <footer
@@ -108,11 +110,19 @@ const handleCancel = () => {
 </script>
 
 <style scoped>
-.simple-input :deep(.el-input__wrapper),
-.simple-textarea :deep(.el-textarea__inner) {
+.simple-input :deep(.el-input__wrapper) {
   background-color: transparent;
   border: none;
-  border-bottom: 1px solid #e5e7eb;
+  border-radius: 0;
+  box-shadow: none;
+  padding-left: 0;
+  padding-right: 0;
+  font-size: 16px;
+}
+
+.simple-textarea :deep(.el-textarea__inner) {
+  background-color: transparent;
+  border: 1px soild #000;
   border-radius: 0;
   box-shadow: none;
   padding-left: 0;
