@@ -30,24 +30,22 @@
           class="simple-textarea"
         />
 
-        <el-card shadow="never">
-          <div class="flex items-center space-x-2">
-            <div class="mr-auto text-sm text-gray-500">任务状态</div>
-            <el-switch v-model="localNode.completed" class="simple-switch" />
-          </div>
-          <div class="flex items-center space-x-2">
-            <div class="mr-auto text-sm text-gray-500">关注状态</div>
-            <el-switch v-model="localNode.isFollowed" class="simple-switch" />
-          </div>
-          <div class="flex items-center space-x-2">
-            <div class="mr-auto text-sm text-gray-500">归档状态</div>
-            <el-switch
-              v-model="localNode.isArchive"
-              class="simple-switch"
-              :disabled="!enableArchive"
-            />
-          </div>
-        </el-card>
+        <div class="flex items-center space-x-2">
+          <div class="mr-auto text-sm text-gray-500">任务状态</div>
+          <el-switch v-model="localNode.completed" class="simple-switch" />
+        </div>
+        <div class="flex items-center space-x-2">
+          <div class="mr-auto text-sm text-gray-500">关注状态</div>
+          <el-switch v-model="localNode.isFollowed" class="simple-switch" />
+        </div>
+        <div class="flex items-center space-x-2">
+          <div class="mr-auto text-sm text-gray-500">归档状态</div>
+          <el-switch
+            v-model="localNode.isArchive"
+            class="simple-switch"
+            :disabled="!enableArchive"
+          />
+        </div>
       </el-form>
     </main>
     <footer
