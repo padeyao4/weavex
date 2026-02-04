@@ -12,6 +12,7 @@ import {
   Switch,
   InfoFilled,
 } from "@element-plus/icons-vue";
+import { invoke } from "@tauri-apps/api/core";
 
 const repoStore = useRepoStore();
 const contextStore = useContextStore();
@@ -26,6 +27,14 @@ const configStore = useConfigStore();
 
 const switchRepo = async () => {
   repoStore.switchRepo();
+};
+
+const openWorkDir = async () => {
+  if (contextStore.context.workDir) {
+    await invoke("open_dir", {
+      dirPath: contextStore.context.workDir ?? "",
+    });
+  }
 };
 </script>
 
@@ -66,11 +75,23 @@ const switchRepo = async () => {
                 </div>
                 <div class="flex-1">
                   <p class="text-sm font-medium text-gray-700">项目存储目录</p>
-                  <p
-                    class="mt-1 rounded-md border border-gray-200 bg-gray-50 px-3 py-2 font-mono text-sm text-gray-500"
-                  >
-                    {{ contextStore.context.workDir }}
-                  </p>
+                  <div class="mt-1 flex items-center gap-2">
+                    <div class="min-w-0 flex-1">
+                      <div
+                        class="w-150 truncate rounded-md border border-gray-200 bg-gray-50 px-3 py-1.5 font-mono text-xs text-gray-500"
+                        :title="contextStore.context.workDir"
+                      >
+                        {{ contextStore.context.workDir }}
+                      </div>
+                    </div>
+                    <button
+                      @click="openWorkDir"
+                      class="shrink-0 rounded-md border border-gray-300 bg-white px-3 py-1 text-xs font-medium text-gray-700 transition-all hover:border-blue-500 hover:bg-blue-50 hover:text-blue-600 active:bg-blue-100"
+                      title="打开目录"
+                    >
+                      打开
+                    </button>
+                  </div>
                 </div>
               </div>
               <div class="flex items-start gap-3">
@@ -143,7 +164,7 @@ const switchRepo = async () => {
               </div>
               <button
                 @click="switchRepo"
-                class="rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 transition-all hover:border-blue-500 hover:bg-blue-50 hover:text-blue-600 active:bg-blue-100"
+                class="rounded-md border border-gray-300 bg-white px-3 py-1 text-xs font-medium text-gray-700 transition-all hover:border-blue-500 hover:bg-blue-50 hover:text-blue-600 active:bg-blue-100"
               >
                 切换
               </button>

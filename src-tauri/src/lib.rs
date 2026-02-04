@@ -27,6 +27,43 @@ fn get_os_type() -> String {
 }
 
 #[tauri::command]
+fn open_dir(dir_path: &str) -> Result<(), String> {
+    // 检查路径是否存在
+    let path = Path::new(dir_path);
+    if !path.exists() {
+        return Err(format!("Directory does not exist: {}", dir_path));
+    }
+
+    // 检查是否为目录
+    if !path.is_dir() {
+        return Err(format!("Path is not a directory: {}", dir_path));
+    }
+
+    // 根据操作系统使用不同的命令打开目录
+    if cfg!(target_os = "windows") {
+        Command::new("explorer")
+            .arg(dir_path)
+            .spawn()
+            .map_err(|e| format!("Failed to open directory on Windows: {}", e))?;
+    } else if cfg!(target_os = "macos") {
+        Command::new("open")
+            .arg(dir_path)
+            .spawn()
+            .map_err(|e| format!("Failed to open directory on macOS: {}", e))?;
+    } else if cfg!(target_os = "linux") {
+        // Linux 系统尝试使用 xdg-open 命令
+        Command::new("xdg-open")
+            .arg(dir_path)
+            .spawn()
+            .map_err(|e| format!("Failed to open directory on Linux: {}", e))?;
+    } else {
+        return Err("Unsupported operating system".to_string());
+    }
+
+    Ok(())
+}
+
+#[tauri::command]
 fn detect_compositor() -> String {
     // 检测合成器类型
     // 只判断是否是 niri 合成器
@@ -337,6 +374,7 @@ fn check_directory_exists(path: &str) -> bool {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_single_instance::init(|_app, _args, _cwd| {
             print!("单例模式")
@@ -369,7 +407,8 @@ pub fn run() {
             git_push,
             read_file,
             write_file,
-            check_directory_exists
+            check_directory_exists,
+            open_dir
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
