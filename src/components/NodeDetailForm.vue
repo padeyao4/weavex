@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-col">
-    <header class="mt-7.5 flex h-12 flex-col px-4">
+    <header class="mt-7.5 flex h-12 flex-col justify-center px-4">
       <el-input
         v-model="localNode.name"
         placeholder="输入节点名称"
