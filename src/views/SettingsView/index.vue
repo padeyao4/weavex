@@ -141,14 +141,12 @@ const switchRepo = async () => {
                   <p class="mt-0.5 text-xs text-gray-400">切换到其他项目</p>
                 </div>
               </div>
-              <el-button
-                type="primary"
-                size="default"
+              <button
                 @click="switchRepo"
-                class="px-6"
+                class="rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 transition-all hover:border-blue-500 hover:bg-blue-50 hover:text-blue-600 active:bg-blue-100"
               >
-                切换项目
-              </el-button>
+                切换
+              </button>
             </div>
           </section>
 
