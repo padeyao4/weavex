@@ -5,7 +5,6 @@
       'pointer-events-none opacity-0': !visible,
       'opacity-100': visible,
     }"
-    @click.self="handleClose"
   >
     <!-- 简洁背景 -->
     <div
