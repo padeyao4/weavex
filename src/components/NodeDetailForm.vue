@@ -1,13 +1,13 @@
 <template>
   <div class="flex flex-col">
-    <header class="flex flex-col px-6 pt-7.5">
+    <header class="mt-7.5 flex h-12 flex-col justify-center px-4">
       <el-input
         v-model="localNode.name"
         placeholder="输入节点名称"
         class="simple-input"
       />
     </header>
-    <main class="flex-1 overflow-y-auto p-6">
+    <main class="flex-1 overflow-y-auto border-t border-gray-200 p-4">
       <el-form
         :model="localNode"
         label-position="top"
@@ -30,34 +30,22 @@
           class="simple-textarea"
         />
 
-        <el-form-item label="完成状态">
-          <div class="flex items-center space-x-2">
-            <el-switch v-model="localNode.completed" class="simple-switch" />
-            <span class="text-sm text-gray-500">
-              {{ localNode.completed ? "已完成" : "未完成" }}
-            </span>
-          </div>
-        </el-form-item>
-        <el-form-item label="关注状态">
-          <div class="flex items-center space-x-2">
-            <el-switch v-model="localNode.isFollowed" class="simple-switch" />
-            <span class="text-sm text-gray-500">
-              {{ localNode.isFollowed ? "已关注" : "未关注" }}
-            </span>
-          </div>
-        </el-form-item>
-        <el-form-item label="归档">
-          <div class="flex items-center space-x-2">
-            <el-switch
-              v-model="localNode.isArchive"
-              class="simple-switch"
-              :disabled="!enableArchive"
-            />
-            <span class="text-sm text-gray-500">
-              {{ localNode.isArchive ? "已归档" : "未归档" }}
-            </span>
-          </div>
-        </el-form-item>
+        <div class="flex items-center space-x-2">
+          <div class="mr-auto text-sm text-gray-500">任务状态</div>
+          <el-switch v-model="localNode.completed" class="simple-switch" />
+        </div>
+        <div class="flex items-center space-x-2">
+          <div class="mr-auto text-sm text-gray-500">关注状态</div>
+          <el-switch v-model="localNode.isFollowed" class="simple-switch" />
+        </div>
+        <div class="flex items-center space-x-2">
+          <div class="mr-auto text-sm text-gray-500">归档状态</div>
+          <el-switch
+            v-model="localNode.isArchive"
+            class="simple-switch"
+            :disabled="!enableArchive"
+          />
+        </div>
       </el-form>
     </main>
     <footer
@@ -120,11 +108,19 @@ const handleCancel = () => {
 </script>
 
 <style scoped>
-.simple-input :deep(.el-input__wrapper),
-.simple-textarea :deep(.el-textarea__inner) {
+.simple-input :deep(.el-input__wrapper) {
   background-color: transparent;
   border: none;
-  border-bottom: 1px solid #e5e7eb;
+  border-radius: 0;
+  box-shadow: none;
+  padding-left: 0;
+  padding-right: 0;
+  font-size: 16px;
+}
+
+.simple-textarea :deep(.el-textarea__inner) {
+  background-color: transparent;
+  border: 1px soild #000;
   border-radius: 0;
   box-shadow: none;
   padding-left: 0;
@@ -157,11 +153,6 @@ const handleCancel = () => {
   color: #374151;
   font-weight: 300;
   transition: all 0.2s;
-}
-
-.simple-button:hover {
-  border-color: #d1d5db;
-  background-color: #f9fafb;
 }
 
 .simple-button:deep(.el-button) {
