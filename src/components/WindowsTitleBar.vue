@@ -87,27 +87,30 @@ const closeWindow = () => {
 }
 
 #close-button::before {
-  font-family: "Segoe MDL2 Assets";
-  content: "\E8BB";
-  font-size: 10px;
-  font-weight: 50;
+  font-family: "Font Awesome 5 Free", "Symbols Nerd Font";
+  content: "\f00d"; /* × 关闭 */
+  font-size: 14px;
+  font-weight: 600;
 }
+
 #min-button::before {
-  font-family: "Segoe MDL2 Assets";
-  content: "\E921";
-  font-size: 10px;
-  font-weight: 50;
+  font-family: "Font Awesome 5 Free", "Symbols Nerd Font";
+  content: "\f068"; /* − 最小化 */
+  font-size: 14px;
+  font-weight: 600;
 }
+
 #max-button::before {
-  font-family: "Segoe MDL2 Assets";
-  content: "\E922";
-  font-size: 10px;
-  font-weight: 50;
+  font-family: "Font Awesome 5 Free", "Symbols Nerd Font";
+  content: "\f065"; /* □ 最大化 */
+  font-size: 14px;
+  font-weight: 600;
 }
+
 #restore-button::before {
-  font-family: "Segoe MDL2 Assets";
-  content: "\E923";
-  font-size: 10px;
-  font-weight: 50;
+  font-family: "Font Awesome 5 Free", "Symbols Nerd Font";
+  content: "\f2d2"; /* ◻ 还原 */
+  font-size: 14px;
+  font-weight: 600;
 }
 </style>
