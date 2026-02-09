@@ -2,7 +2,7 @@
 name = "possible"
 version = "0.3.3"
 description = "A Tauri App"
-authors = ["you"]
+authors = ["padeyao4"]
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
