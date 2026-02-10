@@ -1,16 +1,15 @@
 {
   "name": "weavex",
   "private": true,
-  "version": "0.3.3",
+  "version": "0.3.5",
   "type": "module",
   "scripts": {
-    "dev": "vite --mode dev",
-    "build": "vue-tsc --noEmit && vite build",
-    "preview": "vite preview",
-    "tauri": "tauri",
-    "app:dev": "tauri dev --config src-tauri/tauri.dev.conf.json",
-    "app:build": "tauri build",
-    "test": "vitest"
+    "vue-serve": "vite",
+    "vue-build": "vue-tsc --noEmit && vite build",
+    "dev": "tauri dev",
+    "build": "tauri build",
+    "test": "vitest",
+    "tauri": "tauri"
   },
   "dependencies": {
     "@antv/g": "^6.3.1",
@@ -27,6 +26,7 @@
     "@tauri-apps/plugin-os": "^2.3.2",
     "@tauri-apps/plugin-shell": "^2.3.5",
     "@tauri-apps/plugin-store": "^2.4.2",
+    "@tauri-apps/plugin-updater": "^2.10.0",
     "@vueuse/core": "^14.1.0",
     "element-plus": "^2.12.0",
     "g6-extension-vue": "^0.1.0",

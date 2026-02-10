@@ -8,6 +8,9 @@ type ContextOptions = {
   persist?: boolean;
 };
 
+const dev = import.meta.env.DEV;
+const contextPath = dev ? "context.dev.bin" : "context.bin";
+
 export interface ContextInfo {
   workDir?: string;
   branch?: string;
@@ -29,7 +32,7 @@ export const useContextStore = defineStore("status", () => {
   const context = reactive<ContextInfo>({});
 
   const load = async () => {
-    const store = await Store.load("context.bin");
+    const store = await Store.load(contextPath);
     const data = (await store.get<ContextInfo>("context")) ?? {};
     Object.keys(data).forEach((key) => {
       context[key] = data[key];
@@ -51,7 +54,7 @@ export const useContextStore = defineStore("status", () => {
   };
 
   const save = async function () {
-    const store = await Store.load("context.bin");
+    const store = await Store.load(contextPath);
     await store.set("context", context);
   };
 

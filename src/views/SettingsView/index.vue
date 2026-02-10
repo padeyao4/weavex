@@ -17,7 +17,7 @@ import { invoke } from "@tauri-apps/api/core";
 const repoStore = useRepoStore();
 const contextStore = useContextStore();
 
-const dev = import.meta.env.VITE_APP_ENV === "dev";
+const dev = import.meta.env.DEV;
 
 const back = () => {
   router.push((router.options.history.state.back || { name: "home" }) as any);

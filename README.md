@@ -4,8 +4,8 @@
 
 **DAG-driven tasks & notes management**
 
-[![License](https://img.shields.io/github/license/weavex-project/weavex)](LICENSE.md)
-[![Version](https://img.shields.io/badge/version-0.3.3-blue)](https://github.com/weavex-project/weavex/releases)
+[![License](https://img.shields.io/github/license/weavex-project/weavex)](./LICENSE.md)
+[![Version](https://img.shields.io/badge/version-0.3.5-blue)](https://github.com/weavex-project/weavex/releases)
 [![Vue 3](https://img.shields.io/badge/Vue-3.x-brightgreen)](https://vuejs.org/)
 [![Tauri](https://img.shields.io/badge/Tauri-2.x-orange)](https://tauri.app/)
 
