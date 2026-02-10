@@ -1,6 +1,6 @@
 [package]
 name = "weavx"
-version = "0.3.4"
+version = "0.3.6"
 description = "A Tauri App, DAG-driven tasks & notes management"
 authors = ["padeyao4"]
 edition = "2021"
