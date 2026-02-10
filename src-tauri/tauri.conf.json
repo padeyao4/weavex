@@ -37,9 +37,13 @@
   },
   "plugins": {
     "updater": {
+      "windows": {
+        "installMode": "passive"
+      },
+      "dialog": true,
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDA5MTM5NjY4Qjc5NTk3QUMKUldTc2w1VzNhSllUQ1JUQ3JIWjhzZmtnYjZrZFhKMGZpMGl0QzRPOUU4NGwyTEdDNC9jWFFNaSsK",
       "endpoints": [
-        "https://github.com/padeyao4/weavex/releases/latest"
+        "https://github.com/padeyao4/weavex/releases/latest/download/latest.json"
       ]
     }
   }

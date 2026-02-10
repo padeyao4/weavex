@@ -23,8 +23,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-q.text
 src-tauri/2
-~/.tauri/myapp.key
 .tauri/myapp.key
 .tauri/myapp.key.pub
