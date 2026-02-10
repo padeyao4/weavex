@@ -3,6 +3,7 @@ name = "weavx"
 version = "0.3.6"
 description = "A Tauri App, DAG-driven tasks & notes management"
 authors = ["padeyao4"]
+license = "PolyForm-Noncommercial-1.0.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

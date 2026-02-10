@@ -1,155 +1,54 @@
-Weavex Personal & Commercial License (WPCL)
-==========================================
+# PolyForm Noncommercial License 1.0.0
 
-Version: 1.0
-Effective date: 2026-01-20
-Copyright (c) 2026 The Weavex Project Contributors
+<https://polyformproject.org/licenses/noncommercial/1.0.0>
 
-IMPORTANT — READ CAREFULLY
-This license grants you rights to use the Weavex software under two distinct regimes:
-- Personal Use (free): Individuals may use Weavex for private, non-commercial purposes without paying a fee.
-- Commercial Use (paid): Any commercial use, or use by or on behalf of an organization for business purposes, requires a paid commercial license obtained from the copyright owner.
+## Acceptance
 
-This document is a license agreement, not legal advice. If you require a tailored agreement or formal legal advice, consult a qualified attorney.
+In order to get any license under these terms, you must agree to them as both strict obligations and conditions to all your licenses.
 
-1. Definitions
---------------
-- "Licensor", "we", or "us": the copyright holder(s) of the Software (the project maintainers or entity designated by them).
-- "You" or "Licensee": the natural person or legal entity obtaining rights under this license.
-- "Software": the source code, binaries, resources, artwork, documentation and other materials distributed with this repository.
-- "Personal Use": use by an individual solely for private, personal, educational, academic, research, or non-commercial hobby purposes. Personal Use excludes any usage that generates revenue, supports paid services, or is performed on behalf of any business or organization.
-- "Commercial Use": any use that is undertaken for commercial advantage, financial gain, or on behalf of a business, organization, or governmental entity. Examples include, but are not limited to:
-  - Bundling or distributing Weavex (or derivatives) with a commercial product for sale;
-  - Using Weavex as part of paid services offered to clients;
-  - Deploying Weavex in a corporate environment to support production workflows;
-  - Charging users for access to a service or product that uses Weavex.
-- "Commercial License": a paid license agreement issued by Licensor that authorizes specified Commercial Use under terms and fees negotiated with Licensor.
+## Copyright License
 
-2. Grant of License — Personal Use (Free)
------------------------------------------
-Subject to the terms of this Agreement, if you are using the Software solely for Personal Use, Licensor hereby grants you a worldwide, non-exclusive, non-transferable, royalty-free license to:
-- Download, install, run and use the Software for Personal Use;
-- Modify the Software for your own Personal Use;
-- Make non-commercial backups and copies for personal archival purposes.
+The licensor grants you a copyright license for the software to do everything you might do with the software that would otherwise infringe the licensor's copyright in it for any permitted purpose.  However, you may only distribute the software according to [Distribution License](#distribution-license) and make changes or new works based on the software according to [Changes and New Works License](#changes-and-new-works-license).
 
-Restrictions under Personal Use:
-- You may not use the Software for Commercial Use without first obtaining a Commercial License from Licensor.
-- You may not distribute, sell, sublicense, or otherwise provide the Software (original or modified) to third parties for commercial purposes under the Personal Use grant.
-- If you distribute the Software (unmodified) to others for non-commercial purposes, you must include this license and attribution to the Licensor.
+## Distribution License
 
-3. Commercial Use — Requirement to Purchase
--------------------------------------------
-Any Commercial Use of the Software requires a Commercial License from Licensor. Commercial License terms, pricing, scope, support, and warranty (if any) will be set forth in a separate Commercial License Agreement issued by Licensor.
+The licensor grants you an additional copyright license to distribute copies of the software.  Your license to distribute covers distributing the software with changes and new works permitted by [Changes and New Works License](#changes-and-new-works-license).
 
-Commercial License details:
-- To obtain a Commercial License, contact Licensor at the contact information provided below or visit the commercial licensing page (URL placeholder).
-- The Commercial License will specify the permitted uses, number of seats (if applicable), distribution rights, permitted modifications and redistribution (if any), support terms, fees, and termination conditions.
-- Commercial activities started prior to obtaining a Commercial License remain subject to enforcement; you must obtain a Commercial License before commencing any Commercial Use.
+## Changes and New Works License
 
-4. Evaluation / Trial
----------------------
-Licensor may (at its discretion) offer time-limited evaluation or trial licenses for Commercial Use. Unless a written trial license authorizes otherwise, trials are for evaluation only and do not authorize production or revenue-bearing uses.
+The licensor grants you an additional copyright license to make changes and new works based on the software.
 
-5. Redistribution and Modified Versions
----------------------------------------
-- Redistribution of the unmodified Software for non-commercial purposes is permitted under Personal Use only if the full text of this license and copyright notice are preserved.
-- Redistribution of modified versions is not permitted for any organization or commercial purpose unless a written permission or Commercial License is granted by Licensor.
-- If you wish to redistribute a modified version for commercial purposes, you must obtain a Commercial License that explicitly permits redistribution.
+## Patent License
 
-6. Ownership, Copyright and Trademarks
--------------------------------------
-- Copyright and all intellectual property rights in the Software remain with Licensor (or third-party rights holders where applicable).
-- Nothing in this license transfers ownership of the Software to you.
-- The name "Weavex", associated logos, and other brand assets are trademarks or service marks of Licensor. Use of these marks requires prior written permission.
+The licensor grants you a patent license for the software that covers patent claims the licensor can license, or becomes able to license, that you would infringe by using the software.
 
-7. Fees and Payment
--------------------
-- Personal Use is royalty-free. No fees are due under the Personal Use grant.
-- Commercial Licenses are subject to fees and payment terms set by Licensor in the Commercial License Agreement. Licensor may change fees for future licenses; existing paid licenses will be governed by their own terms.
+## Noncommercial Purposes
 
-8. Support, Maintenance, Updates
---------------------------------
-- Unless otherwise provided in a Commercial License, Licensor is not obliged to provide support, maintenance, or updates.
-- Commercial Licenses may include support and maintenance provisions as agreed.
+Any noncommercial purpose is a permitted purpose.
 
-9. Warranty and Disclaimer
---------------------------
-- The Software is provided "AS IS", without warranty of any kind, express or implied, including but not limited to warranties of merchantability, fitness for a particular purpose, non-infringement, or that operation will be uninterrupted or error-free.
-- Licensor does not warrant that the Software meets your requirements or that defects will be corrected.
+## Personal Uses
 
-10. Limitation of Liability
----------------------------
-To the maximum extent permitted by applicable law, in no event shall Licensor be liable for any indirect, incidental, special, consequential or exemplary damages (including, but not limited to, loss of profits, goodwill, business interruption, or loss of data) arising out of or in connection with use of or inability to use the Software, even if Licensor has been advised of the possibility of such damages.
+Personal use for research, experiment, and testing for the benefit of public knowledge, personal study, and evaluation are permitted uses.
 
-11. Indemnification
--------------------
-If you use the Software for Commercial Use without a valid Commercial License, you agree to indemnify, defend and hold harmless Licensor from and against any and all claims, liabilities, damages, costs and expenses (including reasonable attorneys' fees) arising from your unauthorized Commercial Use.
+## Fair Use
 
-12. Termination
----------------
-- This license is effective until terminated.
-- Licensor may terminate your Personal Use rights if you breach any term of this Agreement. Upon termination, you must cease all use of the Software and destroy all copies in your possession or control.
-- Termination does not limit Licensor's ability to pursue other remedies available under law.
+You may have fair use rights for the software under the law. These terms do not limit them.
 
-13. Export Controls & Compliance
--------------------------------
-You agree to comply with all applicable export and import laws and regulations. You shall not use, export, re-export, or transfer the Software in violation of applicable laws.
+## No Other Rights
 
-14. Governing Law and Dispute Resolution
-----------------------------------------
-This Agreement shall be governed by and construed in accordance with the laws specified by Licensor (insert jurisdiction). Unless otherwise agreed, disputes arising under this Agreement that cannot be resolved amicably will be brought in the competent courts of that jurisdiction. (Licensor may choose arbitration as an alternative; consult Licensor’s commercial terms for specifics.)
+These terms do not allow you to sublicense or transfer any of your licenses to anyone else, or prevent the licensor from granting different terms to anyone else.
 
-15. Severability
-----------------
-If any provision of this Agreement is held invalid or unenforceable, that provision will be enforced to the maximum extent permissible and the remaining provisions will remain in full force and effect.
+## Patents
 
-16. Modification of Terms
--------------------------
-Licensor reserves the right to modify this license for future releases of the Software. Existing copies distributed under earlier versions of this license remain subject to the terms under which they were distributed.
+If you make anything using the software, you must give the licensor attribution in any documentation or other materials that accompany or are displayed alongside your work, stating that you used the software to make your work.
 
-17. Examples (Non-Exhaustive)
------------------------------
-Permitted under Personal Use (no payment required):
-- An individual installs Weavex at home to manage personal todo lists and notes.
-- A student uses Weavex to organize study tasks and attaches personal notes to nodes.
-- An individual modifies the UI for personal convenience and keeps the modified copy for private use.
+## No Liability
 
-Requires Commercial License (must purchase before doing):
-- A company installs Weavex on staff computers and uses it to manage internal project tasks.
-- A freelancer includes Weavex in a paid deliverable to a client or charges for access to a hosted service that includes Weavex functionality.
-- A developer bundles Weavex (or a modified version) with a commercial app and distributes that app for sale.
+***As far as the law allows, the software comes as is, without any warranty or condition, and the licensor will not be liable to you for any damages arising out of these terms or the use or nature of the software, under any kind of legal claim.***
 
-18. How to Obtain a Commercial License
---------------------------------------
-To obtain licensing information, pricing, and to purchase a Commercial License, contact Licensor:
+## Definitions
 
-- Licensing contact: <your-contact@example.com>
-- Commercial licensing page / store: https://example.com/buy-weavex
-
-(Replace the above contact details and URL with your actual contact information and purchase link before public distribution.)
-
-19. Notices and Attribution
----------------------------
-When redistributing the Software (when permitted), you must retain the copyright notice and this license text unless otherwise agreed in writing.
-
-20. Short Notice for README or UI
----------------------------------
-Place the following short notice in README, About dialogs or installer screens:
-
-Weavex — Personal Use is free. Commercial Use requires a purchased license. See LICENSE.md for details or contact <your-contact@example.com>.
-
-21. Acknowledgments
--------------------
-Third-party components included with the Software may be covered by their own licenses. You must comply with those third-party licenses in addition to this Agreement.
-
-22. Contact
------------
-If you have licensing questions or wish to negotiate a Commercial License, contact:
-
-Licensor / Licensing Team
-Email: <your-contact@example.com>
-Commercial licensing page: https://example.com/buy-weavex
-
-(Replace placeholders with correct contact information before publishing.)
-
-END OF LICENSE
+* **To use the software** means to do anything with it that is covered by copyright or patent law, unless it's merely interacting with the software or copying it for archival purposes.
+* **Noncommercial** means not primarily intended for or directed towards commercial advantage or monetary compensation.  For purposes of this license, note that a noncommercial use does not become commercial because it is combined with or intermixed with material that is covered by a different license.
+* **The software** means the software the licensor made available under these terms.
+* **You** means the individual or entity agreeing to these terms.
