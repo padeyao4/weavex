@@ -89,7 +89,10 @@ const handleCancel = () => {
 <template>
   <main class="flex flex-row select-none">
     <div class="mt-7.5 flex min-h-0 min-w-0 flex-1 flex-col">
-      <div class="flex h-12 items-center px-4 text-xl select-none">
+      <div
+        class="flex h-12 items-center px-4 text-xl select-none"
+        data-tauri-drag-region
+      >
         任务列表
       </div>
       <div class="min-h-0 min-w-0 flex-1 overflow-y-auto px-4">
@@ -99,17 +102,14 @@ const handleCancel = () => {
             :update="debounceUpdate"
           >
             <template #default="{ item }">
-              <div
-                @click="handleTaskClick(item)"
+              <TaskItem
+                :task="item"
+                :data-draggable-move="item.id"
                 :class="{ 'selected-task': selectedTask?.id === item.id }"
-              >
-                <TaskItem
-                  :task="item"
-                  :data-draggable-move="item.id"
-                  @toggle-task-completed="toggleTaskCompleted"
-                  @toggle-task-followed="toggleTaskFollowed"
-                />
-              </div>
+                @click="handleTaskClick(item)"
+                @toggle-task-completed="toggleTaskCompleted"
+                @toggle-task-followed="toggleTaskFollowed"
+              />
             </template>
           </SortableList>
           <div
@@ -144,17 +144,14 @@ const handleCancel = () => {
             :update="debounceUpdate"
           >
             <template #default="{ item }">
-              <div
+              <TaskItem
+                :task="item"
                 @click="handleTaskClick(item)"
                 :class="{ 'selected-task': selectedTask?.id === item.id }"
-              >
-                <TaskItem
-                  :task="item"
-                  :data-draggable-move="item.id"
-                  @toggle-task-completed="toggleTaskCompleted"
-                  @toggle-task-followed="toggleTaskFollowed"
-                />
-              </div>
+                :data-draggable-move="item.id"
+                @toggle-task-completed="toggleTaskCompleted"
+                @toggle-task-followed="toggleTaskFollowed"
+              />
             </template>
           </SortableList>
         </div>
