@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useTaskStore } from "@/stores";
+import { useGraphStore, useTaskStore } from "@/stores";
 
 import { ref, onMounted, onUnmounted } from "vue";
 import TaskItem from "./TaskItem.vue";
@@ -9,8 +9,10 @@ import { debug } from "@tauri-apps/plugin-log";
 import NodeDetailForm from "@/components/NodeDetailForm.vue";
 import { ElDrawer } from "element-plus";
 import type { TaskNode } from "@/stores/task";
+import { PNode } from "@/types";
 
 const taskStore = useTaskStore();
+const graphStore = useGraphStore();
 
 const selectedTask = ref<TaskNode | null>(null);
 const showOthers = ref(false);
@@ -31,11 +33,17 @@ onUnmounted(() => {
 
 const toggleTaskCompleted = (task: TaskNode) => {
   task.completed = !task.completed;
+  graphStore.updateNode(task.graphId, task, {
+    persist: true,
+  });
 };
 
 const toggleTaskFollowed = (task: TaskNode) => {
   task.isFollowed = !task.isFollowed;
   task.priority || (task.priority = Date.now());
+  graphStore.updateNode(task.graphId, task, {
+    persist: true,
+  });
 };
 
 function onUpdate(current: TaskNode, other: TaskNode) {
@@ -44,7 +52,10 @@ function onUpdate(current: TaskNode, other: TaskNode) {
     other.priority = (other.priority ?? 0) + Math.random() * 100;
   }
   [current.priority, other.priority] = [other.priority, current.priority];
+  graphStore.updateNode(current?.graphId, current);
+  graphStore.updateNode(other?.graphId, other);
   debug(`Dragging completed, ${current.priority} <-> ${other.priority}`);
+  graphStore.debouncedSave();
 }
 
 const debounceUpdate = debounce(onUpdate, 10);
@@ -59,9 +70,15 @@ const handleTaskClick = (task: TaskNode) => {
   }
 };
 
-const handleSave = () => {
-  // 保存节点更新
-  selectedTask.value = null;
+const handleSave = (value: PNode) => {
+  if (selectedTask.value) {
+    const taskNode = selectedTask.value;
+    graphStore.updateNode(taskNode?.graphId, value, {
+      persist: true,
+    });
+    // 保存节点更新
+    selectedTask.value = null;
+  }
 };
 
 const handleCancel = () => {

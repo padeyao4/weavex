@@ -47,11 +47,8 @@ npm run dev
 ### 构建应用
 
 ```bash
-# 构建前端
-npm run build
-
 # 构建桌面应用
-npm run app:build
+npm run build
 ```
 
 ## 📖 使用指南
