@@ -26,6 +26,7 @@
     <div
       class="ml-3 w-full min-w-0 overflow-hidden text-sm font-normal text-ellipsis whitespace-nowrap text-gray-700"
       :class="{ 'text-gray-400 line-through': task.completed }"
+      :data-draggable-move="task.id"
     >
       {{ task.name }}
     </div>

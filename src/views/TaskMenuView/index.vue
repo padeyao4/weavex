@@ -67,6 +67,7 @@
                     />
                     <div
                       class="min-w-0 flex-1 overflow-hidden pl-3 text-sm font-normal text-ellipsis whitespace-nowrap text-gray-700 select-none"
+                      :data-draggable-move="item.id"
                     >
                       {{ item.name }}
                     </div>
