@@ -6,9 +6,14 @@ import { resolve } from "@tauri-apps/api/path";
 import { readFile, writeFile } from "@/utils";
 import { debounce } from "lodash-es";
 import { debug, error } from "@tauri-apps/plugin-log";
+import {
+  initDb,
+  loadNoteMetasFromDb,
+  migrateLegacyIfNeeded,
+  upsertNoteMetaToDb,
+} from "@/lib/db";
 
 const NOTE_DIR = "notes";
-const NOTE_META_FILE = "note-meta.json";
 
 export interface NoteMeta {
   id: string;
@@ -22,9 +27,20 @@ export const useNodeStore = defineStore("notes", () => {
   const noteMeta = reactive<Record<string, NoteMeta>>({});
 
   const saveMeta = async function () {
-    const contextStore = useContextStore();
-    const path = await resolve(contextStore.context.workDir!, NOTE_META_FILE);
-    await writeFile(path, JSON.stringify(noteMeta));
+    try {
+      await initDb();
+      for (const meta of Object.values(noteMeta)) {
+        await upsertNoteMetaToDb({
+          id: meta.id,
+          title: meta.title,
+          path: meta.path ?? null,
+          createdAt: meta.createdAt,
+          updatedAt: meta.updatedAt,
+        });
+      }
+    } catch (e) {
+      error(`save note meta failed, error is ${JSON.stringify(e)}`);
+    }
   };
 
   const saveNote = async function (nodeId: string, content: string) {
@@ -34,8 +50,8 @@ export const useNodeStore = defineStore("notes", () => {
     meta.updatedAt = Date.now();
     if (!meta.path) {
       meta.path = `${meta.id}.md`;
-      saveMeta();
     }
+    saveMeta();
     const path = await resolve(
       contextStore.context.workDir!,
       NOTE_DIR,
@@ -65,11 +81,19 @@ export const useNodeStore = defineStore("notes", () => {
   const loadNoteMeta = async function () {
     try {
       const contextStore = useContextStore();
-      const path = await resolve(contextStore.context.workDir!, NOTE_META_FILE);
-      const content = await readFile(path);
-      const obj = JSON.parse(content) ?? {};
-      Object.keys(obj).forEach((key) => {
-        noteMeta[key] = obj[key];
+      const workDir = contextStore.context.workDir;
+      if (!workDir) return;
+      await initDb();
+      await migrateLegacyIfNeeded(workDir);
+      const metas = await loadNoteMetasFromDb();
+      metas.forEach((m) => {
+        noteMeta[m.id] = {
+          id: m.id,
+          path: m.path ?? undefined,
+          title: m.title ?? "",
+          createdAt: m.createdAt ?? 0,
+          updatedAt: m.updatedAt ?? 0,
+        };
       });
     } catch (e) {
       error(`read note meta failed, error is ${JSON.stringify(e)}`);

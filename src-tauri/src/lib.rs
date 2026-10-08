@@ -2,11 +2,15 @@
 use serde::{Deserialize, Serialize};
 use std::env;
 use std::fs;
+use std::sync::Mutex;
 use tauri_plugin_log::log::debug;
 use tauri_plugin_log::log::error;
 
 use std::path::Path;
 use std::process::Command;
+
+mod db;
+use crate::db::Db;
 
 #[tauri::command]
 fn get_os_type() -> String {
@@ -398,6 +402,7 @@ pub fn run() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(tauri_plugin_opener::init())
+        .manage(Db(Mutex::new(None)))
         .invoke_handler(tauri::generate_handler![
             get_os_type,
             detect_compositor,
@@ -410,7 +415,16 @@ pub fn run() {
             read_file,
             write_file,
             check_directory_exists,
-            open_dir
+            open_dir,
+            db::db_init,
+            db::db_load_graphs,
+            db::db_save_graph,
+            db::db_delete_graph,
+            db::db_load_note_metas,
+            db::db_upsert_note_meta,
+            db::db_migrate,
+            db::move_file,
+            db::file_exists
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

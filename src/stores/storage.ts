@@ -2,9 +2,16 @@ import { PGraph, PNode } from "@/types";
 import { defineStore } from "pinia";
 import { computed, reactive } from "vue";
 import { useContextStore } from "./context";
-import { NodeUtil, readFile, writeFile } from "@/utils";
-import { resolve } from "@tauri-apps/api/path";
-import { debug } from "@tauri-apps/plugin-log";
+import { NodeUtil } from "@/utils";
+import {
+  dtoToGraph,
+  deleteGraphFromDb,
+  initDb,
+  loadGraphsFromDb,
+  migrateLegacyIfNeeded,
+  saveGraphToDb,
+} from "@/lib/db";
+import { debug, error } from "@tauri-apps/plugin-log";
 import { debounce, keyBy, pull, values } from "lodash-es";
 import { EdgeData, GraphData, NodeData } from "@antv/g6";
 
@@ -13,8 +20,6 @@ export type Options = {
   update?: boolean;
   buildRoots?: boolean;
 };
-
-const GRAPH_FILE_NAME = "graphs.json";
 
 /**
  * 给数组按id去重,只保留最后一个
@@ -45,35 +50,28 @@ export const useGraphStore = defineStore("graph-storage", () => {
 
   async function loadGraphs() {
     const contextStore = useContextStore();
-    const path = await resolve(
-      contextStore.context.workDir ?? "",
-      GRAPH_FILE_NAME,
-    );
-    debug(`Loading graphs from ${path}`);
-    let jsonStr = (await readFile(path)).trim();
-    jsonStr = jsonStr === "" ? "{}" : jsonStr;
-    const obj = JSON.parse(jsonStr);
-    Object.keys(obj).forEach((key) => {
-      allGraph[key] = obj[key];
+    const workDir = contextStore.context.workDir;
+    if (!workDir) {
+      error("loadGraphs skipped: workDir is not set");
+      return;
+    }
+    await initDb();
+    await migrateLegacyIfNeeded(workDir);
+    const dtos = await loadGraphsFromDb();
+    dtos.forEach((dto) => {
+      allGraph[dto.id] = dtoToGraph(dto);
     });
+    debug(`Loaded ${dtos.length} graphs from SQLite`);
   }
 
   async function saveGraphs() {
-    const contextStore = useContextStore();
-    const data = JSON.stringify(allGraph);
-    if (contextStore.context.workDir) {
-      const filePath = await resolve(
-        contextStore.context.workDir,
-        GRAPH_FILE_NAME,
-      );
-      debug(`save graphs, path : ${filePath}`);
-      await writeFile(filePath, data)
-        .then(() => {
-          debug(`Graphs saved successfully`);
-        })
-        .catch((error) => {
-          debug(`Failed to save graphs: ${error}`);
-        });
+    try {
+      for (const graph of Object.values(allGraph)) {
+        await saveGraphToDb(graph);
+      }
+      debug(`Saved ${Object.keys(allGraph).length} graphs to SQLite`);
+    } catch (e) {
+      error(`Failed to save graphs to SQLite: ${JSON.stringify(e)}`);
     }
   }
 
@@ -101,6 +99,13 @@ export const useGraphStore = defineStore("graph-storage", () => {
     if (allGraph[graphId]) {
       delete allGraph[graphId];
       extraProcess(undefined, options);
+      if (options?.persist) {
+        deleteGraphFromDb(graphId).catch((e) => {
+          error(
+            `Failed to delete graph ${graphId} from SQLite: ${JSON.stringify(e)}`,
+          );
+        });
+      }
     }
   };
 
