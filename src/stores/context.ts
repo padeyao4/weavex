@@ -13,20 +13,13 @@ const contextPath = dev ? "context.dev.bin" : "context.bin";
 
 export interface ContextInfo {
   workDir?: string;
-  branch?: string;
-  username?: string;
-  email?: string;
-  password?: string;
-  autoCommit?: boolean;
-  autoPush?: boolean;
-  autoPull?: boolean;
-  repositoryUrl?: string;
   [key: string]: any;
 }
 
 /**
  * 程序上下文配置中心,用于保存程序运行时状态.
- * 数据存储在数据目录和项目目录地址分开
+ * 仅保留"最近使用的本地存储目录"（workDir）指针；
+ * 应用设置（主题/测试模式等）存于存储目录下的 config.json。
  */
 export const useContextStore = defineStore("status", () => {
   const context = reactive<ContextInfo>({});
@@ -67,28 +60,10 @@ export const useContextStore = defineStore("status", () => {
     }
   };
 
-  /**
-   * 切换工作目录
-   */
-  const switchWorkspace = function (
-    param: Partial<ContextInfo> & Pick<ContextInfo, "workDir">,
-    options?: ContextOptions,
-  ) {
-    clear();
-    update(param);
-    process(options);
-  };
-
   const check_work_dir = async function () {
     return await invoke<boolean>("check_directory_exists", {
       path: context.workDir ?? "",
     });
-  };
-
-  const process = function (options?: ContextOptions) {
-    if (options?.persist) {
-      save();
-    }
   };
 
   return {
@@ -97,7 +72,6 @@ export const useContextStore = defineStore("status", () => {
     save,
     clear,
     update,
-    switchWorkspace,
     check_work_dir,
   };
 });

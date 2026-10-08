@@ -18,8 +18,8 @@ Weavex 是一款基于有向无环图（DAG）的桌面应用，用于以图的�
 - **DAG 任务管理** - 使用有向无环图组织任务，支持任务依赖与层级关系的可视化
 - **笔记集成** - 每个节点可以挂载 Markdown 笔记，实现笔记与任务的双向关联
 - **多视图支持** - 图形画布视图与列表/看板视图互相联动，满足不同使用场景
-- **本地优先** - 图结构与笔记元数据存储于 SQLite（`weavex.db`），笔记正文以 Markdown 文件存放于 `notes/` 目录；全部数据位于所选工作目录，不依赖云端服务，可随目录整体备份与迁移
-- **Git 仓库同步** - 支持从远程 Git 仓库克隆初始化项目，并对工作目录内的数据进行提交、推送与拉取
+- **本地优先** - 图结构与笔记元数据存储于 SQLite（`weavex.db`），笔记正文以 Markdown 文件存放于 `notes/` 目录；应用设置存放于 `config.json`；全部数据位于存储目录，不依赖云端服务，可随目录整体备份与迁移
+- **纯本地存储** - 无 Git 同步、无远程仓库，数据完全由本地掌控
 - **自动更新** - 基于 Tauri updater 从 GitHub Releases 自动更新到新版本
 - **跨平台桌面应用** - 基于 Tauri 构建，提供原生桌面应用体验
 - **智能布局** - 内置嵌套 DAG 布局算法（dagre），自动优化节点布局，保持图形清晰易读
@@ -30,7 +30,6 @@ Weavex 是一款基于有向无环图（DAG）的桌面应用，用于以图的�
 
 - Node.js >= 18
 - Rust >= 1.77.2
-- Git（Git 仓库同步功能依赖系统 git 命令）
 - npm 或 pnpm
 
 ### 安装与启动
@@ -56,10 +55,10 @@ npm run build
 
 ## 📖 使用指南
 
-### 初始化项目
-1. 首次启动进入项目初始化页面
-2. 选择「本地目录」直接使用现有文件夹，或选择「Git 仓库」克隆远程仓库作为工作目录
-3. 任务图结构与笔记元数据保存在该目录下的 `weavex.db`（SQLite）中，笔记正文保存为 `notes/*.md` 文件；旧版 `graphs.json` / `note-meta.json` 会在首次启动时自动迁移进 SQLite
+### 启动与存储目录
+1. 首次启动：应用自动在系统文档目录下创建默认存储目录 `WeavexData`，并生成默认配置文件 `config.json`，无需任何手动操作
+2. 之后每次启动：应用读取上次使用的存储目录，加载其中的 `config.json`；若目录为新目录或缺少配置文件，则自动生成默认配置
+3. 任务图结构与笔记元数据保存在存储目录下的 `weavex.db`（SQLite）中，笔记正文保存为 `notes/*.md` 文件；旧版 `graphs.json` / `note-meta.json` 会在首次启动时自动迁移进 SQLite
 
 ### 创建任务图
 1. 在画布上点击 "+" 按钮创建新节点
@@ -87,8 +86,7 @@ npm run build
 - **构建工具**: [Vite](https://vitejs.dev/)
 - **桌面应用**: [Tauri](https://tauri.app/)
 - **样式处理**: [Tailwind CSS](https://tailwindcss.com/)
-- **数据持久化**: SQLite（`weavex.db`，DAG 图结构与笔记元数据，Rust rusqlite 数据层）+ Markdown 文件（笔记正文 `notes/` 目录）
-- **Git 集成**: 系统 git 命令（Rust 侧调用，支持 clone / pull / commit / push）
+- **数据持久化**: SQLite（`weavex.db`，DAG 图结构与笔记元数据，Rust rusqlite 数据层）+ Markdown 文件（笔记正文 `notes/` 目录）+ JSON 配置文件（`config.json`，应用设置，位于存储目录内）
 - **自动更新**: @tauri-apps/plugin-updater + GitHub Releases
 
 ## 🧪 测试

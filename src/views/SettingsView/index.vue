@@ -2,19 +2,17 @@
 import router from "@/router";
 import { version } from "@/../package.json";
 import FramePage from "@/components/FramePage.vue";
-import { useConfigStore, useContextStore, useRepoStore } from "@/stores";
+import { useConfigStore, useContextStore } from "@/stores";
 import {
   Back,
   Folder,
   Warning,
   Setting,
   VideoPlay,
-  Switch,
   InfoFilled,
 } from "@element-plus/icons-vue";
 import { invoke } from "@tauri-apps/api/core";
 
-const repoStore = useRepoStore();
 const contextStore = useContextStore();
 
 const dev = import.meta.env.DEV;
@@ -24,10 +22,6 @@ const back = () => {
 };
 
 const configStore = useConfigStore();
-
-const switchRepo = async () => {
-  repoStore.switchRepo();
-};
 
 const openWorkDir = async () => {
   if (contextStore.context.workDir) {
@@ -125,6 +119,7 @@ const openWorkDir = async () => {
                   v-model="configStore.config.testMode"
                   size="large"
                   class="ml-4"
+                  @change="configStore.save()"
                 />
               </div>
 
@@ -144,30 +139,9 @@ const openWorkDir = async () => {
                   v-model="configStore.config.graphAnimation"
                   size="large"
                   class="ml-4"
+                  @change="configStore.save()"
                 />
               </div>
-            </div>
-          </section>
-
-          <!-- 项目切换 -->
-          <section class="rounded-lg border border-gray-200 bg-white p-6">
-            <h2 class="mb-4 text-lg font-medium text-gray-800">项目切换</h2>
-            <div class="flex items-center justify-between py-2">
-              <div class="flex items-center gap-3">
-                <el-icon class="text-gray-400" :size="18">
-                  <Switch />
-                </el-icon>
-                <div>
-                  <p class="text-sm font-medium text-gray-700">切换项目</p>
-                  <p class="mt-0.5 text-xs text-gray-400">切换到其他项目</p>
-                </div>
-              </div>
-              <button
-                @click="switchRepo"
-                class="rounded-md border border-gray-300 bg-white px-3 py-1 text-xs font-medium text-gray-700 transition-all hover:border-blue-500 hover:bg-blue-50 hover:text-blue-600 active:bg-blue-100"
-              >
-                切换
-              </button>
             </div>
           </section>
 

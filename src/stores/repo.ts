@@ -1,35 +1,32 @@
 import { defineStore } from "pinia";
 import { reactive } from "vue";
-import { ContextInfo, useContextStore } from "./context";
+import { useContextStore } from "./context";
+import { useConfigStore } from "./config";
 import router from "@/router";
-import { debug, info } from "@tauri-apps/plugin-log";
+import { debug } from "@tauri-apps/plugin-log";
 import { useGraphStore } from "./storage";
-import { invoke } from "@tauri-apps/api/core";
 import { useNodeStore } from "./note";
+import { documentDir, resolve } from "@tauri-apps/api/path";
 
-export type State = "idle" | "loading" | "no_repo" | "has_repo";
+export type State = "idle" | "loading" | "has_repo";
 
 type RepoProps = {
   state: State;
   error?: Error;
 };
 
-export type GitCloneOptions = {
-  repo_url: string;
-  target_dir: string;
-  branch: string;
-};
+/** 首次启动自动创建的默认存储目录名（位于用户文档目录下） */
+export const DEFAULT_WORK_DIR_NAME = "WeavexData";
 
 export const useRepoStore = defineStore("repo", () => {
   const repo = reactive<RepoProps>({
     state: "idle",
   });
 
-  const validateStates = {
+  const validateStates: Record<State, State[]> = {
     idle: ["loading"],
-    loading: ["no_repo", "has_repo", "loading"],
-    no_repo: ["has_repo"],
-    has_repo: ["no_repo"],
+    loading: ["has_repo", "loading"],
+    has_repo: [],
   };
 
   const setState = (state: State, error?: Error) => {
@@ -41,9 +38,6 @@ export const useRepoStore = defineStore("repo", () => {
         case "has_repo":
           router.replace({ name: "taskSummary" });
           break;
-        case "no_repo":
-          router.replace({ name: "LaunchView" });
-          break;
         case "loading":
           router.replace({ name: "loading" });
           break;
@@ -53,73 +47,43 @@ export const useRepoStore = defineStore("repo", () => {
     }
   };
 
+  /**
+   * 启动逻辑（仅本地存储）：
+   * 1. 有指针且存储目录存在 → 加载该目录；目录下无 config.json 则自动生成默认配置。
+   * 2. 无指针或目录已失效 → 视为首次启动：自动创建默认存储目录
+   *    （文档目录/WeavexData）并生成默认配置文件。
+   */
   const init = async function () {
     setState("loading");
     const contextStore = useContextStore();
     await contextStore.load();
-    const workDirExists = await contextStore.check_work_dir();
-    setState(workDirExists ? "has_repo" : "no_repo");
-    if (repo.state === "has_repo") {
-      // 加载graph
-      const graphStore = useGraphStore();
-      await graphStore.loadGraphs();
-      // 加载note
-      const noteStore = useNodeStore();
-      await noteStore.loadNoteMeta();
+
+    let workDir = contextStore.context.workDir;
+    if (workDir) {
+      const exists = await contextStore.check_work_dir();
+      if (!exists) {
+        debug(`workDir no longer exists, treating as first launch: ${workDir}`);
+        workDir = undefined;
+      }
     }
-  };
 
-  const switchRepo = function () {
-    const contextStore = useContextStore();
-    contextStore.clear();
-    // 清理graph
-    const graphStore = useGraphStore();
-    graphStore.clear();
-    // 清理note
-    const noteStore = useNodeStore();
-    noteStore.clear();
-    setState("no_repo");
-  };
+    if (!workDir) {
+      const docDir = await documentDir();
+      workDir = await resolve(docDir, DEFAULT_WORK_DIR_NAME);
+      contextStore.update({ workDir }, { persist: true });
+      debug(`First launch, using default storage dir: ${workDir}`);
+    }
 
-  const loadRepo = async function (
-    params: Partial<ContextInfo> & Pick<ContextInfo, "workDir">,
-    options?: { persist?: boolean },
-  ) {
-    const contextStore = useContextStore();
-    contextStore.switchWorkspace(params, options);
+    // 加载（或生成）存储目录下的配置文件
+    const configStore = useConfigStore();
+    await configStore.load();
+
+    // 加载图与笔记数据
     const graphStore = useGraphStore();
     await graphStore.loadGraphs();
-
     const noteStore = useNodeStore();
     await noteStore.loadNoteMeta();
-    setState("has_repo");
-  };
 
-  /**
-   * 使用git clone repository,并处理后续逻辑
-   */
-  const cloneRepo = async function (gitOptions: GitCloneOptions) {
-    debug("开始克隆仓库: " + gitOptions.repo_url);
-    debug("分支: " + gitOptions.branch);
-    debug("工作目录: " + gitOptions.target_dir);
-
-    debug("调用git_clone命令");
-    const result = await invoke<string>("git_clone", {
-      options: gitOptions,
-    });
-
-    info("clone success: " + result);
-
-    // 克隆成功后，设置状态为has_repo
-    const contextStore = useContextStore();
-    contextStore.update(
-      {
-        workDir: gitOptions.target_dir,
-        repositoryUrl: gitOptions.repo_url,
-        branch: gitOptions.branch,
-      },
-      { persist: true },
-    );
     setState("has_repo");
   };
 
@@ -127,8 +91,5 @@ export const useRepoStore = defineStore("repo", () => {
     repo,
     setState,
     init,
-    switchRepo,
-    loadRepo,
-    cloneRepo,
   };
 });
