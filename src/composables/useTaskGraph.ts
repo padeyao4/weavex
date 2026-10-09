@@ -25,6 +25,49 @@ import {
 import type { PGraph, PNode } from "@/types";
 
 /**
+ * 绘制区右键菜单图标：24x24 内联 SVG（stroke 风格，与 icon-park outline 一致），
+ * 颜色由 CSS .ctx-icon { color: var(--color-icon) } 控制，随主题自适应。
+ */
+const CTX_ICONS: Record<string, string> = {
+  "node:add-next":
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="12" r="4"/><path d="M13 12h6"/><path d="M16 9l3 3-3 3"/></svg>',
+  "node:add-child":
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="4"/><path d="M12 11v3.5"/><circle cx="12" cy="18.5" r="3.5"/></svg>',
+  "node:add-prev":
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 9l-3 3 3 3"/><path d="M6 12h5"/><circle cx="17" cy="12" r="4"/></svg>',
+  "node:insert-next":
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8v8"/><path d="M8 12h7"/><path d="M11 9l4 3-4 3"/><circle cx="20" cy="12" r="3"/></svg>',
+  "node:insert-prev":
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 8v8"/><path d="M16 12H9"/><path d="M13 9l-4 3 4 3"/><circle cx="4" cy="12" r="3"/></svg>',
+  "node:delete":
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M9 9l6 6"/><path d="M15 9l-6 6"/></svg>',
+  "node:delete-prev-edge":
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="12" r="4"/><path d="M3 12h8"/><path d="M13 8l4 4"/><path d="M17 8l-4 4"/></svg>',
+  "node:delete-next-edge":
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="12" r="4"/><path d="M21 12h-8"/><path d="M11 8l-4 4"/><path d="M7 8l4 4"/></svg>',
+  "node:delete-keep-edge":
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h5"/><path d="M17 12h5"/><circle cx="12" cy="12" r="7"/><path d="M9 9l6 6"/><path d="M15 9l-6 6"/></svg>',
+  "node:test":
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 13l4 4 8-9"/></svg>',
+  "edge:delete":
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h18"/><path d="M10 8l4 4"/><path d="M14 8l-4 4"/></svg>',
+  "canvas:add-new-node":
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 9v6"/><path d="M9 12h6"/></svg>',
+};
+
+/** 由菜单项生成带图标的菜单 HTML；li 保留 value 属性供 G6 onClick 取用 */
+function buildMenuItemsHtml(items: { name: string; value: string }[]): string {
+  return `<ul class="g6-contextmenu-ul">${items
+    .map(
+      (item) =>
+        `<li class="g6-contextmenu-li" value="${item.value}"><span class="ctx-icon">${
+          CTX_ICONS[item.value] ?? ""
+        }</span><span class="ctx-name">${item.name}</span></li>`,
+    )
+    .join("")}</ul>`;
+}
+
+/**
  * DAG 画布生命周期管理：Graph 实例创建、数据同步、动画开关、视口保存/恢复、
  * 节点/边 hover 状态、右键菜单操作派发、主题感知渲染。
  * 组件只保留模板绑定与编辑抽屉交互。
@@ -187,62 +230,65 @@ export function useTaskGraph(options: {
         {
           type: "contextmenu",
           trigger: "contextmenu",
-          getItems: (e: IElementEvent) => {
-            switch (e.targetType) {
-              case "node":
-                return [
-                  ...[
-                    {
-                      name: "添加后续节点",
-                      value: "node:add-next",
-                    },
-                    {
-                      name: "添加子节点",
-                      value: "node:add-child",
-                    },
-                    {
-                      name: "添加前置节点",
-                      value: "node:add-prev",
-                    },
-                    {
-                      name: "插入后续节点",
-                      value: "node:insert-next",
-                    },
-                    {
-                      name: "插入前置节点",
-                      value: "node:insert-prev",
-                    },
-                    { name: "删除节点", value: "node:delete" },
-                    {
-                      name: "删除前置关系",
-                      value: "node:delete-prev-edge",
-                    },
-                    {
-                      name: "删除后续关系",
-                      value: "node:delete-next-edge",
-                    },
-                    {
-                      name: "删除且保留关系",
-                      value: "node:delete-keep-edge",
-                    },
-                  ],
-                  ...(configStore.config.testMode
-                    ? [
-                        {
-                          name: "测试",
-                          value: "node:test",
-                        },
-                      ]
-                    : []),
-                ];
-              case "edge":
-                return [{ name: "删除边", value: "edge:delete" }];
-              case "canvas":
-                return [{ name: "添加节点", value: "canvas:add-new-node" }];
-              default:
-                debug("getItems : " + e.targetType);
-                return [];
-            }
+          getContent: (e: IElementEvent) => {
+            const items = (() => {
+              switch (e.targetType) {
+                case "node":
+                  return [
+                    ...[
+                      {
+                        name: "添加后续节点",
+                        value: "node:add-next",
+                      },
+                      {
+                        name: "添加子节点",
+                        value: "node:add-child",
+                      },
+                      {
+                        name: "添加前置节点",
+                        value: "node:add-prev",
+                      },
+                      {
+                        name: "插入后续节点",
+                        value: "node:insert-next",
+                      },
+                      {
+                        name: "插入前置节点",
+                        value: "node:insert-prev",
+                      },
+                      { name: "删除节点", value: "node:delete" },
+                      {
+                        name: "删除前置关系",
+                        value: "node:delete-prev-edge",
+                      },
+                      {
+                        name: "删除后续关系",
+                        value: "node:delete-next-edge",
+                      },
+                      {
+                        name: "删除且保留关系",
+                        value: "node:delete-keep-edge",
+                      },
+                    ],
+                    ...(configStore.config.testMode
+                      ? [
+                          {
+                            name: "测试",
+                            value: "node:test",
+                          },
+                        ]
+                      : []),
+                  ];
+                case "edge":
+                  return [{ name: "删除边", value: "edge:delete" }];
+                case "canvas":
+                  return [{ name: "添加节点", value: "canvas:add-new-node" }];
+                default:
+                  debug("getContent : " + e.targetType);
+                  return [];
+              }
+            })();
+            return buildMenuItemsHtml(items);
           },
           onClick: (value: any, _target: HTMLElement, current?: Element) => {
             if (!current || animationPlaying.value) return;

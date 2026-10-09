@@ -55,6 +55,39 @@ body {
     --el-mask-color: rgba(0, 0, 0, 0.55);
 }
 
+/* G6 画布右键菜单：布局与图标 */
+.g6-contextmenu-li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    font-size: 13px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.g6-contextmenu-li .ctx-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    color: var(--color-icon);
+    /* 点击穿透：保证 G6 的 onClick 始终命中 li 上的 value */
+    pointer-events: none;
+}
+
+.g6-contextmenu-li .ctx-icon svg {
+    display: block;
+    width: 16px;
+    height: 16px;
+}
+
+.g6-contextmenu-li:hover .ctx-icon {
+    color: var(--color-text);
+}
+
 /* G6 画布右键菜单暗色样式 */
 .dark .g6-contextmenu {
     background-color: rgba(40, 46, 55, 0.96);
