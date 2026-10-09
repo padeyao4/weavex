@@ -469,6 +469,13 @@ onMounted(async () => {
           lineWidth: 1,
           shadowBlur: 5,
         },
+        hover: {
+          stroke: "#3B82F6",
+          lineWidth: 1.2,
+          shadowColor: "#3B82F6",
+          shadowBlur: 8,
+          cursor: "pointer",
+        },
       },
       animation: {
         exit: [
@@ -528,6 +535,25 @@ onMounted(async () => {
     const node = currentGraph.value.nodes[nodeId];
     drawerNode.value = node ? { ...node } : null;
   });
+  // 鼠标悬停节点：添加 hover 样式；移出节点时移除
+  graph.on(
+    NodeEvent.POINTER_ENTER,
+    (evt: IElementEvent & { target: Element }) => {
+      const id = evt.target.id;
+      if (id && graph?.getElementType(id) === "node") {
+        setNodeStatus(id, "hover");
+      }
+    },
+  );
+  graph.on(
+    NodeEvent.POINTER_LEAVE,
+    (evt: IElementEvent & { target: Element }) => {
+      const id = evt.target.id;
+      if (id && graph?.getElementType(id) === "node") {
+        clearNodeStatus(id, "hover");
+      }
+    },
+  );
   graph.on(GraphEvent.BEFORE_ANIMATE, () => {
     animationPlaying.value = true;
   });
