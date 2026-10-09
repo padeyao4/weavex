@@ -35,7 +35,8 @@ export async function loadConfig(workDir: string): Promise<AppConfig> {
   }
   try {
     const raw = await invoke<string>("read_file", { path: configPath });
-    const parsed = JSON.parse(raw || "{}");
+    // 容错：外部编辑器可能以带 BOM 的 UTF-8 保存，strip 掉 BOM 防止 JSON.parse 失败
+    const parsed = JSON.parse((raw || "{}").replace(/^\uFEFF/, ""));
     return { ...DEFAULT_CONFIG, ...parsed };
   } catch (e) {
     debug(`config.json parse failed, fallback to default: ${e}`);

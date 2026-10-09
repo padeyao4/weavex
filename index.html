@@ -1,14 +1,122 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-CN">
     <head>
         <meta charset="UTF-8" />
         <link rel="icon" type="image/svg+xml" href="/vite.svg" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Tauri + Vue + Typescript App</title>
+        <title>Weavex</title>
+        <script>
+            // 启动前同步应用主题：读取 config store 写入的 localStorage 镜像，
+            // 在 main.ts 执行前设置 html.dark，保证骨架屏首帧颜色与用户设置一致，
+            // 避免"骨架屏(系统色) → Vue 挂载(亮色) → config 加载后(设置色)"的亮暗跳变。
+            (function () {
+                try {
+                    var t = localStorage.getItem("weavex:theme");
+                    var dark = false;
+                    if (t === "dark") {
+                        dark = true;
+                    } else if (t === "light") {
+                        dark = false;
+                    } else {
+                        // 首次启动（无镜像）或跟随系统：按系统偏好解析
+                        dark = window.matchMedia(
+                            "(prefers-color-scheme: dark)",
+                        ).matches;
+                    }
+                    var root = document.documentElement;
+                    if (dark) root.classList.add("dark");
+                    root.style.colorScheme = dark ? "dark" : "light";
+                } catch (e) {}
+            })();
+        </script>
+        <style>
+            /* 启动骨架屏：纯 CSS，零 JS 依赖，视觉与 LoadingView 完全一致
+               （大圆圈 + 加载中 + 进度条），Vue 挂载后无缝切换为同款 LoadingView，
+               用户感知为同一次加载，不再出现两次不同样式的加载界面。
+               颜色跟随 html.dark（由上方内联脚本在首帧前设置），与应用主题完全一致。
+               色值与 tailwind.theme 的 token 对齐（base/border/text/muted/hover/blue）。 */
+            .boot-splash {
+                position: fixed;
+                inset: 0;
+                display: flex;
+                flex-direction: column;
+                gap: 24px;
+                align-items: center;
+                justify-content: center;
+                background: #f7f8fa;
+            }
+            .boot-text {
+                text-align: center;
+            }
+            .boot-text-1 {
+                font-size: 16px;
+                font-weight: 500;
+                letter-spacing: 0.025em;
+                line-height: 1.5; /* 与 Tailwind preflight 的 html line-height 对齐 */
+                color: #1f2937;
+                font-family: "Inter", system-ui, -apple-system,
+                    BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            }
+            .boot-text-2 {
+                margin-top: 4px;
+                font-size: 14px;
+                line-height: 1.5; /* 与 Tailwind preflight 对齐 */
+                color: #6b7280;
+                text-align: center;
+                font-family: "Inter", system-ui, -apple-system,
+                    BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            }
+            .boot-bar {
+                width: 128px;
+                height: 4px;
+                box-sizing: border-box;
+                overflow: hidden;
+                border-radius: 9999px;
+                background: rgba(0, 0, 0, 0.06);
+            }
+            .boot-bar::after {
+                content: "";
+                display: block;
+                width: 50%;
+                height: 100%;
+                border-radius: 9999px;
+                background: #3b82f6;
+                animation: boot-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+            }
+            @keyframes boot-pulse {
+                0%,
+                100% {
+                    opacity: 1;
+                }
+                50% {
+                    opacity: 0.5;
+                }
+            }
+            .dark .boot-splash {
+                background: #1f242b;
+            }
+            .dark .boot-text-1 {
+                color: #e6e9ee;
+            }
+            .dark .boot-text-2 {
+                color: #a6adba;
+            }
+            .dark .boot-bar {
+                background: rgba(255, 255, 255, 0.08);
+            }
+        </style>
     </head>
 
     <body>
-        <div id="app"></div>
+        <div id="app">
+            <div class="boot-splash">
+                <div class="boot-text">
+                    <div class="boot-text-1">加载中</div>
+                    <div class="boot-text-2">请稍候...</div>
+                </div>
+                <div class="boot-bar"></div>
+            </div>
+        </div>
         <script type="module" src="/src/main.ts"></script>
     </body>
 </html>

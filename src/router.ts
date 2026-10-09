@@ -1,14 +1,17 @@
 import { createRouter, createWebHashHistory } from "vue-router";
-import HomeView from "./views/HomeView/index.vue";
-import SettingsView from "./views/SettingsView/index.vue";
-import NoteMenuView from "./views/NoteMenuView/index.vue";
-import TaskGraphView from "./views/TaskGraphView/index.vue";
-import TaskMenuView from "./views/TaskMenuView/index.vue";
-import TaskSummaryView from "./views/TaskSummaryView/index.vue";
-import TestPageView from "./views/TestPageView.vue";
 import LoadingView from "./views/LoadingView.vue";
 import { debug } from "@tauri-apps/plugin-log";
-import NoteEditor from "./views/NoteEditor.vue";
+
+// 路由级懒加载：首屏只需 LoadingView，其余视图按需加载，
+// 避免启动时同步解析全部视图（TaskGraphView/G6/NoteEditor 等大模块）
+const HomeView = () => import("./views/HomeView/index.vue");
+const SettingsView = () => import("./views/SettingsView/index.vue");
+const NoteMenuView = () => import("./views/NoteMenuView/index.vue");
+const TaskGraphView = () => import("./views/TaskGraphView/index.vue");
+const TaskMenuView = () => import("./views/TaskMenuView/index.vue");
+const TaskSummaryView = () => import("./views/TaskSummaryView/index.vue");
+const TestPageView = () => import("./views/TestPageView.vue");
+const NoteEditor = () => import("./views/NoteEditor.vue");
 
 const router = createRouter({
   history: createWebHashHistory(),

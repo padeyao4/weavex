@@ -10,48 +10,8 @@ import { useRepoStore } from "./stores/repo";
 import { ElMessageBox, ElMessage } from "element-plus";
 
 const repoStore = useRepoStore();
-const isCheckingUpdate = ref(false);
 const isDownloading = ref(false);
 const downloadProgress = ref(0);
-
-const fetchVersion = async () => {
-  try {
-    isCheckingUpdate.value = true;
-    const update = await check();
-
-    if (update) {
-      console.log(
-        `发现新版本 ${update.version}，发布于 ${update.date}，更新内容：${update.body}`,
-      );
-
-      // 第一步：询问用户是否要下载更新
-      try {
-        await ElMessageBox.confirm(
-          `发现新版本 ${update.version}\n\n更新内容：\n${update.body}\n\n是否要下载此更新？`,
-          "发现新版本",
-          {
-            confirmButtonText: "下载更新",
-            cancelButtonText: "忽略",
-            type: "info",
-            center: true,
-            dangerouslyUseHTMLString: true,
-          },
-        );
-
-        // 用户确认下载
-        await downloadUpdate(update);
-      } catch (error) {
-        // 用户点击了"忽略"或关闭了对话框
-        console.log("用户忽略更新");
-        ElMessage.info("已跳过本次更新");
-      }
-    }
-  } catch (error) {
-    console.error("检查更新失败:", error);
-  } finally {
-    isCheckingUpdate.value = false;
-  }
-};
 
 const downloadUpdate = async (update: any) => {
   try {
@@ -219,10 +179,8 @@ defineExpose({
 onMounted(() => {
   repoStore.init();
 
-  // 延迟检查更新，让应用先完全启动
-  setTimeout(() => {
-    fetchVersion();
-    checkPendingUpdate();
-  }, 2000);
+  // 更新检查改为设置页手动触发（manualCheckUpdate），移除启动自动检查：
+  // 曾观测到启动后偶发退出与自动更新检查活动同时发生，且自动弹窗会打扰启动流程。
+  checkPendingUpdate();
 });
 </script>
