@@ -37,6 +37,8 @@ pub struct GraphDto {
     #[serde(default)]
     pub priority: Option<f64>,
     #[serde(default)]
+    pub viewport: Option<String>,
+    #[serde(default)]
     pub nodes: Vec<NodeDto>,
     #[serde(default)]
     pub edges: Vec<EdgeDto>,
@@ -235,7 +237,21 @@ pub fn create_schema(conn: &Connection) -> Result<(), String> {
            updated_at INTEGER NOT NULL DEFAULT 0
          );",
     )
-    .map_err(|e| format!("Failed to create schema: {}", e))
+    .map_err(|e| format!("Failed to create schema: {}", e))?;
+
+    // 迁移：旧库 graphs 表无 viewport 列时补列（幂等）
+    let has_viewport = conn
+        .prepare("PRAGMA table_info(graphs)")
+        .map_err(|e| e.to_string())?
+        .query_map([], |row| row.get::<_, String>(1))
+        .map_err(|e| e.to_string())?
+        .filter_map(|r| r.ok())
+        .any(|name| name == "viewport");
+    if !has_viewport {
+        conn.execute("ALTER TABLE graphs ADD COLUMN viewport TEXT", [])
+            .map_err(|e| format!("Failed to add viewport column: {}", e))?;
+    }
+    Ok(())
 }
 
 // ---------------- 图数据读写 ----------------
@@ -246,15 +262,16 @@ pub fn save_graph(conn: &mut Connection, dto: &GraphDto) -> Result<(), String> {
     let root_json = serde_json::to_string(&dto.root_node_ids).unwrap_or_else(|_| "[]".into());
 
     tx.execute(
-        "INSERT INTO graphs (id, name, created_at, updated_at, root_node_ids, show_archive, priority)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)
+        "INSERT INTO graphs (id, name, created_at, updated_at, root_node_ids, show_archive, priority, viewport)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)
          ON CONFLICT(id) DO UPDATE SET
            name = excluded.name,
            created_at = excluded.created_at,
            updated_at = excluded.updated_at,
            root_node_ids = excluded.root_node_ids,
            show_archive = excluded.show_archive,
-           priority = excluded.priority",
+           priority = excluded.priority,
+           viewport = excluded.viewport",
         params![
             dto.id,
             dto.name,
@@ -262,7 +279,8 @@ pub fn save_graph(conn: &mut Connection, dto: &GraphDto) -> Result<(), String> {
             dto.updated_at,
             root_json,
             dto.show_archive,
-            dto.priority
+            dto.priority,
+            dto.viewport
         ],
     )
     .map_err(|e| format!("Failed to upsert graph {}: {}", dto.id, e))?;
@@ -331,7 +349,7 @@ pub fn save_graph(conn: &mut Connection, dto: &GraphDto) -> Result<(), String> {
 pub fn load_graphs(conn: &Connection) -> Result<String, String> {
     let mut stmt = conn
         .prepare(
-            "SELECT id, name, created_at, updated_at, root_node_ids, show_archive, priority
+            "SELECT id, name, created_at, updated_at, root_node_ids, show_archive, priority, viewport
              FROM graphs ORDER BY priority DESC",
         )
         .map_err(|e| e.to_string())?;
@@ -345,13 +363,14 @@ pub fn load_graphs(conn: &Connection) -> Result<String, String> {
                 row.get::<_, String>(4)?,
                 row.get::<_, Option<bool>>(5)?,
                 row.get::<_, Option<f64>>(6)?,
+                row.get::<_, Option<String>>(7)?,
             ))
         })
         .map_err(|e| e.to_string())?;
 
     let mut graphs: Vec<GraphDto> = Vec::new();
     for row in rows {
-        let (id, name, created_at, updated_at, root_json, show_archive, priority) =
+        let (id, name, created_at, updated_at, root_json, show_archive, priority, viewport) =
             row.map_err(|e| e.to_string())?;
         let root_node_ids: Vec<String> = serde_json::from_str(&root_json).unwrap_or_default();
 
@@ -420,6 +439,7 @@ pub fn load_graphs(conn: &Connection) -> Result<String, String> {
             root_node_ids,
             show_archive,
             priority,
+            viewport,
             nodes,
             edges,
         });
@@ -526,6 +546,7 @@ fn legacy_to_dto(g: LegacyGraph) -> GraphDto {
         root_node_ids: g.root_node_ids,
         show_archive: g.show_archive,
         priority: g.priority,
+        viewport: None,
         nodes,
         edges,
     }

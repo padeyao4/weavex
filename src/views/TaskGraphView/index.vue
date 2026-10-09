@@ -212,7 +212,23 @@ const toggleArchive = async () => {
 
 useEventListener("resize", checkScreenWidth);
 
-onMounted(() => {
+// 保存当前画布视口（缩放 + 画布原点在视口的位置）
+const saveViewport = () => {
+  if (!graph) return;
+  const [x, y] = graph.getPosition();
+  debug(
+    `[viewport] save zoom=${graph.getZoom()} pos=${JSON.stringify(graph.getPosition())}`,
+  );
+  graphStore.updateGraph(
+    {
+      id: graphId,
+      viewport: { zoom: graph.getZoom(), x, y },
+    },
+    { persist: true }, // persist 走 debouncedSave 防抖写库
+  );
+};
+
+onMounted(async () => {
   checkScreenWidth();
 
   // 主题切换（含跟随系统实时变化）时重渲染画布，使节点/边取色生效
@@ -518,8 +534,36 @@ onMounted(() => {
   graph.on(GraphEvent.AFTER_ANIMATE, () => {
     animationPlaying.value = false;
   });
+  // 画布视口（拖动/缩放）变化时保存，下次打开恢复
+  graph.on("canvas:dragend", saveViewport);
+  graph.on("canvas:wheel", saveViewport);
 
-  graph.render();
+  await graph.render();
+  // 恢复上次关闭时的画布视口（缩放 + 平移，无动画）
+  const vp = currentGraph.value.viewport;
+  if (vp) {
+    debug(`[viewport] restore target=${JSON.stringify(vp)}`);
+    await graph.zoomTo(vp.zoom, false);
+    // 不能用 translateTo（绝对平移）：G6 会把 camera 的 position 与 focalPoint
+    // 设为同一点，lookAt 退化导致画面翻转/异常。用 translateBy（相对平移，
+    // 与 drag-canvas 同机制）把当前视口偏移到目标位置：
+    // 视口坐标差 → 画布相对位移需乘当前 zoom。
+    let [px, py] = graph.getPosition();
+    for (let i = 0; i < 3; i++) {
+      const dx = vp.x - px;
+      const dy = vp.y - py;
+      if (Math.abs(dx) < 0.01 && Math.abs(dy) < 0.01) break;
+      await graph.translateBy([dx * vp.zoom, dy * vp.zoom], false);
+      [px, py] = graph.getPosition();
+    }
+    debug(
+      `[viewport] restore after zoom=${graph.getZoom()} pos=${JSON.stringify(graph.getPosition())}`,
+    );
+    const b = graph.getCanvas()?.getBounds();
+    debug(
+      `[viewport] bounds=${b ? JSON.stringify({ min: b.min, max: b.max }) : "none"}`,
+    );
+  }
 });
 
 useResizeObserver([containerRef, canvasRef], (entries) => {
@@ -554,6 +598,8 @@ const clearNodeStatus = function (nodeId: string, state: string) {
 };
 
 onUnmounted(() => {
+  // 卸载（切换项目/关闭）前兜底保存一次视口
+  saveViewport();
   themeObserver?.disconnect();
   graph?.destroy();
 });

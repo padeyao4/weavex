@@ -6,7 +6,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { resolve } from "@tauri-apps/api/path";
 import { debug } from "@tauri-apps/plugin-log";
 import { useContextStore } from "@/stores/context";
-import type { PGraph, PNode } from "@/types";
+import type { PGraph, PNode, ViewportState } from "@/types";
 
 export const DB_FILE = "weavex.db";
 
@@ -20,6 +20,7 @@ export interface GraphDto {
   rootNodeIds?: string[];
   showArchive?: boolean | null;
   priority?: number | null;
+  viewport?: string | null; // 画布视口 JSON（{zoom,x,y}），与 Rust GraphDto.viewport 对应
   nodes?: NodeDto[];
   edges?: EdgeDto[];
 }
@@ -106,6 +107,7 @@ export function graphToDto(graph: PGraph): GraphDto {
     rootNodeIds: graph.rootNodeIds ?? [],
     showArchive: graph.showArchive ?? null,
     priority: graph.priority ?? null,
+    viewport: graph.viewport ? JSON.stringify(graph.viewport) : null,
     nodes,
     edges,
   };
@@ -159,6 +161,7 @@ export function dtoToGraph(dto: GraphDto): PGraph {
     rootNodeIds: dto.rootNodeIds ?? [],
     showArchive: dto.showArchive ?? undefined,
     priority: dto.priority ?? undefined,
+    viewport: dto.viewport ? (JSON.parse(dto.viewport) as ViewportState) : undefined,
     nodes,
   };
 }

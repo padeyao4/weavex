@@ -19,6 +19,13 @@ export interface PNode {
   isArchive?: boolean; // 节点是否已归档,归档的要求是prevs节点归档,chilren的节点也归档,该节点次才能归档.归档的节点禁止任何操作
 }
 
+/** 画布视口状态：缩放级别 + 画布原点在视口的位置（G6 getPosition） */
+export interface ViewportState {
+  zoom: number;
+  x: number;
+  y: number;
+}
+
 export interface PGraph {
   id: string; // 图的唯一 ID
   name: string; // 图名称（用于列表展示）
@@ -28,4 +35,5 @@ export interface PGraph {
   showArchive?: boolean; // 是否显示归档节点
   nodes: Record<string, PNode>; // 扁平化节点映射
   priority?: number; // 图优先级，数字越大优先级越高
+  viewport?: ViewportState | null; // 画布视口（拖动/缩放后的位置，持久化恢复用）
 }
