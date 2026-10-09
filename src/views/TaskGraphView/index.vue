@@ -15,7 +15,7 @@
         id="canvas"
         ref="canvasRef"
         @contextmenu.prevent
-        class="min-h-0 min-w-0 flex-1 overflow-hidden border-t border-border"
+        class="min-h-0 min-w-0 flex-1 overflow-hidden border-t border-border bg-canvas"
       />
       <footer
         class="flex h-12 flex-row items-center justify-center gap-2 border-t border-border"
@@ -63,7 +63,7 @@
         :enableArchive="enableArchive"
         @save="handleSave"
         @cancel="handleCancel"
-        class="w-90 border-l border-border"
+        class="w-90 border-l border-border bg-surface"
       />
     </template>
     <teleport to="body" v-else-if="drawerNode">
@@ -372,16 +372,16 @@ onMounted(() => {
       style: {
         fill: (d: NodeData) =>
           d.data?.completed
-            ? themeColor("#00000050", "#12151b")
-            : themeColor("#fff", "#1c212c"),
-        stroke: themeColor("#00000080", "#3a3f4c"),
+            ? themeColor("#00000050", "#232930")
+            : themeColor("#fff", "#2b323d"),
+        stroke: themeColor("#00000080", "#47505e"),
         lineWidth: 0.5,
         lineDash: (d: NodeData) => (d.data?.expanded ? [4, 4] : []),
         radius: 8,
         labelText: (d: NodeData) => d.data?.name as string,
         labelFill: themeColor("#000000", "#e5e7eb"),
         labelBackground: true,
-        labelBackgroundFill: themeColor("#fff", "#262a35"),
+        labelBackgroundFill: themeColor("#fff", "#333b47"),
         labelBackgroundOpacity: (d: NodeData) => (d.data?.expanded ? 1 : 0),
         labelBackgroundRadius: 6,
         labelPlacement: (d: NodeData) => (d.data?.expanded ? "top" : "center"),

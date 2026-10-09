@@ -129,7 +129,7 @@ const handleCancel = () => {
 
 .simple-input :deep(.el-input__wrapper):hover,
 .simple-textarea :deep(.el-textarea__inner):hover {
-  border-bottom-color: #9ca3af;
+  border-bottom-color: var(--color-muted);
   background-color: transparent;
 }
 
@@ -199,7 +199,7 @@ const handleCancel = () => {
 
 .simple-input :deep(.el-input__inner::placeholder),
 .simple-textarea :deep(.el-textarea__inner::placeholder) {
-  color: #9ca3af;
+  color: var(--color-muted);
   font-weight: 300;
 }
 
@@ -207,14 +207,14 @@ const handleCancel = () => {
 .dark .simple-button,
 .dark .simple-button :deep(.el-button),
 .dark .simple-button.secondary :deep(.el-button) {
-  background-color: #181b22;
-  border-color: #2b2f3a;
-  color: #e5e7eb;
+  background-color: #282e37;
+  border-color: #39404d;
+  color: #e6e9ee;
 }
 
 .dark .simple-button :deep(.el-button):hover {
-  border-color: #3a3f4c;
-  background-color: #1e222b;
+  border-color: #47505e;
+  background-color: #2d333d;
 }
 
 .dark .simple-button :deep(.el-button--primary),
@@ -226,16 +226,16 @@ const handleCancel = () => {
 
 .dark .simple-input :deep(.el-input__inner),
 .dark .simple-textarea :deep(.el-textarea__inner) {
-  color: #e5e7eb;
+  color: #e6e9ee;
 }
 
 .dark :deep(.el-form-item__label) {
-  color: #9ca3af;
+  color: #a6adba;
 }
 
 .dark .simple-switch :deep(.el-switch__core) {
-  border-color: #2b2f3a;
-  background-color: #2b2f3a;
+  border-color: #39404d;
+  background-color: #39404d;
 }
 
 .dark .simple-switch :deep(.el-switch.is-checked .el-switch__core) {

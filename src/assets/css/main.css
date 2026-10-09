@@ -56,14 +56,32 @@ body {
     background-color: rgba(255, 255, 255, 0.28);
 }
 
+/* Element Plus 暗色变量对齐新调色板（弹窗/下拉/消息等组件） */
+.dark {
+    --el-bg-color: #282e37;
+    --el-bg-color-page: #1f242b;
+    --el-bg-color-overlay: #282e37;
+    --el-fill-color-blank: #282e37;
+    --el-fill-color-light: #2d333d;
+    --el-fill-color: #333b47;
+    --el-fill-color-dark: #39404d;
+    --el-border-color: #39404d;
+    --el-border-color-light: #39404d;
+    --el-border-color-lighter: #39404d;
+    --el-text-color-primary: #e6e9ee;
+    --el-text-color-regular: #c3c9d4;
+    --el-text-color-secondary: #a6adba;
+    --el-mask-color: rgba(0, 0, 0, 0.55);
+}
+
 /* G6 画布右键菜单暗色样式 */
 .dark .g6-contextmenu {
-    background-color: rgba(24, 27, 34, 0.96);
+    background-color: rgba(40, 46, 55, 0.96);
     box-shadow: rgba(0, 0, 0, 0.5) 0px 6px 12px 0px;
 }
 
 .dark .g6-contextmenu-li {
-    color: #e5e7eb;
+    color: #e6e9ee;
 }
 
 .dark .g6-contextmenu-li:hover {

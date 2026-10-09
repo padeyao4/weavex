@@ -236,8 +236,8 @@ section:hover {
 }
 
 .dark section:hover {
-  border-color: #3a3f4c;
-  background-color: #1e222b;
+  border-color: #47505e;
+  background-color: #2d333d;
 }
 
 /* 按钮悬停效果 */

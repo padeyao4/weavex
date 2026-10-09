@@ -200,7 +200,7 @@ const handleCancel = () => {
 }
 
 .dark .selected-task {
-  background-color: #1a2234;
+  background-color: #232a34;
   border-color: #3b82f6;
 }
 

@@ -8,6 +8,8 @@
 
   --color-base: #f7f8fa;        /* 极浅灰，非纯白 */
   --color-surface: #fbfdff;     /* 近白但非纯白 */
+  --color-sidebar: #f1f3f5;     /* 侧边栏：比 base 略深，形成导航区层次 */
+  --color-canvas: #fbfdff;      /* 绘制区：近白，衬托画布节点 */
   --color-text: #1f2937;        /* 主文字 */
   --color-muted: #6b7280;       /* 中灰文字 */
   --color-border: #e6e7ea;
@@ -15,7 +17,9 @@
   --color-hover: rgba(0, 0, 0, 0.06); /* 基于浅色背景的深色悬停 */
 }
 
-/* 暗色模式 token 覆盖：切换 html.dark 后自动翻转使用这些 token 的组件 */
+/* 暗色模式 token 覆盖：切换 html.dark 后自动翻转使用这些 token 的组件
+   参考 DeepSeek 桌面（背景 #292a2d 柔和深灰）与豆包桌面（深蓝灰调）气质，
+   相比旧版 #0f1115 明显提亮，避免近黑压抑感 */
 .dark {
   --color-primary: #5b8cff;
   --color-secondary: #b08968;
@@ -23,11 +27,13 @@
   --color-warning: #fbbf24;
   --color-danger: #f87171;
 
-  --color-base: #0f1115;        /* 深色底 */
-  --color-surface: #181b22;     /* 面板 */
-  --color-text: #e5e7eb;        /* 主文字 */
-  --color-muted: #9ca3af;       /* 弱化文字 */
-  --color-border: #2b2f3a;      /* 描边 */
+  --color-base: #1f242b;        /* 深蓝灰底（应用最底层） */
+  --color-surface: #282e37;     /* 面板/卡片（编辑区等） */
+  --color-sidebar: #181c22;     /* 侧边栏：比 base 深一档 */
+  --color-canvas: #151920;      /* 绘制区：最暗，衬托画布节点/连线 */
+  --color-text: #e6e9ee;        /* 主文字 */
+  --color-muted: #a6adba;       /* 弱化文字 */
+  --color-border: #39404d;      /* 描边 */
   --color-overlay: rgba(0, 0, 0, 0.4);
   --color-hover: rgba(255, 255, 255, 0.08);
 }

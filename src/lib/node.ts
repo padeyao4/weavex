@@ -70,8 +70,8 @@ export class CustomNode extends Rect {
       "circle",
       {
         r: attributes.button?.r,
-        fill: themeColor("#fff", "#181b22"),
-        stroke: themeColor("#00000080", "#2b2f3a"),
+        fill: themeColor("#fff", "#282e37"),
+        stroke: themeColor("#00000080", "#39404d"),
         lineWidth: 0.5,
         cx: 0, // 相对于组中心
         cy: 0, // 相对于组中心
@@ -86,7 +86,7 @@ export class CustomNode extends Rect {
       {
         text: `${attributes.childrenTodoNum}/${attributes.countChildren}`,
         fontSize: 12,
-        fill: themeColor("#33333380", "#9ca3af"),
+        fill: themeColor("#33333380", "#a6adba"),
         x: 0,
         y: 0,
         textAlign: "center",
