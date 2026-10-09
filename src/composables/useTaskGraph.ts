@@ -85,6 +85,8 @@ export function useTaskGraph(options: {
   const graph = shallowRef<Graph | undefined>(undefined);
   const animationPlaying = ref(false);
   let themeObserver: MutationObserver | undefined;
+  // 动画兜底定时器：AFTER_ANIMATE 丢失时强制复位动画状态
+  let animationResetTimer: ReturnType<typeof setTimeout> | undefined;
 
   // 主题感知取色：亮/暗两套色值，渲染时按 html.dark 解析
   const isDark = () => document.documentElement.classList.contains("dark");
@@ -96,14 +98,24 @@ export function useTaskGraph(options: {
   let lastSignature = "";
   const computeGraphSignature = (data: GraphData) => JSON.stringify(data);
 
+  let pendingSync = false; // 动画播放期间发生的数据变更，动画结束后补一次同步
+
   const syncGraphData = async function () {
-    if (animationPlaying.value) return;
+    if (animationPlaying.value) {
+      pendingSync = true;
+      return;
+    }
     const { result } = await measureTime(() => {
       return graphStore.toGraphData(graphStore.allGraph[graphId]);
     }, "to graph data cost time");
     const signature = computeGraphSignature(result);
     if (signature === lastSignature) return; // 结构未变，跳过全量重绘
     lastSignature = signature;
+    debug(
+      `[sync] render nodes=${result.nodes?.length ?? 0} edges=${
+        result.edges?.length ?? 0
+      } changed`,
+    );
     graph.value?.setData(result);
     await graph.value?.render();
     disableEditAnimation(); // 渲染完成：复位动画开关，避免残留影响后续渲染
@@ -565,11 +577,27 @@ export function useTaskGraph(options: {
         }
       },
     );
+    // 动画结束（含兜底超时）统一复位：解除右键/同步拦截，并补发动画期间挂起的变更
+    const markAnimationEnd = () => {
+      animationPlaying.value = false;
+      if (animationResetTimer) {
+        clearTimeout(animationResetTimer);
+        animationResetTimer = undefined;
+      }
+      if (pendingSync) {
+        pendingSync = false;
+        debounceSyncData();
+      }
+    };
     graph.value.on(GraphEvent.BEFORE_ANIMATE, () => {
       animationPlaying.value = true;
+      // 兜底：AFTER_ANIMATE 在元素销毁/动画被取消时可能丢失，
+      // 超时强制复位，避免动画状态卡死而拦截后续右键菜单操作
+      if (animationResetTimer) clearTimeout(animationResetTimer);
+      animationResetTimer = setTimeout(markAnimationEnd, 1000);
     });
     graph.value.on(GraphEvent.AFTER_ANIMATE, () => {
-      animationPlaying.value = false;
+      markAnimationEnd();
     });
     // 画布视口（拖动/缩放）变化时保存，下次打开恢复
     graph.value.on("canvas:dragend", saveViewport);
@@ -607,9 +635,12 @@ export function useTaskGraph(options: {
     // 卸载（切换项目/关闭）前兜底保存一次视口
     saveViewport();
     themeObserver?.disconnect();
+    if (animationResetTimer) {
+      clearTimeout(animationResetTimer);
+      animationResetTimer = undefined;
+    }
     graph.value?.destroy();
   });
-
   return {
     animationPlaying,
     syncGraphData,

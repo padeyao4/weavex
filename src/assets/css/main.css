@@ -84,6 +84,11 @@ body {
     height: 16px;
 }
 
+.g6-contextmenu-li .ctx-name {
+    /* 点击穿透：文字也要让 event.target 命中 li，否则 G6 onClick 不触发 */
+    pointer-events: none;
+}
+
 .g6-contextmenu-li:hover .ctx-icon {
     color: var(--color-text);
 }
