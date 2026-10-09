@@ -1,6 +1,7 @@
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 use std::fs;
 use std::sync::Mutex;
+use tauri::Manager;
 use tauri_plugin_log::log::debug;
 use tauri_plugin_log::log::error;
 
@@ -8,7 +9,9 @@ use std::path::Path;
 use std::process::Command;
 
 mod db;
+mod mcp;
 use crate::db::Db;
+use crate::mcp::McpState;
 
 #[tauri::command]
 fn get_os_type() -> String {
@@ -151,6 +154,21 @@ pub fn run() {
         .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(tauri_plugin_opener::init())
         .manage(Db(Mutex::new(None)))
+        .manage(McpState(Mutex::new(None)))
+        .setup(|app| {
+            // 自动拉起 MCP 服务（失败不阻塞应用，仅记录日志）
+            match mcp::spawn_mcp_server(app.handle()) {
+                Ok(Some(child)) => {
+                    let state = app.state::<McpState>();
+                    *state.0.lock().unwrap() = Some(child);
+                }
+                Ok(None) => {}
+                Err(e) => {
+                    error!("[mcp] {}", e);
+                }
+            }
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             get_os_type,
             detect_compositor,
@@ -169,8 +187,13 @@ pub fn run() {
             db::move_file,
             db::file_exists
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|app_handle, event| {
+            if let tauri::RunEvent::Exit = event {
+                mcp::stop_mcp_server(app_handle);
+            }
+        });
 }
 
 #[cfg(test)]

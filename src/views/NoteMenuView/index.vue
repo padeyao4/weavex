@@ -32,7 +32,7 @@ const handleCreateNoteConfirm = function (title: string) {
         <el-button icon="Plus" @click="handleAddNote"></el-button>
       </div>
       <div
-        class="flex min-w-0 flex-1 flex-col gap-1 overflow-y-auto border-t border-gray-200 px-1 pt-1 select-none"
+        class="flex min-w-0 flex-1 flex-col gap-1 overflow-y-auto border-t border-border px-1 pt-1 select-none"
       >
         <router-link
           v-for="item in metaList"
@@ -43,9 +43,9 @@ const handleCreateNoteConfirm = function (title: string) {
           <div
             @click="navigate"
             :class="{
-              'rounded-md bg-[#eee]': isActive,
+              'rounded-md bg-hover': isActive,
             }"
-            class="flex h-10 cursor-pointer items-center justify-start rounded-lg px-3 hover:bg-[#eee]"
+            class="flex h-10 cursor-pointer items-center justify-start rounded-lg px-3 hover:bg-hover"
           >
             <div
               class="overflow-hidden text-sm font-normal text-ellipsis whitespace-nowrap"

@@ -19,7 +19,7 @@
         />
       </aside>
       <router-view
-        class="min-w-0 flex-1 rounded-tl-lg border-l border-gray-300"
+        class="min-w-0 flex-1 rounded-tl-lg border-l border-border"
       />
     </div>
   </FramePage>

@@ -1,6 +1,6 @@
 <template>
   <div
-    class="task-item flex h-12 w-full flex-1 flex-row items-center rounded-md border border-gray-200 bg-white px-3 transition-colors duration-200 hover:border-gray-300 hover:bg-[#f5f5f5]"
+    class="task-item flex h-12 w-full flex-1 flex-row items-center rounded-md border border-border bg-surface px-3 transition-colors duration-200 hover:border-border hover:bg-hover"
   >
     <div
       class="checkbox-container-group relative flex h-5 w-5 shrink-0 items-center"
@@ -9,7 +9,7 @@
       <icon-round
         theme="outline"
         size="20"
-        fill="#9ca3af"
+        fill="var(--color-muted)"
         :strokeWidth="2"
         strokeLinecap="square"
         class="absolute"
@@ -24,8 +24,8 @@
       />
     </div>
     <div
-      class="ml-3 w-full min-w-0 overflow-hidden text-sm font-normal text-ellipsis whitespace-nowrap text-gray-700"
-      :class="{ 'text-gray-400 line-through': task.completed }"
+      class="ml-3 w-full min-w-0 overflow-hidden text-sm font-normal text-ellipsis whitespace-nowrap text-text"
+      :class="{ 'text-muted line-through': task.completed }"
       :data-draggable-move="task.id"
     >
       {{ task.name }}
@@ -46,7 +46,7 @@
         v-else
         theme="outline"
         size="20"
-        fill="#9ca3af"
+        fill="var(--color-muted)"
         :strokeWidth="2"
         strokeLinecap="square"
       />

@@ -8,8 +8,26 @@
 
   --color-base: #f7f8fa;        /* 极浅灰，非纯白 */
   --color-surface: #fbfdff;     /* 近白但非纯白 */
+  --color-text: #1f2937;        /* 主文字 */
   --color-muted: #6b7280;       /* 中灰文字 */
   --color-border: #e6e7ea;
   --color-overlay: rgba(10,15,20,0.06);   /* 轻遮罩，避免纯黑 */
   --color-hover: rgba(0, 0, 0, 0.06); /* 基于浅色背景的深色悬停 */
+}
+
+/* 暗色模式 token 覆盖：切换 html.dark 后自动翻转使用这些 token 的组件 */
+.dark {
+  --color-primary: #5b8cff;
+  --color-secondary: #b08968;
+  --color-success: #34d399;
+  --color-warning: #fbbf24;
+  --color-danger: #f87171;
+
+  --color-base: #0f1115;        /* 深色底 */
+  --color-surface: #181b22;     /* 面板 */
+  --color-text: #e5e7eb;        /* 主文字 */
+  --color-muted: #9ca3af;       /* 弱化文字 */
+  --color-border: #2b2f3a;      /* 描边 */
+  --color-overlay: rgba(0, 0, 0, 0.4);
+  --color-hover: rgba(255, 255, 255, 0.08);
 }

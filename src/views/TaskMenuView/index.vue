@@ -4,7 +4,7 @@
       class="flex shrink-0 flex-col pt-7.5 select-none"
       @contextmenu.prevent
     >
-      <div class="border-b border-gray-200">
+      <div class="border-b border-border">
         <router-link
           :to="{ name: 'taskSummary' }"
           custom
@@ -12,22 +12,22 @@
           v-slot="{ navigate, isActive }"
         >
           <div
-            class="m-1 flex h-10 flex-row items-center rounded-md pr-2 pl-3 transition-colors duration-200 hover:bg-[#eee]"
+            class="m-1 flex h-10 flex-row items-center rounded-md pr-2 pl-3 transition-colors duration-200 hover:bg-hover"
             @click="navigate"
-            :class="isActive ? 'rounded-md bg-[#eee]' : ''"
+            :class="isActive ? 'rounded-md bg-hover' : ''"
           >
             <icon-sun-one
               theme="outline"
               size="18"
-              fill="#6b7280"
+              fill="var(--color-muted)"
               :strokeWidth="2"
             />
-            <div class="ml-3 text-sm font-normal text-gray-700 select-none">
+            <div class="ml-3 text-sm font-normal text-text select-none">
               我的一天
             </div>
             <div
               v-if="taskStore.importantTasks.length > 0"
-              class="ml-auto flex h-6 w-6 items-center justify-center rounded-full bg-[#00000020] text-xs font-light"
+              class="ml-auto flex h-6 w-6 items-center justify-center rounded-full bg-hover text-xs font-light"
             >
               {{ taskStore.importantTasks.length }}
             </div>
@@ -54,31 +54,31 @@
                   <div
                     @click="navigate"
                     :class="{
-                      'rounded-md bg-[#eee]': isActive,
+                      'rounded-md bg-hover': isActive,
                     }"
-                    class="group mr-1 ml-1 flex h-9 cursor-default flex-row items-center pl-3 transition-colors duration-200 hover:rounded-md hover:bg-[#eee]"
+                    class="group mr-1 ml-1 flex h-9 cursor-default flex-row items-center pl-3 transition-colors duration-200 hover:rounded-md hover:bg-hover"
                     :data-draggable-move="item.id"
                   >
                     <icon-chart-graph
                       theme="outline"
                       size="18"
-                      fill="#6b7280"
+                      fill="var(--color-muted)"
                       :strokeWidth="2"
                     />
                     <div
-                      class="min-w-0 flex-1 overflow-hidden pl-3 text-sm font-normal text-ellipsis whitespace-nowrap text-gray-700 select-none"
+                      class="min-w-0 flex-1 overflow-hidden pl-3 text-sm font-normal text-ellipsis whitespace-nowrap text-text select-none"
                       :data-draggable-move="item.id"
                     >
                       {{ item.name }}
                     </div>
                     <div
-                      class="m-2 flex h-6 w-6 cursor-pointer items-center justify-center rounded-sm opacity-0 transition-opacity duration-200 group-hover:opacity-100 hover:bg-gray-300"
+                      class="m-2 flex h-6 w-6 cursor-pointer items-center justify-center rounded-sm opacity-0 transition-opacity duration-200 group-hover:opacity-100 hover:bg-hover"
                       @click.stop="showContextMenu($event, item.id, item.name)"
                     >
                       <icon-more-one
                         theme="outline"
                         size="16"
-                        fill="#333"
+                        fill="var(--color-muted)"
                         :strokeWidth="2"
                         strokeLinecap="square"
                       />
@@ -91,19 +91,19 @@
         </div>
       </div>
       <div
-        class="flex h-12 items-center justify-center border-t border-gray-200 p-1"
+        class="flex h-12 items-center justify-center border-t border-border p-1"
       >
         <div
           @click="formData.visible = true"
-          class="flex h-full w-full flex-row items-center rounded-md p-1 pl-3 transition-colors duration-200 hover:rounded-md hover:bg-gray-100"
+          class="flex h-full w-full flex-row items-center rounded-md p-1 pl-3 transition-colors duration-200 hover:rounded-md hover:bg-hover"
         >
           <icon-plus
             theme="outline"
             size="18"
-            fill="#6b7280"
+            fill="var(--color-muted)"
             :strokeWidth="2"
           />
-          <div class="ml-3 text-sm font-normal text-gray-700 select-none">
+          <div class="ml-3 text-sm font-normal text-text select-none">
             创建项目
           </div>
         </div>

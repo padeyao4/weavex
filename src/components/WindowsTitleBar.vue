@@ -5,13 +5,13 @@
   >
     <div class="ml-auto flex">
       <button
-        class="flex h-8 w-10 items-center justify-center hover:bg-gray-300"
+        class="flex h-8 w-10 items-center justify-center hover:bg-hover"
         id="min-button"
         @click="minimizeWindow()"
         title="最小化"
       />
       <button
-        class="flex h-8 w-10 items-center justify-center hover:bg-gray-300"
+        class="flex h-8 w-10 items-center justify-center hover:bg-hover"
         @click="toggleMaximizeWindow()"
         :id="isMaximized ? 'restore-button' : 'max-button'"
         :title="isMaximized ? '还原' : '最大化'"

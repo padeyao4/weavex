@@ -7,7 +7,7 @@
         class="simple-input"
       />
     </header>
-    <main class="flex-1 overflow-y-auto border-t border-gray-200 p-4">
+    <main class="flex-1 overflow-y-auto border-t border-border p-4">
       <el-form
         :model="localNode"
         label-position="top"
@@ -31,15 +31,15 @@
         />
 
         <div class="flex items-center space-x-2">
-          <div class="mr-auto text-sm text-gray-500">任务状态</div>
+          <div class="mr-auto text-sm text-muted">任务状态</div>
           <el-switch v-model="localNode.completed" class="simple-switch" />
         </div>
         <div class="flex items-center space-x-2">
-          <div class="mr-auto text-sm text-gray-500">关注状态</div>
+          <div class="mr-auto text-sm text-muted">关注状态</div>
           <el-switch v-model="localNode.isFollowed" class="simple-switch" />
         </div>
         <div class="flex items-center space-x-2">
-          <div class="mr-auto text-sm text-gray-500">归档状态</div>
+          <div class="mr-auto text-sm text-muted">归档状态</div>
           <el-switch
             v-model="localNode.isArchive"
             class="simple-switch"
@@ -49,7 +49,7 @@
       </el-form>
     </main>
     <footer
-      class="flex h-12 shrink-0 items-center justify-center border-t border-gray-200"
+      class="flex h-12 shrink-0 items-center justify-center border-t border-border"
     >
       <div class="flex space-x-3">
         <el-button
@@ -201,5 +201,45 @@ const handleCancel = () => {
 .simple-textarea :deep(.el-textarea__inner::placeholder) {
   color: #9ca3af;
   font-weight: 300;
+}
+
+/* 暗色模式覆盖 */
+.dark .simple-button,
+.dark .simple-button :deep(.el-button),
+.dark .simple-button.secondary :deep(.el-button) {
+  background-color: #181b22;
+  border-color: #2b2f3a;
+  color: #e5e7eb;
+}
+
+.dark .simple-button :deep(.el-button):hover {
+  border-color: #3a3f4c;
+  background-color: #1e222b;
+}
+
+.dark .simple-button :deep(.el-button--primary),
+.dark .simple-button :deep(.el-button--primary):hover {
+  background-color: #3b82f6;
+  border-color: #3b82f6;
+  color: white;
+}
+
+.dark .simple-input :deep(.el-input__inner),
+.dark .simple-textarea :deep(.el-textarea__inner) {
+  color: #e5e7eb;
+}
+
+.dark :deep(.el-form-item__label) {
+  color: #9ca3af;
+}
+
+.dark .simple-switch :deep(.el-switch__core) {
+  border-color: #2b2f3a;
+  background-color: #2b2f3a;
+}
+
+.dark .simple-switch :deep(.el-switch.is-checked .el-switch__core) {
+  border-color: #3b82f6;
+  background-color: #3b82f6;
 }
 </style>

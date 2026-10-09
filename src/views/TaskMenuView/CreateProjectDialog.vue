@@ -9,7 +9,7 @@
   >
     <!-- 简洁背景 -->
     <div
-      class="absolute inset-0 bg-black/20"
+      class="absolute inset-0 bg-black/20 dark:bg-black/50"
       :class="{
         'opacity-0': !visible,
         'opacity-100': visible,
@@ -18,7 +18,7 @@
 
     <!-- 极简风格对话框 -->
     <div
-      class="relative w-96 max-w-[90vw] rounded-lg bg-white shadow-sm transition-all duration-300"
+      class="relative w-96 max-w-[90vw] rounded-lg bg-surface shadow-sm transition-all duration-300"
       :class="{
         'scale-95 opacity-0': !visible,
         'scale-100 opacity-100': visible,
@@ -26,14 +26,14 @@
     >
       <!-- 标题栏 -->
       <div class="flex items-center justify-between px-4 py-3">
-        <h3 class="font-medium text-gray-900">创建新项目</h3>
+        <h3 class="font-medium text-text">创建新项目</h3>
         <div
           @click="handleClose"
-          class="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full transition-colors hover:bg-gray-100"
+          class="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full transition-colors hover:bg-hover"
           aria-label="关闭"
         >
           <svg
-            class="h-4 w-4 text-gray-500"
+            class="h-4 w-4 text-muted"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -58,7 +58,7 @@
               :maxlength="50"
               type="text"
               placeholder="请输入项目名称"
-              class="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-gray-900 placeholder-gray-400 transition-all duration-200 focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              class="w-full rounded-lg border border-border bg-base px-3 py-2 text-text placeholder-muted transition-all duration-200 focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none"
               :class="{
                 'border-red-300 focus:ring-red-500':
                   showError && !projectName.trim(),
@@ -66,13 +66,13 @@
               autofocus
             />
             <!-- 字符计数 -->
-            <div class="mt-1 text-right text-xs text-gray-400">
+            <div class="mt-1 text-right text-xs text-muted">
               {{ projectName.length }}/50
             </div>
             <!-- 错误提示 -->
             <div
               v-if="showError && !projectName.trim()"
-              class="mt-2 flex items-center text-sm text-red-600"
+              class="mt-2 flex items-center text-sm text-danger"
             >
               <svg class="mr-1 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
                 <path
@@ -92,13 +92,13 @@
         <div class="flex justify-end space-x-2">
           <div
             @click="handleClose"
-            class="cursor-pointer rounded-lg border border-gray-200 px-4 py-1.5 text-sm font-normal text-gray-600 transition-colors select-none hover:bg-gray-100 hover:text-gray-900"
+            class="cursor-pointer rounded-lg border border-border px-4 py-1.5 text-sm font-normal text-text transition-colors select-none hover:bg-hover"
           >
             取消
           </div>
           <div
             @click="handleConfirmButton"
-            class="cursor-pointer rounded-lg border border-gray-200 px-4 py-1.5 text-sm font-normal transition-colors select-none hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
+            class="cursor-pointer rounded-lg border border-border px-4 py-1.5 text-sm font-normal transition-colors select-none hover:bg-blue-50 dark:hover:bg-blue-500/10 disabled:cursor-not-allowed disabled:opacity-50"
             :disabled="!projectName.trim()"
           >
             确定
@@ -187,6 +187,16 @@ const handleConfirmButton = (e: MouseEvent) => {
 
 ::-webkit-scrollbar-thumb:hover {
   background-color: rgba(0, 0, 0, 0.3);
+}
+
+/* 暗色模式滚动条 */
+.dark ::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.18);
+  border-radius: 4px;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.28);
 }
 
 /* 平滑过渡效果 */

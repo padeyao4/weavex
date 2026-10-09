@@ -39,6 +39,11 @@ export class CustomNode extends Rect {
     // 创建和更新
     const [width, height] = this.size;
 
+    // 暗色模式取色
+    const isDark = document.documentElement.classList.contains("dark");
+    const themeColor = (light: string, dark: string) =>
+      isDark ? dark : light;
+
     // 创建或获取按钮组
     const buttonGroup = this.upsert(
       "button-group",
@@ -65,8 +70,8 @@ export class CustomNode extends Rect {
       "circle",
       {
         r: attributes.button?.r,
-        fill: "#fff",
-        stroke: "#00000080",
+        fill: themeColor("#fff", "#181b22"),
+        stroke: themeColor("#00000080", "#2b2f3a"),
         lineWidth: 0.5,
         cx: 0, // 相对于组中心
         cy: 0, // 相对于组中心
@@ -81,7 +86,7 @@ export class CustomNode extends Rect {
       {
         text: `${attributes.childrenTodoNum}/${attributes.countChildren}`,
         fontSize: 12,
-        fill: "#33333380",
+        fill: themeColor("#33333380", "#9ca3af"),
         x: 0,
         y: 0,
         textAlign: "center",

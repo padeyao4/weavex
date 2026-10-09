@@ -6,16 +6,19 @@ import { debug } from "@tauri-apps/plugin-log";
 
 export interface AppConfig {
   version: number;
-  theme: string;
+  theme: ThemeMode;
   testMode: boolean;
   graphAnimation: boolean;
 }
+
+/** 主题模式：亮色 / 暗色 / 跟随系统 */
+export type ThemeMode = "light" | "dark" | "system";
 
 export const CONFIG_FILE = "config.json";
 
 export const DEFAULT_CONFIG: AppConfig = {
   version: 1,
-  theme: "light",
+  theme: "system",
   testMode: false,
   graphAnimation: true,
 };

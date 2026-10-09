@@ -2,11 +2,11 @@
   <router-link
     :to="{ name: routeName }"
     :class="[
-      'flex h-10 w-10 items-center justify-center rounded-lg transition-colors duration-200 hover:bg-[#eee]',
+      'flex h-10 w-10 items-center justify-center rounded-lg transition-colors duration-200 hover:bg-hover',
       positionClass,
       { 'mb-4': !isLast },
     ]"
-    active-class="bg-[#ededed]"
+    active-class="bg-hover"
   >
     <component
       :is="iconComponent"
@@ -35,7 +35,7 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   iconTheme: "outline",
   iconSize: "20",
-  iconColor: "#6b7280",
+  iconColor: "var(--color-muted)",
   iconStrokeWidth: 2,
   position: "top",
   isLast: false,

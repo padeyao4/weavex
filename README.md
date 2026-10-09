@@ -5,7 +5,7 @@
 **DAG-driven tasks & notes management**
 
 [![License](https://img.shields.io/badge/License-PolyForm_Noncommercial-yellow)](./LICENSE.md)
-[![Version](https://img.shields.io/badge/version-0.3.6-blue)](https://github.com/padeyao4/weavex/releases)
+[![Version](https://img.shields.io/badge/version-0.3.7-blue)](https://github.com/padeyao4/weavex/releases)
 [![Vue 3](https://img.shields.io/badge/Vue-3.x-brightgreen)](https://vuejs.org/)
 [![Tauri](https://img.shields.io/badge/Tauri-2.x-orange)](https://tauri.app/)
 

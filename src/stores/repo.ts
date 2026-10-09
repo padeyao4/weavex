@@ -7,6 +7,7 @@ import { debug } from "@tauri-apps/plugin-log";
 import { useGraphStore } from "./storage";
 import { useNodeStore } from "./note";
 import { documentDir, resolve } from "@tauri-apps/api/path";
+import { initTheme } from "@/lib/theme";
 
 export type State = "idle" | "loading" | "has_repo";
 
@@ -74,9 +75,10 @@ export const useRepoStore = defineStore("repo", () => {
       debug(`First launch, using default storage dir: ${workDir}`);
     }
 
-    // 加载（或生成）存储目录下的配置文件
+    // 加载（或生成）存储目录下的配置文件，并应用主题
     const configStore = useConfigStore();
     await configStore.load();
+    initTheme(configStore.config.theme);
 
     // 加载图与笔记数据
     const graphStore = useGraphStore();

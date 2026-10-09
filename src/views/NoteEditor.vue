@@ -14,6 +14,17 @@ const noteTitle = computed(() => noteStore.noteMeta[noteId].title);
 const vditorRef = ref();
 const vditorContent = ref();
 
+let themeObserver: MutationObserver | undefined;
+
+// 根据当前主题切换 vditor 暗色类
+const syncVditorTheme = () => {
+  if (!vditorRef.value) return;
+  vditorRef.value.classList.toggle(
+    "vditor--dark",
+    document.documentElement.classList.contains("dark"),
+  );
+};
+
 watch(vditorContent, () => {
   noteStore.saveNote(noteId, vditorContent.value);
 });
@@ -24,8 +35,12 @@ onMounted(async () => {
   vditor = new Vditor(vditorRef.value, {
     height: "100%",
     width: "100%",
+    theme: document.documentElement.classList.contains("dark")
+      ? "dark"
+      : "classic",
     after: () => {
       debug("vditor loaded");
+      syncVditorTheme();
     },
     value: await noteStore.loadNote(noteId),
     input: (value) => {
@@ -35,9 +50,17 @@ onMounted(async () => {
       enable: false,
     },
   });
+
+  // 主题切换（含跟随系统实时变化）时联动 vditor 暗色类
+  themeObserver = new MutationObserver(syncVditorTheme);
+  themeObserver.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ["class"],
+  });
 });
 
 onBeforeUnmount(() => {
+  themeObserver?.disconnect();
   vditor?.destroy();
 });
 </script>

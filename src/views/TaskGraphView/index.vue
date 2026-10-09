@@ -15,10 +15,10 @@
         id="canvas"
         ref="canvasRef"
         @contextmenu.prevent
-        class="min-h-0 min-w-0 flex-1 overflow-hidden border-t border-gray-200"
+        class="min-h-0 min-w-0 flex-1 overflow-hidden border-t border-border"
       />
       <footer
-        class="flex h-12 flex-row items-center justify-center gap-2 border-t border-gray-200"
+        class="flex h-12 flex-row items-center justify-center gap-2 border-t border-border"
       >
         <el-button
           circle
@@ -63,7 +63,7 @@
         :enableArchive="enableArchive"
         @save="handleSave"
         @cancel="handleCancel"
-        class="w-90 border-l border-gray-300"
+        class="w-90 border-l border-border"
       />
     </template>
     <teleport to="body" v-else-if="drawerNode">
@@ -116,6 +116,11 @@ const currentGraph = computed(() => graphStore.getGraph(graphId));
 const drawerNode = ref<PNode | null>(null);
 const isMobile = ref(false);
 
+// 主题感知取色：亮/暗两套色值，渲染时按 html.dark 解析
+const isDark = () => document.documentElement.classList.contains("dark");
+const themeColor = (light: string, dark: string) =>
+  isDark() ? dark : light;
+
 const checkScreenWidth = () => {
   isMobile.value = window.innerWidth < 1000;
 };
@@ -130,6 +135,7 @@ const enableArchive = computed(() => {
 });
 
 let graph: Graph | undefined;
+let themeObserver: MutationObserver | undefined;
 
 const syncGraphData = async function () {
   if (animationPlaying.value) return;
@@ -181,6 +187,15 @@ useEventListener("resize", checkScreenWidth);
 
 onMounted(() => {
   checkScreenWidth();
+
+  // 主题切换（含跟随系统实时变化）时重渲染画布，使节点/边取色生效
+  themeObserver = new MutationObserver(() => {
+    graph?.render();
+  });
+  themeObserver.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ["class"],
+  });
 
   graph = new Graph({
     container: "canvas",
@@ -341,13 +356,18 @@ onMounted(() => {
     node: {
       type: "custom-node",
       style: {
-        fill: (d: NodeData) => (d.data?.completed ? "#00000050" : "#fff"),
-        stroke: "#00000080",
+        fill: (d: NodeData) =>
+          d.data?.completed
+            ? themeColor("#00000050", "#12151b")
+            : themeColor("#fff", "#1c212c"),
+        stroke: themeColor("#00000080", "#3a3f4c"),
         lineWidth: 0.5,
         lineDash: (d: NodeData) => (d.data?.expanded ? [4, 4] : []),
         radius: 8,
         labelText: (d: NodeData) => d.data?.name as string,
+        labelFill: themeColor("#000000", "#e5e7eb"),
         labelBackground: true,
+        labelBackgroundFill: themeColor("#fff", "#262a35"),
         labelBackgroundOpacity: (d: NodeData) => (d.data?.expanded ? 1 : 0),
         labelBackgroundRadius: 6,
         labelPlacement: (d: NodeData) => (d.data?.expanded ? "top" : "center"),
@@ -419,7 +439,7 @@ onMounted(() => {
     edge: {
       type: "cubic-horizontal",
       style: {
-        stroke: "#00000080",
+        stroke: themeColor("#00000080", "#4b5563"),
         lineWidth: 0.5,
         increasedLineWidthForHitTesting: 3,
         cursor: "pointer",
@@ -498,6 +518,7 @@ const clearNodeStatus = function (nodeId: string, state: string) {
 };
 
 onUnmounted(() => {
+  themeObserver?.disconnect();
   graph?.destroy();
 });
 

@@ -113,14 +113,14 @@ const handleCancel = () => {
             </template>
           </SortableList>
           <div
-            class="flex h-8 w-fit shrink-0 items-center justify-center rounded-md border border-gray-200 bg-gray-50 px-2 text-sm select-none hover:bg-gray-200"
+            class="flex h-8 w-fit shrink-0 items-center justify-center rounded-md border border-border bg-base px-2 text-sm select-none hover:bg-hover"
             @click="showOthers = !showOthers"
           >
             <span v-if="showOthers" class="flex items-center justify-center">
               <icon-down
                 theme="outline"
                 size="24"
-                fill="#333"
+                fill="var(--color-muted)"
                 :strokeWidth="2"
                 strokeLinecap="square"
               />
@@ -129,13 +129,13 @@ const handleCancel = () => {
               <icon-right
                 theme="outline"
                 size="24"
-                fill="#333"
+                fill="var(--color-muted)"
                 :strokeWidth="2"
                 strokeLinecap="square"
               />
             </span>
             次要任务
-            <span class="text-gray-400"
+            <span class="text-muted"
               >（{{ taskStore.lowPriorityTasks.length }}）</span
             >
           </div>
@@ -164,7 +164,7 @@ const handleCancel = () => {
         :graphId="selectedTask.graphId"
         @save="handleSave"
         @cancel="handleCancel"
-        class="w-90 border-l border-gray-300"
+        class="w-90 border-l border-border"
       />
     </template>
     <teleport to="body" v-else>
@@ -197,6 +197,11 @@ const handleCancel = () => {
   border-radius: 6px;
   background-color: #f0f9ff;
   border: 1px solid #3b82f6;
+}
+
+.dark .selected-task {
+  background-color: #1a2234;
+  border-color: #3b82f6;
 }
 
 .selected-task .task-item {
