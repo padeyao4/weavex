@@ -80,6 +80,7 @@ import { measureTime } from "@/utils";
 import {
   EdgeData,
   Element,
+  EdgeEvent,
   Graph,
   GraphData,
   GraphEvent,
@@ -508,6 +509,15 @@ onMounted(async () => {
             : "hidden";
         },
       },
+      state: {
+        hover: {
+          stroke: "#3B82F6",
+          lineWidth: 2,
+          shadowColor: "#3B82F6",
+          shadowBlur: 8,
+          cursor: "pointer",
+        },
+      },
     },
 
     // 交互行为
@@ -550,6 +560,25 @@ onMounted(async () => {
     (evt: IElementEvent & { target: Element }) => {
       const id = evt.target.id;
       if (id && graph?.getElementType(id) === "node") {
+        clearNodeStatus(id, "hover");
+      }
+    },
+  );
+  // 鼠标悬停边：添加 hover 样式；移出边时移除
+  graph.on(
+    EdgeEvent.POINTER_ENTER,
+    (evt: IElementEvent & { target: Element }) => {
+      const id = evt.target.id;
+      if (id && graph?.getElementType(id) === "edge") {
+        setNodeStatus(id, "hover");
+      }
+    },
+  );
+  graph.on(
+    EdgeEvent.POINTER_LEAVE,
+    (evt: IElementEvent & { target: Element }) => {
+      const id = evt.target.id;
+      if (id && graph?.getElementType(id) === "edge") {
         clearNodeStatus(id, "hover");
       }
     },
