@@ -619,6 +619,8 @@ onMounted(async () => {
       `[viewport] bounds=${b ? JSON.stringify({ min: b.min, max: b.max }) : "none"}`,
     );
   }
+  // ESC 关闭编辑框（相当于点击取消）
+  window.addEventListener("keydown", onKeydown);
 });
 
 useResizeObserver([containerRef, canvasRef], (entries) => {
@@ -655,6 +657,7 @@ const clearNodeStatus = function (nodeId: string, state: string) {
 onUnmounted(() => {
   // 卸载（切换项目/关闭）前兜底保存一次视口
   saveViewport();
+  window.removeEventListener("keydown", onKeydown);
   themeObserver?.disconnect();
   graph?.destroy();
 });
@@ -689,6 +692,13 @@ function handleSave(node: PNode) {
 
 function handleCancel() {
   drawerNode.value = null;
+}
+
+// ESC 关闭编辑框：仅在编辑框打开时生效，等同于点击“取消”
+function onKeydown(e: KeyboardEvent) {
+  if (e.key === "Escape" && drawerNode.value) {
+    handleCancel();
+  }
 }
 
 function handleDrawerClose() {
