@@ -1,5 +1,5 @@
 <template>
-  <div class="flex min-w-0 flex-1 flex-row" ref="containerRef">
+  <div class="flex h-full min-w-0 flex-1 flex-row" ref="containerRef">
     <div class="flex min-w-0 flex-1 flex-col pt-7.5">
       <div
         class="flex h-12 items-center pl-4 select-none"
@@ -26,7 +26,7 @@
           :type="currentGraph?.showArchive ? 'default' : 'info'"
           @click="toggleArchive"
           :loading="animationPlaying"
-          :color="currentGraph?.showArchive ? '#d1d5db' : '#f3f4f6'"
+          title="归档节点显示"
         />
         <el-button
           circle
@@ -34,7 +34,6 @@
           :loading="animationPlaying"
           title="适应画布大小"
           icon="FullScreen"
-          color="#f3f4f6"
         >
         </el-button>
         <el-button
@@ -43,13 +42,11 @@
           :loading="animationPlaying"
           title="居中显示"
           icon="Aim"
-          color="#f3f4f6"
         >
         </el-button>
         <el-button
           title="自动归档"
           circle
-          color="#f3f4f6"
           icon="Box"
           @click="autoArchive()"
           :loading="animationPlaying"
@@ -190,6 +187,9 @@ const toggleArchive = () => {
     key: "archive-transform",
     showArchive: graphStore.getGraph(graphId).showArchive,
   });
+  // updateTransform 只更新配置并 refreshData，不触发渲染；
+  // 必须显式 render() 才会重新执行 archive-transform 的 beforeDraw
+  graph?.render();
 };
 
 useEventListener("resize", checkScreenWidth);

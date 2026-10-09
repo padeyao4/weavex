@@ -25,6 +25,15 @@ import {
   SwitchButton,
 } from "@icon-park/vue-next";
 import "@icon-park/vue-next/styles/index.css";
+// Element Plus 图标：按需注册模板中 icon="Xxx" 字符串引用的图标
+// （删全量注册后，Open/FullScreen/Aim/Box/Plus 等必须显式注册才会渲染）
+import {
+  Aim,
+  Box,
+  FullScreen,
+  Open,
+  Plus as EpPlus,
+} from "@element-plus/icons-vue";
 import { register, ExtensionCategory } from "@antv/g6";
 import "vditor/dist/index.css";
 import {
@@ -62,6 +71,16 @@ for (const [key, component] of Object.entries(iconParkIcons)) {
   const name =
     "icon-" + key.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase();
   app.component(name, component);
+}
+// 注册 Element Plus 图标为全局组件（保持原名，供 el-button icon="Xxx" 字符串解析）
+for (const [key, component] of Object.entries({
+  Aim,
+  Box,
+  FullScreen,
+  Open,
+  Plus: EpPlus,
+})) {
+  app.component(key, component);
 }
 const pinia = createPinia();
 pinia.use(piniaPluginPersistedstate);
