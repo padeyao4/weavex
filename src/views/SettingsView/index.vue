@@ -49,12 +49,12 @@ const setTheme = (value: ThemeMode) => {
     <div class="flex h-screen flex-col bg-base">
       <!-- 头部 -->
       <header
-        class="drag-region shrink-0 border-b border-border bg-surface/80 backdrop-blur-sm"
+        class="shrink-0 border-b border-border bg-surface/80 backdrop-blur-sm"
       >
         <div class="px-6 py-4">
           <div class="flex items-center gap-4">
             <button
-              class="no-drag-region flex h-10 w-10 items-center justify-center rounded-full transition-colors hover:bg-hover"
+              class="flex h-10 w-10 items-center justify-center rounded-full transition-colors hover:bg-hover"
               @click="back"
             >
               <el-icon class="text-muted" :size="24">
@@ -219,14 +219,6 @@ const setTheme = (value: ThemeMode) => {
 </template>
 
 <style scoped>
-.no-drag-region {
-  -webkit-app-region: no-drag;
-}
-
-.drag-region {
-  -webkit-app-region: drag;
-}
-
 /* 平滑过渡效果 */
 section {
   transition: all 0.2s ease;

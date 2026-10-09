@@ -1,7 +1,7 @@
 <template>
   <div @click="handleClickOutside" class="flex h-full w-full flex-row">
     <menu-frame
-      class="flex shrink-0 flex-col pt-7.5 select-none"
+      class="flex shrink-0 flex-col select-none"
       @contextmenu.prevent
     >
       <div class="border-b border-border">

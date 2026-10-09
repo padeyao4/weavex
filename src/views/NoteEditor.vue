@@ -66,7 +66,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="flex h-full min-h-0 w-full min-w-0 flex-col px-4 pt-7.5 pb-2">
+  <div class="flex h-full min-h-0 w-full min-w-0 flex-col px-4 pb-2">
     <div
       class="flex h-12 min-w-0 shrink-0 items-center justify-start font-sans text-xl"
     >

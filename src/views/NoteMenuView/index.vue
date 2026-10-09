@@ -26,7 +26,7 @@ const handleCreateNoteConfirm = function (title: string) {
 
 <template>
   <div class="flex flex-row">
-    <menu-frame class="flex shrink-0 flex-col pt-7.5 pb-2">
+    <menu-frame class="flex shrink-0 flex-col pb-2">
       <div class="my-2 flex flex-row gap-1 px-4">
         <el-input />
         <el-button icon="Plus" @click="handleAddNote"></el-button>

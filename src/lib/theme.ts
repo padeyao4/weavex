@@ -2,11 +2,19 @@
 // 通过切换 <html> 上的 .dark 类生效（Tailwind dark: 变体 + Element Plus 暗色变量共用）。
 
 import type { ThemeMode } from "@/lib/config";
+import { invoke } from "@tauri-apps/api/core";
 
 const DARK_QUERY = "(prefers-color-scheme: dark)";
 
 let mediaListener: MediaQueryList | null = null;
 let mediaHandler: ((e: MediaQueryListEvent) => void) | null = null;
+
+/** 同步 Windows 系统标题栏颜色到应用主题（非 Windows / 非 Tauri 环境自动忽略） */
+function syncTitlebarTheme(effective: "light" | "dark"): void {
+  invoke("set_titlebar_color", { theme: effective }).catch(() => {
+    /* 浏览器预览或非 Windows 平台下忽略 */
+  });
+}
 
 /** 解析"跟随系统"为实际明暗 */
 export function resolveTheme(mode: ThemeMode): "light" | "dark" {
@@ -23,6 +31,7 @@ export function applyTheme(mode: ThemeMode): void {
 
   root.classList.toggle("dark", effective === "dark");
   root.style.colorScheme = effective;
+  syncTitlebarTheme(effective);
 
   // 仅"跟随系统"时监听系统切换；其他模式下移除监听
   if (mode === "system") {

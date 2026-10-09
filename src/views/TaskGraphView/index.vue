@@ -1,10 +1,7 @@
 <template>
   <div class="flex h-full min-w-0 flex-1 flex-row" ref="containerRef">
-    <div class="flex min-w-0 flex-1 flex-col pt-7.5">
-      <div
-        class="flex h-12 items-center pl-4 select-none"
-        data-tauri-drag-region
-      >
+    <div class="flex min-w-0 flex-1 flex-col">
+      <div class="flex h-12 items-center pl-4 select-none">
         <div
           class="overflow-hidden font-sans text-xl text-ellipsis whitespace-nowrap"
         >

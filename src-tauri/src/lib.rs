@@ -127,6 +127,54 @@ fn check_directory_exists(path: &str) -> bool {
     Path::new(path).is_dir()
 }
 
+/// 设置 Windows 系统标题栏颜色（跟随应用主题）。
+/// Windows 11 22H2+ 通过 DWM 的 DWMWA_CAPTION_COLOR / DWMWA_TEXT_COLOR 生效；
+/// 其他平台为 no-op。颜色取值与前端主题 token（--color-base / --color-text）一致。
+#[cfg(target_os = "windows")]
+#[tauri::command]
+fn set_titlebar_color(window: tauri::Window, theme: String) -> Result<(), String> {
+    use std::os::raw::c_void;
+
+    #[link(name = "dwmapi")]
+    extern "system" {
+        fn DwmSetWindowAttribute(
+            hwnd: *mut c_void,
+            dw_attribute: u32,
+            pv_attribute: *const c_void,
+            cb_attribute: u32,
+        ) -> i32;
+    }
+
+    // DWM 窗口属性：标题栏背景色 / 标题栏文字色（Win11 22H2+）
+    const DWMWA_CAPTION_COLOR: u32 = 35;
+    const DWMWA_TEXT_COLOR: u32 = 36;
+
+    // COLORREF 为 0x00BBGGRR
+    let (caption, text) = if theme == "dark" {
+        (0x002B241Fu32, 0x00EEE9E6u32) // 背景 #1F242B（--color-base） 文字 #E6E9EE（--color-text）
+    } else {
+        (0x00FAF8F7u32, 0x0037291Fu32) // 背景 #F7F8FA（--color-base） 文字 #1F2937（--color-text）
+    };
+
+    let hwnd = window.hwnd().map_err(|e| e.to_string())?;
+    unsafe {
+        DwmSetWindowAttribute(
+            hwnd.0,
+            DWMWA_CAPTION_COLOR,
+            &caption as *const u32 as *const c_void,
+            4,
+        );
+        DwmSetWindowAttribute(hwnd.0, DWMWA_TEXT_COLOR, &text as *const u32 as *const c_void, 4);
+    }
+    Ok(())
+}
+
+#[cfg(not(target_os = "windows"))]
+#[tauri::command]
+fn set_titlebar_color(_window: tauri::Window, _theme: String) -> Result<(), String> {
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -177,6 +225,7 @@ pub fn run() {
             write_file,
             check_directory_exists,
             open_dir,
+            set_titlebar_color,
             db::db_init,
             db::db_load_graphs,
             db::db_save_graph,

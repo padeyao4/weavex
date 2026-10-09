@@ -2,7 +2,7 @@
   <FramePage>
     <div class="flex h-screen w-screen overflow-hidden bg-base">
       <aside
-        class="flex h-screen w-14 shrink-0 flex-col items-center pt-9 pb-1"
+        class="flex h-screen w-14 shrink-0 flex-col items-center pt-1 pb-1"
       >
         <NavItem route-name="taskMenu" :icon-component="'icon-list-success'" />
         <NavItem route-name="noteMenu" :icon-component="'icon-notebook'" />
@@ -19,7 +19,7 @@
         />
       </aside>
       <router-view
-        class="min-w-0 flex-1 rounded-tl-lg border-l border-border"
+        class="min-w-0 flex-1 border-l border-border"
       />
     </div>
   </FramePage>

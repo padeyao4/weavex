@@ -88,11 +88,8 @@ const handleCancel = () => {
 
 <template>
   <main class="flex flex-row select-none">
-    <div class="mt-7.5 flex min-h-0 min-w-0 flex-1 flex-col">
-      <div
-        class="flex h-12 items-center px-4 text-xl select-none"
-        data-tauri-drag-region
-      >
+    <div class="flex min-h-0 min-w-0 flex-1 flex-col">
+      <div class="flex h-12 items-center px-4 text-xl select-none">
         任务列表
       </div>
       <div class="min-h-0 min-w-0 flex-1 overflow-y-auto px-4">
