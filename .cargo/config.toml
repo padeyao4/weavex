@@ -1,0 +1,6 @@
+# 本机构建输出目录（C 盘 NTFS）。
+# 原因：项目位于 H: 盘 ReFS 文件系统，cargo 增量编译 finalize 阶段在 ReFS 上会报
+# "拒绝访问 (os error 5)"（ReFS 的目录锁语义与 rustc 增量缓存不兼容）。
+# 将 target 指向 NTFS 盘可保留增量编译并消除该警告。
+[build]
+target-dir = "C:/weavex-target"
