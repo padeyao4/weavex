@@ -84,6 +84,7 @@ import {
   EdgeData,
   Element,
   Graph,
+  GraphData,
   GraphEvent,
   IElementEvent,
   NodeData,
@@ -137,11 +138,19 @@ const enableArchive = computed(() => {
 let graph: Graph | undefined;
 let themeObserver: MutationObserver | undefined;
 
+// 内容签名：任何影响画布展示的字段（名称/完成态/归档/结构等）变化都触发重绘；
+// 布局是否重排由 layout.ts 的内部结构签名缓存兜底（改名等不重排，坐标保持不变）
+let lastSignature = "";
+const computeGraphSignature = (data: GraphData) => JSON.stringify(data);
+
 const syncGraphData = async function () {
   if (animationPlaying.value) return;
   const { result } = await measureTime(() => {
     return graphStore.toGraphData(graphStore.allGraph[graphId]);
   }, "to graph data cost time");
+  const signature = computeGraphSignature(result);
+  if (signature === lastSignature) return; // 结构未变，跳过全量重绘
+  lastSignature = signature;
   graph?.setData(result);
   graph?.render();
 };
@@ -197,9 +206,14 @@ onMounted(() => {
     attributeFilter: ["class"],
   });
 
+  // 构造时直接携带初始数据，避免"空渲染 + 数据渲染"两次布局
+  const initialData = graphStore.toGraphData(graphStore.allGraph[graphId]);
+  lastSignature = computeGraphSignature(initialData);
+
   graph = new Graph({
     container: "canvas",
     autoResize: false,
+    data: initialData,
     transforms: [
       "collapsed-transform",
       {

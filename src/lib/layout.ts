@@ -1,13 +1,17 @@
-import { PNode } from "@/types";
 import { measureTime } from "@/utils";
 import {
   BaseLayout,
   BaseLayoutOptions,
   GraphData,
   NodeData,
-  Size,
 } from "@antv/g6";
-import dagre from "dagre";
+import {
+  computeLayout,
+  computeSignature,
+  LayoutPosition,
+  LayoutResult,
+  toSlimNodes,
+} from "./layout-core";
 
 export interface DagreLayoutOptions extends BaseLayoutOptions {
   rankdir?: string;
@@ -16,127 +20,79 @@ export interface DagreLayoutOptions extends BaseLayoutOptions {
   nodesep?: number;
 }
 
-const defaultSize: Size = [120, 60];
-const margin = 20;
+/** 节点数超过该阈值时，布局计算放 Web Worker，避免阻塞主线程 */
+const WORKER_THRESHOLD = 120;
+/** 布局缓存上限（按结构签名），超过时淘汰最旧 */
+const CACHE_MAX = 100;
 
-class SubGraph {
-  id: string;
-  nodeMap: Map<string, NodeData> = new Map();
-  size?: [number, number];
-  dependencies: SubGraph[] = [];
-  options = {};
+const layoutCache = new Map<string, LayoutResult>();
 
-  constructor(id: string, options?: DagreLayoutOptions) {
-    this.id = id;
-    this.options = { ...this.options, ...options };
-  }
+let worker: Worker | undefined;
 
-  layout(layer: number = 1) {
-    this.dependencies?.forEach((dependency) => {
-      if (!dependency.size) {
-        dependency.layout(layer + 1);
-      }
-      const node = this.nodeMap.get(dependency.id)!;
-      node.style = {
-        ...node.style,
-        zIndex: layer + 1,
-        size: dependency.size!,
-      };
-    });
-
-    const g = new dagre.graphlib.Graph();
-    g.setGraph({ ...this.options });
-    g.setDefaultEdgeLabel(() => ({}));
-    this.nodeMap.forEach((node) => {
-      const size = node.data?.expanded
-        ? (node?.style?.size ?? defaultSize)
-        : defaultSize;
-      const [width, height] = typeof size === "number" ? [size, size] : size;
-      g.setNode(node.id, {
-        width,
-        height,
-      });
-      (node.data?.nexts as Array<string>).forEach((next) => {
-        g.setEdge(node.id, next);
-      });
-    });
-    dagre.layout(g);
-
-    this.nodeMap.forEach((node) => {
-      const data = g.node(node.id);
-      const size = node.data?.expanded
-        ? (node?.style?.size ?? defaultSize)
-        : defaultSize;
-      node.style = {
-        ...node?.style,
-        size,
-        zIndex: layer,
-        x: data.x,
-        y: data.y,
-      };
-    });
-    const { width = 0, height = 0 } = g.graph();
-    this.size = [width + margin * 2, height + margin * 2];
-  }
-
-  setOffset(offsetX: number, offsetY: number) {
-    this.nodeMap.forEach((node) => {
-      node.style = {
-        ...node.style,
-        x: (node.style?.x ?? 0) + offsetX,
-        y: (node.style?.y ?? 0) + offsetY,
-      };
-    });
-    this.dependencies?.forEach((dependency) => {
-      const node = this.nodeMap.get(dependency.id);
-      const size = node?.style?.size ?? 0;
-      const [width, height] = typeof size === "number" ? [size, size] : size;
-      const nextOffsetX = node?.style?.x ?? 0;
-      const nextOffsetY = node?.style?.y ?? 0;
-      dependency.setOffset(
-        nextOffsetX - width / 2 + margin,
-        nextOffsetY - height / 2 + margin,
-      );
+function getWorker(): Worker {
+  if (!worker) {
+    worker = new Worker(new URL("./dagre-worker.ts", import.meta.url), {
+      type: "module",
     });
   }
+  return worker;
 }
 
-function executeLayout(model: GraphData, options?: DagreLayoutOptions) {
-  const graphMap = new Map<string, SubGraph>();
-  model?.nodes?.forEach((node) => {
-    const data = node.data as unknown as PNode;
-    if (graphMap.has(data.parent ?? "")) {
-      const subGraph = graphMap.get(data.parent ?? "");
-      subGraph?.nodeMap.set(node.id, node);
-    } else {
-      const subGraph = new SubGraph(data.parent ?? "", options);
-      subGraph.nodeMap.set(node.id, node);
-      graphMap.set(data.parent ?? "", subGraph);
-    }
+function runWorker(
+  slimNodes: Parameters<typeof computeLayout>[0],
+  options: DagreLayoutOptions,
+): Promise<LayoutResult> {
+  return new Promise((resolve, reject) => {
+    const w = getWorker();
+    const handler = (e: MessageEvent) => {
+      w.removeEventListener("message", handler);
+      w.removeEventListener("error", errorHandler);
+      resolve(e.data as LayoutResult);
+    };
+    const errorHandler = (e: ErrorEvent) => {
+      w.removeEventListener("message", handler);
+      w.removeEventListener("error", errorHandler);
+      reject(e);
+    };
+    w.addEventListener("message", handler);
+    w.addEventListener("error", errorHandler);
+    w.postMessage({
+      slimNodes,
+      options: {
+        rankdir: options.rankdir,
+        align: options.align,
+        ranksep: options.ranksep,
+        nodesep: options.nodesep,
+      },
+    });
   });
+}
 
-  for (const key of graphMap.keys()) {
-    if (key === "") continue;
-    Array.from(graphMap.values())
-      .find((value) => value.id !== key && value.nodeMap.has(key))
-      ?.dependencies.push(graphMap.get(key)!);
-  }
+function applyPositions(model: GraphData, positions: Record<string, LayoutPosition>) {
+  model.nodes?.forEach((node) => {
+    const pos = positions[node.id];
+    if (!pos) return;
+    node.style = {
+      ...node.style,
+      size: [pos.size[0], pos.size[1]],
+      zIndex: pos.zIndex,
+      x: pos.x,
+      y: pos.y,
+    };
+  });
+}
 
-  const rootGraph = graphMap.get("");
-  rootGraph?.layout();
-  rootGraph?.setOffset(0, 0);
-
+function applyEdgeZIndex(model: GraphData) {
   const nodeMap = new Map<string, NodeData>();
   model.nodes?.forEach((node) => {
     nodeMap.set(node.id, node);
   });
-
   model.edges?.forEach((edge) => {
-    const source = nodeMap.get(edge.source)!;
-    const target = nodeMap.get(edge.target)!;
+    const source = nodeMap.get(edge.source);
+    const target = nodeMap.get(edge.target);
     const zIndex = Math.max(
-      source.style?.zIndex ?? 0,
-      target.style?.zIndex ?? 0,
+      source?.style?.zIndex ?? 0,
+      target?.style?.zIndex ?? 0,
     );
     edge.style = {
       ...edge.style,
@@ -152,11 +108,42 @@ export class DagreLayout extends BaseLayout<DagreLayoutOptions> {
     model: GraphData,
     options?: DagreLayoutOptions,
   ): Promise<GraphData> {
-    await measureTime(() => {
-      executeLayout(model, {
-        ...options,
-        ...this.options,
-      });
+    const merged = { ...this.options, ...options };
+    await measureTime(async () => {
+      const slimNodes = toSlimNodes(model);
+      const edges = (model.edges ?? []).map((e) => ({
+        source: e.source,
+        target: e.target,
+      }));
+      const signature = computeSignature(slimNodes, edges);
+
+      // 命中缓存：结构未变，直接复用坐标，不重跑 dagre
+      const cached = layoutCache.get(signature);
+      if (cached) {
+        applyPositions(model, cached.positions);
+        applyEdgeZIndex(model);
+        return;
+      }
+
+      // 未命中：小图同步计算，大图丢 Worker
+      let result: LayoutResult;
+      if (slimNodes.length > WORKER_THRESHOLD) {
+        try {
+          result = await runWorker(slimNodes, merged);
+        } catch {
+          // Worker 不可用时回退到主线程同步计算
+          result = computeLayout(slimNodes, merged);
+        }
+      } else {
+        result = computeLayout(slimNodes, merged);
+      }
+
+      if (layoutCache.size >= CACHE_MAX) {
+        layoutCache.delete(layoutCache.keys().next().value as string);
+      }
+      layoutCache.set(signature, result);
+      applyPositions(model, result.positions);
+      applyEdgeZIndex(model);
     });
     return model;
   }

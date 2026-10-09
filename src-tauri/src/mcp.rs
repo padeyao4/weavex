@@ -14,8 +14,8 @@ use std::process::{Child, Command, Stdio};
 use std::sync::Mutex;
 use std::time::Duration;
 
-use tauri::Manager;
 use tauri::path::BaseDirectory;
+use tauri::Manager;
 use tauri_plugin_log::log::{error, info, warn};
 
 /// 保存 MCP 子进程句柄，应用退出时据此终止
@@ -43,7 +43,6 @@ fn locate_server_dir(app: &tauri::AppHandle) -> Option<PathBuf> {
             return Some(dev);
         }
     }
-    // release：随安装包分发的资源目录
     match app.path().resolve("mcp-server", BaseDirectory::Resource) {
         Ok(p) if p.join("server.mjs").exists() => Some(p),
         _ => None,
@@ -74,7 +73,10 @@ fn open_log_file(app: &tauri::AppHandle) -> Option<std::fs::File> {
 pub fn spawn_mcp_server(app: &tauri::AppHandle) -> Result<Option<Child>, String> {
     let port = mcp_port();
     if port_in_use(port) {
-        info!("[mcp] 端口 {} 已被监听，跳过自动拉起（服务可能已在运行）", port);
+        info!(
+            "[mcp] 端口 {} 已被监听，跳过自动拉起（服务可能已在运行）",
+            port
+        );
         return Ok(None);
     }
     let dir = match locate_server_dir(app) {
@@ -85,8 +87,7 @@ pub fn spawn_mcp_server(app: &tauri::AppHandle) -> Result<Option<Child>, String>
         }
     };
 
-    let out = open_log_file(app)
-        .ok_or_else(|| "无法创建 MCP 日志文件".to_string())?;
+    let out = open_log_file(app).ok_or_else(|| "无法创建 MCP 日志文件".to_string())?;
     let err = out
         .try_clone()
         .map_err(|e| format!("无法复制日志句柄: {}", e))?;
@@ -101,12 +102,7 @@ pub fn spawn_mcp_server(app: &tauri::AppHandle) -> Result<Option<Child>, String>
         .stdout(Stdio::from(out))
         .stderr(Stdio::from(err))
         .spawn()
-        .map_err(|e| {
-            format!(
-                "启动 MCP 服务失败（需要系统已安装 Node.js ≥ 22.5）: {}",
-                e
-            )
-        })?;
+        .map_err(|e| format!("启动 MCP 服务失败（需要系统已安装 Node.js ≥ 22.5）: {}", e))?;
 
     info!(
         "[mcp] 已自动拉起 MCP HTTP 服务: http://127.0.0.1:{}/mcp (pid {})",
