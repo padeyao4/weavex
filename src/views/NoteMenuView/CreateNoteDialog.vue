@@ -33,7 +33,7 @@
           aria-label="关闭"
         >
           <svg
-            class="h-4 w-4 text-muted"
+            class="h-4 w-4 text-icon"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -66,7 +66,7 @@
               autofocus
             />
             <!-- 字符计数 -->
-            <div class="mt-1 text-right text-xs text-muted">
+            <div class="mt-1 text-right text-[13px] text-muted">
               {{ noteTitle.length }}/50
             </div>
             <!-- 错误提示 -->

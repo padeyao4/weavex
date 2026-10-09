@@ -117,7 +117,7 @@ const handleCancel = () => {
               <icon-down
                 theme="outline"
                 size="24"
-                fill="var(--color-muted)"
+                fill="var(--color-icon)"
                 :strokeWidth="2"
                 strokeLinecap="square"
               />
@@ -126,7 +126,7 @@ const handleCancel = () => {
               <icon-right
                 theme="outline"
                 size="24"
-                fill="var(--color-muted)"
+                fill="var(--color-icon)"
                 :strokeWidth="2"
                 strokeLinecap="square"
               />

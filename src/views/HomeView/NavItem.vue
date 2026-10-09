@@ -35,7 +35,7 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   iconTheme: "outline",
   iconSize: "20",
-  iconColor: "var(--color-muted)",
+  iconColor: "var(--color-icon)",
   iconStrokeWidth: 2,
   position: "top",
   isLast: false,

@@ -19,15 +19,15 @@
             <icon-sun-one
               theme="outline"
               size="18"
-              fill="var(--color-muted)"
+              fill="var(--color-icon)"
               :strokeWidth="2"
             />
-            <div class="ml-3 text-sm font-normal text-text select-none">
+            <div class="ml-3 text-sm font-medium text-text select-none">
               我的一天
             </div>
             <div
               v-if="taskStore.importantTasks.length > 0"
-              class="ml-auto flex h-6 w-6 items-center justify-center rounded-full bg-hover text-xs font-light"
+              class="ml-auto flex h-6 w-6 items-center justify-center rounded-full bg-hover text-xs font-normal"
             >
               {{ taskStore.importantTasks.length }}
             </div>
@@ -62,11 +62,11 @@
                     <icon-chart-graph
                       theme="outline"
                       size="18"
-                      fill="var(--color-muted)"
+                      fill="var(--color-icon)"
                       :strokeWidth="2"
                     />
                     <div
-                      class="min-w-0 flex-1 overflow-hidden pl-3 text-sm font-normal text-ellipsis whitespace-nowrap text-text select-none"
+                      class="min-w-0 flex-1 overflow-hidden pl-3 text-sm font-medium text-ellipsis whitespace-nowrap text-text select-none"
                       :data-draggable-move="item.id"
                     >
                       {{ item.name }}
@@ -78,7 +78,7 @@
                       <icon-more-one
                         theme="outline"
                         size="16"
-                        fill="var(--color-muted)"
+                        fill="var(--color-icon)"
                         :strokeWidth="2"
                         strokeLinecap="square"
                       />
@@ -100,10 +100,10 @@
           <icon-plus
             theme="outline"
             size="18"
-            fill="var(--color-muted)"
+            fill="var(--color-icon)"
             :strokeWidth="2"
           />
-          <div class="ml-3 text-sm font-normal text-text select-none">
+          <div class="ml-3 text-sm font-medium text-text select-none">
             创建项目
           </div>
         </div>

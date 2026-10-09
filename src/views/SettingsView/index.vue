@@ -57,7 +57,7 @@ const setTheme = (value: ThemeMode) => {
               class="flex h-10 w-10 items-center justify-center rounded-full transition-colors hover:bg-hover"
               @click="back"
             >
-              <el-icon class="text-muted" :size="24">
+              <el-icon class="text-icon" :size="24">
                 <Back />
               </el-icon>
             </button>
@@ -75,7 +75,7 @@ const setTheme = (value: ThemeMode) => {
             <div class="space-y-3">
               <div class="flex items-start gap-3">
                 <div class="mt-0.5 shrink-0">
-                  <el-icon class="text-muted" :size="18">
+                  <el-icon class="text-icon" :size="18">
                     <Folder />
                   </el-icon>
                 </div>
@@ -102,7 +102,7 @@ const setTheme = (value: ThemeMode) => {
               </div>
               <div class="flex items-start gap-3">
                 <div class="mt-0.5 shrink-0">
-                  <el-icon class="text-muted" :size="18">
+                  <el-icon class="text-icon" :size="18">
                     <Warning />
                   </el-icon>
                 </div>
@@ -118,12 +118,12 @@ const setTheme = (value: ThemeMode) => {
             <h2 class="mb-4 text-lg font-medium text-text">主题</h2>
             <div class="flex items-center justify-between py-2">
               <div class="flex items-center gap-3">
-                <el-icon class="text-muted" :size="18">
+                <el-icon class="text-icon" :size="18">
                   <Sunny />
                 </el-icon>
                 <div>
                   <p class="text-sm font-medium text-text">外观模式</p>
-                  <p class="mt-0.5 text-xs text-muted">
+                  <p class="mt-0.5 text-[13px] text-muted">
                     亮色、暗色或跟随系统
                   </p>
                 </div>
@@ -154,12 +154,12 @@ const setTheme = (value: ThemeMode) => {
             <div class="space-y-4">
               <div class="flex items-center justify-between py-2">
                 <div class="flex items-center gap-3">
-                  <el-icon class="text-muted" :size="18">
+                  <el-icon class="text-icon" :size="18">
                     <Setting />
                   </el-icon>
                   <div>
                     <p class="text-sm font-medium text-text">测试模式</p>
-                    <p class="mt-0.5 text-xs text-muted">启用测试功能</p>
+                    <p class="mt-0.5 text-[13px] text-muted">启用测试功能</p>
                   </div>
                 </div>
                 <el-switch
@@ -172,14 +172,14 @@ const setTheme = (value: ThemeMode) => {
 
               <div class="flex items-center justify-between py-2">
                 <div class="flex items-center gap-3">
-                  <el-icon class="text-muted" :size="18">
+                  <el-icon class="text-icon" :size="18">
                     <VideoPlay />
                   </el-icon>
                   <div>
                     <p class="text-sm font-medium text-text">
                       编辑操作动画
                     </p>
-                    <p class="mt-0.5 text-xs text-muted">
+                    <p class="mt-0.5 text-[13px] text-muted">
                       节点增删、折叠展开、保存修改等编辑操作播放过渡动画；切换项目直接展示
                     </p>
                   </div>
@@ -208,7 +208,7 @@ const setTheme = (value: ThemeMode) => {
                     >(开发版)</span
                   >
                 </p>
-                <p class="mt-0.5 text-xs text-muted">软件版本信息</p>
+                <p class="mt-0.5 text-[13px] text-muted">软件版本信息</p>
               </div>
             </div>
           </section>

@@ -48,7 +48,7 @@ const handleCreateNoteConfirm = function (title: string) {
             class="flex h-10 cursor-pointer items-center justify-start rounded-lg px-3 hover:bg-hover"
           >
             <div
-              class="overflow-hidden text-sm font-normal text-ellipsis whitespace-nowrap"
+              class="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap"
             >
               {{ item.title }}
             </div>

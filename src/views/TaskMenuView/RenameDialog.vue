@@ -32,7 +32,7 @@
           aria-label="关闭"
         >
           <svg
-            class="h-4 w-4 text-muted"
+            class="h-4 w-4 text-icon"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -57,7 +57,7 @@
               :maxlength="50"
               type="text"
               placeholder="请输入项目名称"
-              class="w-full rounded-lg border border-border bg-base px-3 py-2 text-sm font-light text-text placeholder-muted transition-all duration-200 focus:border-border focus:outline-none"
+              class="w-full rounded-lg border border-border bg-base px-3 py-2 text-sm font-normal text-text placeholder-muted transition-all duration-200 focus:border-border focus:outline-none"
               :class="{
                 'border-red-300 focus:border-red-300':
                   showError && !localName.trim(),

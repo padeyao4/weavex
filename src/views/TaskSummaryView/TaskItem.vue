@@ -9,7 +9,7 @@
       <icon-round
         theme="outline"
         size="20"
-        fill="var(--color-muted)"
+        fill="var(--color-icon)"
         :strokeWidth="2"
         strokeLinecap="square"
         class="absolute"
@@ -24,7 +24,7 @@
       />
     </div>
     <div
-      class="ml-3 w-full min-w-0 overflow-hidden text-sm font-normal text-ellipsis whitespace-nowrap text-text"
+      class="ml-3 w-full min-w-0 overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-text"
       :class="{ 'text-muted line-through': task.completed }"
       :data-draggable-move="task.id"
     >
@@ -46,7 +46,7 @@
         v-else
         theme="outline"
         size="20"
-        fill="var(--color-muted)"
+        fill="var(--color-icon)"
         :strokeWidth="2"
         strokeLinecap="square"
       />
