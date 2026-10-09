@@ -149,7 +149,8 @@ const syncGraphData = async function () {
   if (signature === lastSignature) return; // 结构未变，跳过全量重绘
   lastSignature = signature;
   graph?.setData(result);
-  graph?.render();
+  await graph?.render();
+  disableEditAnimation(); // 渲染完成：复位动画开关，避免残留影响后续渲染
 };
 
 const debounceSyncData = debounce(() => {
@@ -163,6 +164,21 @@ watch(
   },
   { immediate: true },
 );
+
+const EDIT_ANIMATION = { duration: 200 };
+
+// 编辑操作：开启动画（受设置开关控制）。
+// 初始化/切换项目时 G6 构造不带 animation，直接展示 DAG；只有编辑操作才临时开启。
+const enableEditAnimation = () => {
+  graph?.setOptions({
+    animation: configStore.config.graphAnimation ? EDIT_ANIMATION : false,
+  });
+};
+
+// 渲染完成：复位动画开关，避免残留影响后续渲染
+const disableEditAnimation = () => {
+  graph?.setOptions({ animation: false });
+};
 
 const fitView = () => {
   graph?.fitView();
@@ -178,18 +194,20 @@ const fitCenter = () => {
 
 const animationPlaying = ref(false);
 
-const toggleArchive = () => {
+const toggleArchive = async () => {
   graphStore.updateGraph({
     id: graphId,
     showArchive: !currentGraph.value.showArchive,
   });
+  enableEditAnimation();
   graph?.updateTransform({
     key: "archive-transform",
     showArchive: graphStore.getGraph(graphId).showArchive,
   });
   // updateTransform 只更新配置并 refreshData，不触发渲染；
   // 必须显式 render() 才会重新执行 archive-transform 的 beforeDraw
-  graph?.render();
+  await graph?.render();
+  disableEditAnimation();
 };
 
 useEventListener("resize", checkScreenWidth);
@@ -285,6 +303,8 @@ onMounted(() => {
         },
         onClick: (value: any, _target: HTMLElement, current?: Element) => {
           if (!current || animationPlaying.value) return;
+          // 编辑操作（增删/插入节点、删除边、新建节点等）：开启动画
+          enableEditAnimation();
           const options = {
             persist: true,
             buildRoots: true,
@@ -417,6 +437,7 @@ onMounted(() => {
           r: 12,
           onClick: (id: string | undefined) => {
             if (animationPlaying.value || !id) return;
+            enableEditAnimation();
             graphStore.toggleNodeExpanded(graphId, id);
           },
         },
@@ -481,9 +502,10 @@ onMounted(() => {
       marginx: 0,
       marginy: 0,
     },
-    animation: configStore.config.graphAnimation && {
-      duration: 200,
-    },
+    // 初始化/切换项目不带动画（直接展示 DAG）：
+    // 必须显式 false，不传会落到 G6 默认主题动画（duration 1000ms）；
+    // 编辑操作时由 enableEditAnimation 临时开启，渲染完成后复位
+    animation: false,
   });
   graph.on(NodeEvent.CLICK, (evt: IElementEvent & { target: Element }) => {
     const nodeId = evt.target.id;
@@ -540,7 +562,7 @@ onUnmounted(() => {
  * 更新节点
  * @param node
  */
-function updateNode(node: PNode) {
+async function updateNode(node: PNode) {
   const states = graph?.getElementState(node.id) ?? [];
   const set = new Set(states);
   if (node.isFollowed && !node.completed) {
@@ -550,11 +572,13 @@ function updateNode(node: PNode) {
   }
   graph?.setElementState(node.id, Array.from(set));
 
+  enableEditAnimation();
   graphStore.updateNode(graphId, node, {
     persist: true,
     update: true,
   });
-  graph?.draw();
+  await graph?.draw();
+  disableEditAnimation();
   drawerNode.value = null;
 }
 

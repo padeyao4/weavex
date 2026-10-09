@@ -177,9 +177,11 @@ const setTheme = (value: ThemeMode) => {
                   </el-icon>
                   <div>
                     <p class="text-sm font-medium text-text">
-                      Graph动画效果
+                      编辑操作动画
                     </p>
-                    <p class="mt-0.5 text-xs text-muted">启用图表动画</p>
+                    <p class="mt-0.5 text-xs text-muted">
+                      节点增删、折叠展开、保存修改等编辑操作播放过渡动画；切换项目直接展示
+                    </p>
                   </div>
                 </div>
                 <el-switch
