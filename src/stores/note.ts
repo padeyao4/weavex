@@ -28,7 +28,8 @@ export const useNodeStore = defineStore("notes", () => {
 
   const saveMeta = async function () {
     try {
-      await initDb();
+      const contextStore = useContextStore();
+      await initDb(contextStore.context.workDir!);
       for (const meta of Object.values(noteMeta)) {
         await upsertNoteMetaToDb({
           id: meta.id,
@@ -83,7 +84,7 @@ export const useNodeStore = defineStore("notes", () => {
       const contextStore = useContextStore();
       const workDir = contextStore.context.workDir;
       if (!workDir) return;
-      await initDb();
+      await initDb(workDir);
       await migrateLegacyIfNeeded(workDir);
       const metas = await loadNoteMetasFromDb();
       metas.forEach((m) => {

@@ -5,7 +5,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { resolve } from "@tauri-apps/api/path";
 import { debug } from "@tauri-apps/plugin-log";
-import { useContextStore } from "@/stores/context";
 import type { PGraph, PNode, ViewportState } from "@/types";
 
 export const DB_FILE = "weavex.db";
@@ -58,10 +57,8 @@ export interface NoteMetaDto {
 
 // ---------------- 连接 ----------------
 
-/** 打开（或切换）当前工作目录的 SQLite 数据库。 */
-export async function initDb(): Promise<void> {
-  const contextStore = useContextStore();
-  const workDir = contextStore.context.workDir;
+/** 打开（或切换）指定工作目录的 SQLite 数据库。 */
+export async function initDb(workDir: string): Promise<void> {
   if (!workDir) throw new Error("workDir is not set");
   await invoke("db_init", { workDir });
 }

@@ -4,7 +4,7 @@ import { useContextStore } from "./context";
 import { useConfigStore } from "./config";
 import router from "@/router";
 import { debug } from "@tauri-apps/plugin-log";
-import { useGraphStore } from "./storage";
+import { useGraphStore } from "./graph";
 import { useNodeStore } from "./note";
 import { documentDir, resolve } from "@tauri-apps/api/path";
 import { initTheme } from "@/lib/theme";

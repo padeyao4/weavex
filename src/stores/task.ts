@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import { computed } from "vue";
-import { useGraphStore } from "./storage";
+import { useGraphStore } from "./graph";
 import { GraphUtils } from "@/utils";
 import { PNode } from "@/types";
 
