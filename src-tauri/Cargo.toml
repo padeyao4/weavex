@@ -15,11 +15,6 @@ edition = "2021"
 name = "weavx_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
-[[bin]]
-# Rust 版 MCP server：复用 weavx_lib::db 数据层，零 Node 依赖
-name = "mcp-server"
-path = "src/bin/mcp_server.rs"
-
 [build-dependencies]
 tauri-build = { version = "2.5.4", features = [] }
 

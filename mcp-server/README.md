@@ -1,10 +1,10 @@
-# Weavex MCP Server
+# Weavex MCP
 
 让豆包（以及其他支持 MCP 的 AI 客户端）直接读写 Weavex 的任务图与笔记数据。
 
-**实现方式：Rust 独立二进制（`mcp-server.exe`），仅支持 stdio 传输，目标机器零 Node 依赖。**
+**实现方式：单 exe —— 主程序 `weavx.exe` 加 `--mcp-stdio` 参数进入 MCP 模式（MCP over stdio），目标机器零 Node 依赖，无需额外分发文件。**
 
-- 直接复用 Weavex 应用（Tauri）的 `weavx_lib::db` 数据层（单一 SQL 实现），19 个工具与产品口径逐字段一致
+- MCP 逻辑与 Weavex 应用同源编译（`src-tauri/src/mcp_server.rs` 复用 `crate::db` 数据层），19 个工具与产品口径逐字段一致
 - 数据目录解析规则、`busy_timeout`、filesystem-first 同步机制均与应用相同
 - 由 MCP 客户端（豆包 / Claude / Cursor 等）自己 spawn，随客户端生命周期启停；Weavex 应用可完全退出
 
@@ -12,12 +12,10 @@
 
 ```
 cd H:\workspace\weavex\src-tauri
-cargo build --release --bin mcp-server
+cargo build --release
 ```
 
-产物：`C:\weavex-target\release\mcp-server.exe`（target 目录见 `.cargo/config.toml`）。
-
-随安装包分发：`tauri.conf.json` 的 `bundle.resources` 已配置，安装后位于 `<安装目录>\resources\mcp-server\mcp-server.exe`。
+产物：`C:\weavex-target\release\weavx.exe`（target 目录见 `.cargo/config.toml`）。主应用即 MCP server，无独立二进制。
 
 ## 在豆包中配置（STDIO 连接器）
 
@@ -25,9 +23,9 @@ cargo build --release --bin mcp-server
 
 - **服务器名称**：`weavex`
 - **传输类型**：`STDIO`
-- **启动命令**：exe 绝对路径（开发版示例 `H:\workspace\weavex\mcp-server\bin\mcp-server.exe`；打包版填安装目录资源路径）
-
-> 开发期：命令后加 `--dev` 连接开发版数据（`%APPDATA%\dev.padeyao4.weavex`）；正式打包版不加（连接生产数据 `%APPDATA%\padeyao4.weavex`）。
+- **启动命令**：`"<weavx.exe 绝对路径>" --mcp-stdio`
+  - 开发版示例：`"C:\weavex-target\debug\weavx.exe" --mcp-stdio --dev`（连接 dev 数据，与 `npm run dev` 一致）
+  - 打包版：`"<安装目录>\weavx.exe" --mcp-stdio`（连接生产数据）
 
 ## 数据目录解析规则（优先级从高到低）
 
@@ -70,7 +68,7 @@ cargo build --release --bin mcp-server
 
 ```
 $env:WEAVEX_DATA_DIR = "H:\workspace\temp\mcp-test-data"
-node test-client.mjs H:\workspace\weavex\mcp-server\bin\mcp-server.exe
+node test-client.mjs C:\weavex-target\release\weavx.exe --mcp-stdio
 ```
 
 ## 注意事项
@@ -78,4 +76,5 @@ node test-client.mjs H:\workspace\weavex\mcp-server\bin\mcp-server.exe
 - 删除类工具（`delete_graph` / `delete_node` / `delete_note`）不可恢复，调用前请与用户确认目标
 - MCP 与 Weavex 应用可同时运行（SQLite 使用 `busy_timeout` 处理并发锁）
 - 应用内的改动会即时反映到 MCP 查询结果，反之亦然（filesystem-first：应用 watcher 广播变更）
-- 日志输出走 stderr（stdio 通道被协议占用）；`WEAVEX_PARENT_PID` 可设置父进程看护（按需）
+- `--mcp-stdio` 模式不初始化 Tauri 运行时，纯 stdio JSON-RPC；日志走 stderr（stdio 通道被协议占用）
+- 历史方案已移除：Node 版 `server.mjs`（HTTP + stdio）、独立 `mcp-server.exe` 二进制均不再分发

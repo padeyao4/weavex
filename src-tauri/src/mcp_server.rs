@@ -1,8 +1,9 @@
-// Weavex MCP Server —— Rust 实现
+// Weavex MCP Server —— Rust 实现（单 exe 模式）
 //
 // 与 Node 版 mcp-server/server.mjs 行为对齐（19 个工具、数据目录解析、返回 JSON 结构），
-// 但直接复用 weavx_lib::db 数据层函数（单一 SQL 实现），并编译为独立二进制：
-//   目标机器无需安装 Node，随安装包分发 mcp-server.exe 即可。
+// 直接复用 crate::db 数据层函数（单一 SQL 实现）。
+// 自 0.4 起与主应用合并为单一二进制：主程序 weavx.exe 以 --mcp-stdio 参数进入本模式，
+// 目标机器无需安装 Node，也无需额外分发 mcp-server.exe。
 //
 // 协议：MCP over stdio（newline-delimited JSON-RPC 2.0）。
 //   stdin 读请求，stdout 写响应（每行一条 JSON），日志一律走 stderr。
@@ -19,7 +20,7 @@ use std::path::{Path, PathBuf};
 
 use rusqlite::{Connection, params};
 use serde_json::{Value, json};
-use weavx_lib::db::{
+use crate::db::{
     add_edge, create_node, delete_graph, delete_node, delete_note, now_ms, open_db,
     remove_edge, update_node, upsert_graph_meta, upsert_note_meta,
     GraphMetaPatch, NodeDto, NodePatch, NoteMetaDto,
@@ -931,16 +932,14 @@ fn handle(conn: &Connection, data_dir: &Path, method: &str, params: &Value) -> R
     }
 }
 
-// ---------------- main ----------------
+// ---------------- stdio 入口（主程序 weavx.exe --mcp-stdio 调用） ----------------
 
-fn main() {
-    let args: Vec<String> = env::args().collect();
+pub fn stdio_main() {
+    // 过滤掉本模式标志 --mcp-stdio，其余参数（--dev 等）继续生效
+    let args: Vec<String> = env::args().filter(|a| a != "--mcp-stdio").collect();
 
     if args.iter().any(|a| a == "--http") || env::var("WEAVEX_MCP_HTTP").is_ok_and(|v| v == "1") {
-        eprintln!(
-            "[weavex-mcp] HTTP 模式尚未在 Rust 版实现；请使用默认 stdio 模式（不传 --http），\
-             或继续使用 Node 版 server.mjs --http。"
-        );
+        eprintln!("[weavex-mcp] HTTP 模式已弃用；请使用默认 stdio 模式（不传 --http）。");
         std::process::exit(1);
     }
 

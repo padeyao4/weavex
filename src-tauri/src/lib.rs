@@ -9,8 +9,15 @@ use std::path::Path;
 use std::process::Command;
 
 pub mod db;
+mod mcp_server;
 mod watcher;
 use crate::db::Db;
+
+/// MCP stdio 模式入口：主程序 weavx.exe 以 --mcp-stdio 参数进入
+/// （不初始化 Tauri 运行时，直接跑 JSON-RPC 主循环，复用 db 数据层）
+pub fn mcp_stdio_main() {
+    mcp_server::stdio_main();
+}
 
 #[tauri::command]
 fn get_os_type() -> String {
