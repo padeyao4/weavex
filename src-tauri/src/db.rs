@@ -325,7 +325,9 @@ pub fn save_graph(conn: &mut Connection, dto: &GraphDto) -> Result<(), String> {
 
     {
         let mut stmt = tx
-            .prepare("INSERT OR IGNORE INTO edges (graph_id, source_id, target_id) VALUES (?1, ?2, ?3)")
+            .prepare(
+                "INSERT OR IGNORE INTO edges (graph_id, source_id, target_id) VALUES (?1, ?2, ?3)",
+            )
             .map_err(|e| e.to_string())?;
         let node_ids: HashSet<&String> = dto.nodes.iter().map(|n| &n.id).collect();
         let mut seen: HashSet<(&String, &String)> = HashSet::new();
@@ -337,7 +339,9 @@ pub fn save_graph(conn: &mut Connection, dto: &GraphDto) -> Result<(), String> {
                 continue;
             }
             stmt.execute(params![dto.id, e.source, e.target])
-                .map_err(|err| format!("Failed to insert edge {}-{}: {}", e.source, e.target, err))?;
+                .map_err(|err| {
+                    format!("Failed to insert edge {}-{}: {}", e.source, e.target, err)
+                })?;
         }
     }
 
@@ -462,7 +466,9 @@ pub fn delete_graph(conn: &Connection, id: &str) -> Result<(), String> {
 
 pub fn load_note_metas(conn: &Connection) -> Result<String, String> {
     let mut stmt = conn
-        .prepare("SELECT id, title, path, created_at, updated_at FROM notes ORDER BY updated_at DESC")
+        .prepare(
+            "SELECT id, title, path, created_at, updated_at FROM notes ORDER BY updated_at DESC",
+        )
         .map_err(|e| e.to_string())?;
     let rows = stmt
         .query_map([], |row| {
@@ -644,8 +650,8 @@ pub fn db_save_graph(state: tauri::State<Db>, graph_json: &str) -> Result<(), St
     let conn = guard
         .as_mut()
         .ok_or("Database not initialized, call db_init first")?;
-    let dto: GraphDto = serde_json::from_str(graph_json)
-        .map_err(|e| format!("Invalid graph payload: {}", e))?;
+    let dto: GraphDto =
+        serde_json::from_str(graph_json).map_err(|e| format!("Invalid graph payload: {}", e))?;
     save_graph(conn, &dto)
 }
 
@@ -673,8 +679,8 @@ pub fn db_upsert_note_meta(state: tauri::State<Db>, meta_json: &str) -> Result<(
     let conn = guard
         .as_ref()
         .ok_or("Database not initialized, call db_init first")?;
-    let dto: NoteMetaDto = serde_json::from_str(meta_json)
-        .map_err(|e| format!("Invalid note meta payload: {}", e))?;
+    let dto: NoteMetaDto =
+        serde_json::from_str(meta_json).map_err(|e| format!("Invalid note meta payload: {}", e))?;
     upsert_note_meta(conn, &dto)
 }
 
@@ -723,6 +729,7 @@ mod tests {
             root_node_ids: vec!["a".into()],
             show_archive: Some(false),
             priority: Some(10.0),
+            viewport: None,
             nodes: vec![
                 NodeDto {
                     id: "a".into(),
@@ -773,14 +780,12 @@ mod tests {
 
         // 覆盖保存（幂等）
         save_graph(&mut conn, &sample_dto()).unwrap();
-        let graphs2: Vec<GraphDto> =
-            serde_json::from_str(&load_graphs(&conn).unwrap()).unwrap();
+        let graphs2: Vec<GraphDto> = serde_json::from_str(&load_graphs(&conn).unwrap()).unwrap();
         assert_eq!(graphs2.len(), 1);
         assert_eq!(graphs2[0].nodes.len(), 3);
 
         delete_graph(&conn, "g1").unwrap();
-        let graphs3: Vec<GraphDto> =
-            serde_json::from_str(&load_graphs(&conn).unwrap()).unwrap();
+        let graphs3: Vec<GraphDto> = serde_json::from_str(&load_graphs(&conn).unwrap()).unwrap();
         assert!(graphs3.is_empty());
 
         drop(conn);
@@ -796,8 +801,7 @@ mod tests {
             save_graph(&mut conn, &sample_dto()).unwrap();
         }
         let conn = open_db(&db_path).unwrap();
-        let graphs: Vec<GraphDto> =
-            serde_json::from_str(&load_graphs(&conn).unwrap()).unwrap();
+        let graphs: Vec<GraphDto> = serde_json::from_str(&load_graphs(&conn).unwrap()).unwrap();
         assert_eq!(graphs.len(), 1);
         assert_eq!(graphs[0].name, "测试图");
         drop(conn);
@@ -853,13 +857,20 @@ mod tests {
         }
 
         let work = temp_workdir("migrate");
-        fs::copy(Path::new(&dir).join("graphs.json"), work.join("graphs.json")).unwrap();
-        fs::copy(Path::new(&dir).join("note-meta.json"), work.join("note-meta.json")).unwrap();
+        fs::copy(
+            Path::new(&dir).join("graphs.json"),
+            work.join("graphs.json"),
+        )
+        .unwrap();
+        fs::copy(
+            Path::new(&dir).join("note-meta.json"),
+            work.join("note-meta.json"),
+        )
+        .unwrap();
 
         // 期望值：直接解析旧文件统计
         let legacy_text = fs::read_to_string(work.join("graphs.json")).unwrap();
-        let legacy_map: HashMap<String, LegacyGraph> =
-            serde_json::from_str(&legacy_text).unwrap();
+        let legacy_map: HashMap<String, LegacyGraph> = serde_json::from_str(&legacy_text).unwrap();
         let expected_graphs = legacy_map.len() as i64;
         let mut expected_nodes = 0i64;
         let mut expected_edges = 0i64;
@@ -886,8 +897,7 @@ mod tests {
         assert_eq!(res.graphs, expected_graphs, "migrated graphs count");
         assert_eq!(res.notes, expected_notes, "migrated notes count");
 
-        let loaded: Vec<GraphDto> =
-            serde_json::from_str(&load_graphs(&conn).unwrap()).unwrap();
+        let loaded: Vec<GraphDto> = serde_json::from_str(&load_graphs(&conn).unwrap()).unwrap();
         assert_eq!(loaded.len() as i64, expected_graphs);
         let mut nodes = 0i64;
         let mut edges = 0i64;
