@@ -523,13 +523,18 @@ export function useTaskGraph(options: {
       animation: false,
     });
 
-    // 点击节点：打开编辑抽屉
+    // 点击节点：打开编辑抽屉；再次点击同一节点则关闭（toggle）
     graph.value.on(
       NodeEvent.CLICK,
       (evt: IElementEvent & { target: Element }) => {
         const nodeId = evt.target.id;
         const node = currentGraph.value?.nodes[nodeId];
-        drawerNode.value = node ? { ...node } : null;
+        if (!node) {
+          drawerNode.value = null;
+          return;
+        }
+        drawerNode.value =
+          drawerNode.value?.id === nodeId ? null : { ...node };
       },
     );
     // 鼠标悬停节点：添加 hover 样式；移出节点时移除
