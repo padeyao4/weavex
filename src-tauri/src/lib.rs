@@ -8,11 +8,9 @@ use tauri_plugin_log::log::error;
 use std::path::Path;
 use std::process::Command;
 
-mod db;
-mod mcp;
+pub mod db;
 mod watcher;
 use crate::db::Db;
-use crate::mcp::McpState;
 
 #[tauri::command]
 fn get_os_type() -> String {
@@ -273,23 +271,11 @@ pub fn run() {
             }
         })
         .manage(Db(Mutex::new(None)))
-        .manage(McpState(Mutex::new(None)))
         .setup(|app| {
             // 系统托盘（桌面平台）
             #[cfg(not(any(target_os = "android", target_os = "ios")))]
             if let Err(e) = setup_tray(app.handle()) {
                 error!("[tray] 创建系统托盘失败: {}", e);
-            }
-            // 自动拉起 MCP 服务（失败不阻塞应用，仅记录日志）
-            match mcp::spawn_mcp_server(app.handle()) {
-                Ok(Some(child)) => {
-                    let state = app.state::<McpState>();
-                    *state.0.lock().unwrap() = Some(child);
-                }
-                Ok(None) => {}
-                Err(e) => {
-                    error!("[mcp] {}", e);
-                }
             }
             // 数据目录变更监听（filesystem-first：外部写者直写存储 → 广播给前端）
             let data_dir = app
@@ -330,11 +316,7 @@ pub fn run() {
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
-        .run(|app_handle, event| {
-            if let tauri::RunEvent::Exit = event {
-                mcp::stop_mcp_server(app_handle);
-            }
-        });
+        .run(|_app_handle, _event| {});
 }
 
 #[cfg(test)]

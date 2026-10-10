@@ -4,8 +4,10 @@
 import { spawn } from "node:child_process";
 import { once } from "node:events";
 
-const serverPath = process.argv[2] || "server.mjs";
-const child = spawn(process.execPath, [serverPath], {
+const serverArg = process.argv[2] || "server.mjs";
+// 支持直接 spawn 可执行文件（Rust 版 mcp-server.exe）；否则按 Node 脚本处理
+const isExe = /\.exe$/i.test(serverArg);
+const child = spawn(isExe ? serverArg : process.execPath, isExe ? [] : [serverArg], {
   stdio: ["pipe", "pipe", "pipe"],
   env: { ...process.env },
 });

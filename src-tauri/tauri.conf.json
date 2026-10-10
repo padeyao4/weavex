@@ -26,9 +26,9 @@
     "active": true,
     "targets": "all",
     "createUpdaterArtifacts": true,
-    "resources": [
-      "../mcp-server"
-    ],
+    "resources": {
+      "../mcp-server/bin/mcp-server.exe": "mcp-server/mcp-server.exe"
+    },
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
