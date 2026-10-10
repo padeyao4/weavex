@@ -97,6 +97,13 @@ pub fn spawn_mcp_server(app: &tauri::AppHandle) -> Result<Option<Child>, String>
         .map_err(|e| format!("无法复制日志句柄: {}", e))?;
 
     let mut cmd = Command::new("node");
+    // Windows：不创建控制台窗口（父进程已无控制台，node 是 console 程序，
+    // 不加此 flag 会弹出黑色命令行窗口遮挡应用窗口）
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        cmd.creation_flags(0x08000000); // CREATE_NO_WINDOW
+    }
     cmd.arg("server.mjs").arg("--http");
     // dev（debug）构建：让 server.mjs 按开发版 identifier 解析数据目录
     #[cfg(debug_assertions)]

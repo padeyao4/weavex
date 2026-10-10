@@ -19,7 +19,7 @@ export default defineConfig(async () => ({
   server: {
     port: 3300,
     strictPort: true,
-    host: host || false,
+    host: host || "127.0.0.1",
     hmr: host
       ? {
           protocol: "ws",

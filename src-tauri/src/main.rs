@@ -1,5 +1,5 @@
-// Prevents additional console window on Windows in release, DO NOT REMOVE!!
-#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+// 无控制台窗口：debug/release 均不弹控制台（日志通过 tauri-plugin-log 写文件）
+#![windows_subsystem = "windows"]
 
 fn main() {
     weavx_lib::run()

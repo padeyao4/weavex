@@ -4,7 +4,7 @@
   "identifier": "padeyao4.weavex",
   "build": {
     "beforeDevCommand": "npm run vue-serve",
-    "devUrl": "http://localhost:3300",
+    "devUrl": "http://127.0.0.1:3300",
     "beforeBuildCommand": "npm run vue-build",
     "frontendDist": "../dist"
   },

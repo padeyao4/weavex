@@ -249,6 +249,14 @@ pub fn run() {
                         message
                     ))
                 })
+                .targets([
+                    // 控制台输出（无控制台窗口时静默丢弃）
+                    tauri_plugin_log::Target::new(tauri_plugin_log::TargetKind::Stdout),
+                    // 文件输出：{appLogDir}/weavx.log（默认文件名 = 应用名）
+                    tauri_plugin_log::Target::new(tauri_plugin_log::TargetKind::LogDir {
+                        file_name: None,
+                    }),
+                ])
                 .build(),
         )
         .plugin(tauri_plugin_fs::init())
