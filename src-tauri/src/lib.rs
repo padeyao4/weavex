@@ -175,6 +175,59 @@ fn set_titlebar_color(_window: tauri::Window, _theme: String) -> Result<(), Stri
     Ok(())
 }
 
+/// 系统托盘（桌面平台）：
+///  - 菜单：打开 Weavex / 退出
+///  - 左键单击托盘图标：唤回主窗口
+///  - 窗口关闭时隐藏到托盘（托盘常驻），退出仅通过托盘菜单
+#[cfg(not(any(target_os = "android", target_os = "ios")))]
+fn setup_tray(app: &tauri::AppHandle) -> tauri::Result<()> {
+    use tauri::menu::{Menu, MenuItem};
+    use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
+
+    let open_item = MenuItem::with_id(app, "open", "打开 Weavex", true, None::<&str>)?;
+    let quit_item = MenuItem::with_id(app, "quit", "退出", true, None::<&str>)?;
+    let menu = Menu::with_items(app, &[&open_item, &quit_item])?;
+
+    let icon = app
+        .default_window_icon()
+        .cloned()
+        .expect("default window icon is required for tray icon");
+
+    TrayIconBuilder::with_id("weavex-tray")
+        .icon(icon)
+        .menu(&menu)
+        // 左键点击不弹菜单（用于唤回窗口），右键弹出菜单
+        .show_menu_on_left_click(false)
+        .on_menu_event(|app, event| match event.id.as_ref() {
+            "open" => show_main_window(app),
+            "quit" => app.exit(0),
+            _ => {}
+        })
+        .on_tray_icon_event(|tray, event| {
+            // 左键单击托盘图标 → 唤回主窗口
+            if let TrayIconEvent::Click {
+                button: MouseButton::Left,
+                button_state: MouseButtonState::Up,
+                ..
+            } = event
+            {
+                show_main_window(tray.app_handle());
+            }
+        })
+        .build(app)?;
+    Ok(())
+}
+
+/// 显示并聚焦主窗口（从托盘唤回）
+#[cfg(not(any(target_os = "android", target_os = "ios")))]
+fn show_main_window(app: &tauri::AppHandle) {
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.show();
+        let _ = window.unminimize();
+        let _ = window.set_focus();
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -201,9 +254,21 @@ pub fn run() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(tauri_plugin_opener::init())
+        // 关闭窗口 → 隐藏到系统托盘（托盘常驻，退出需通过托盘菜单）
+        .on_window_event(|window, event| {
+            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                api.prevent_close();
+                let _ = window.hide();
+            }
+        })
         .manage(Db(Mutex::new(None)))
         .manage(McpState(Mutex::new(None)))
         .setup(|app| {
+            // 系统托盘（桌面平台）
+            #[cfg(not(any(target_os = "android", target_os = "ios")))]
+            if let Err(e) = setup_tray(app.handle()) {
+                error!("[tray] 创建系统托盘失败: {}", e);
+            }
             // 自动拉起 MCP 服务（失败不阻塞应用，仅记录日志）
             match mcp::spawn_mcp_server(app.handle()) {
                 Ok(Some(child)) => {

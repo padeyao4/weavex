@@ -6,10 +6,7 @@
     "beforeDevCommand": "npm run vue-serve",
     "devUrl": "http://localhost:3300",
     "beforeBuildCommand": "npm run vue-build",
-    "frontendDist": "../dist",
-    "windows": {
-      "staticVCRuntime": true
-    }
+    "frontendDist": "../dist"
   },
   "app": {
     "windows": [
