@@ -1,13 +1,12 @@
 import { defineStore } from "pinia";
 import { reactive } from "vue";
-import { useContextStore } from "./context";
 import { useConfigStore } from "./config";
 import router from "@/router";
 import { debug } from "@tauri-apps/plugin-log";
 import { useGraphStore } from "./graph";
 import { useNodeStore } from "./note";
-import { documentDir, resolve } from "@tauri-apps/api/path";
 import { initTheme } from "@/lib/theme";
+import { getDataDir } from "@/lib/dataDir";
 
 export type State = "idle" | "loading" | "has_repo";
 
@@ -15,9 +14,6 @@ type RepoProps = {
   state: State;
   error?: Error;
 };
-
-/** 首次启动自动创建的默认存储目录名（位于用户文档目录下） */
-export const DEFAULT_WORK_DIR_NAME = "WeavexData";
 
 export const useRepoStore = defineStore("repo", () => {
   const repo = reactive<RepoProps>({
@@ -49,33 +45,17 @@ export const useRepoStore = defineStore("repo", () => {
   };
 
   /**
-   * 启动逻辑（仅本地存储）：
-   * 1. 有指针且存储目录存在 → 加载该目录；目录下无 config.json 则自动生成默认配置。
-   * 2. 无指针或目录已失效 → 视为首次启动：自动创建默认存储目录
-   *    （文档目录/WeavexData）并生成默认配置文件。
+   * 启动逻辑（本地存储）：
+   * 数据固定存放于 Tauri 默认数据目录（appDataDir，按 identifier 隔离），
+   * 目录下无 config.json 则自动生成默认配置。
    */
   const init = async function () {
     setState("loading");
-    const contextStore = useContextStore();
-    await contextStore.load();
+    // 确认数据目录（appDataDir 为异步获取，先解析一次确保可用）
+    const dataDir = await getDataDir();
+    debug(`Using data dir: ${dataDir}`);
 
-    let workDir = contextStore.context.workDir;
-    if (workDir) {
-      const exists = await contextStore.check_work_dir();
-      if (!exists) {
-        debug(`workDir no longer exists, treating as first launch: ${workDir}`);
-        workDir = undefined;
-      }
-    }
-
-    if (!workDir) {
-      const docDir = await documentDir();
-      workDir = await resolve(docDir, DEFAULT_WORK_DIR_NAME);
-      contextStore.update({ workDir }, { persist: true });
-      debug(`First launch, using default storage dir: ${workDir}`);
-    }
-
-    // 加载（或生成）存储目录下的配置文件，并应用主题
+    // 加载（或生成）数据目录下的配置文件，并应用主题
     const configStore = useConfigStore();
     await configStore.load();
     initTheme(configStore.config.theme);

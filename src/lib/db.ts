@@ -57,9 +57,10 @@ export interface NoteMetaDto {
 
 // ---------------- 连接 ----------------
 
-/** 打开（或切换）指定工作目录的 SQLite 数据库。 */
+/** 打开指定数据目录（appDataDir）下的 SQLite 数据库。
+ *  参数名 workDir 与 Rust 侧 db_init(work_dir) 的 camelCase 映射耦合，勿改。 */
 export async function initDb(workDir: string): Promise<void> {
-  if (!workDir) throw new Error("workDir is not set");
+  if (!workDir) throw new Error("data dir is not set");
   await invoke("db_init", { workDir });
 }
 

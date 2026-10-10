@@ -1,7 +1,6 @@
 import { defineStore } from "pinia";
 import { reactive } from "vue";
 import { v4 } from "uuid";
-import { useContextStore } from "./context";
 import { resolve } from "@tauri-apps/api/path";
 import { readFile, writeFile } from "@/utils";
 import { debounce } from "lodash-es";
@@ -12,6 +11,7 @@ import {
   migrateLegacyIfNeeded,
   upsertNoteMetaToDb,
 } from "@/lib/db";
+import { getDataDir } from "@/lib/dataDir";
 
 const NOTE_DIR = "notes";
 
@@ -28,8 +28,8 @@ export const useNodeStore = defineStore("notes", () => {
 
   const saveMeta = async function () {
     try {
-      const contextStore = useContextStore();
-      await initDb(contextStore.context.workDir!);
+      const dataDir = await getDataDir();
+      await initDb(dataDir);
       for (const meta of Object.values(noteMeta)) {
         await upsertNoteMetaToDb({
           id: meta.id,
@@ -46,32 +46,24 @@ export const useNodeStore = defineStore("notes", () => {
 
   const saveNote = async function (nodeId: string, content: string) {
     debug(`save note ${nodeId}`);
-    const contextStore = useContextStore();
+    const dataDir = await getDataDir();
     const meta = noteMeta[nodeId];
     meta.updatedAt = Date.now();
     if (!meta.path) {
       meta.path = `${meta.id}.md`;
     }
     saveMeta();
-    const path = await resolve(
-      contextStore.context.workDir!,
-      NOTE_DIR,
-      meta.path,
-    );
+    const path = await resolve(dataDir, NOTE_DIR, meta.path);
     await writeFile(path, content);
   };
 
   const debounceSaveNote = debounce(saveMeta, 5000);
 
   const loadNote = async function (nodeId: string) {
-    const contextStore = useContextStore();
+    const dataDir = await getDataDir();
     const metaPath = noteMeta[nodeId].path;
     if (metaPath) {
-      const path = await resolve(
-        contextStore.context.workDir!,
-        NOTE_DIR,
-        metaPath,
-      );
+      const path = await resolve(dataDir, NOTE_DIR, metaPath);
       const content = await readFile(path);
       return content;
     } else {
@@ -81,11 +73,9 @@ export const useNodeStore = defineStore("notes", () => {
 
   const loadNoteMeta = async function () {
     try {
-      const contextStore = useContextStore();
-      const workDir = contextStore.context.workDir;
-      if (!workDir) return;
-      await initDb(workDir);
-      await migrateLegacyIfNeeded(workDir);
+      const dataDir = await getDataDir();
+      await initDb(dataDir);
+      await migrateLegacyIfNeeded(dataDir);
       const metas = await loadNoteMetasFromDb();
       metas.forEach((m) => {
         noteMeta[m.id] = {

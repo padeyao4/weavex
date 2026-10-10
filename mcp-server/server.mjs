@@ -2,13 +2,17 @@
 // 让豆包等 MCP 客户端直接读写 Weavex 的任务图与笔记数据。
 //
 // 数据定位（优先级从高到低）：
-//   1. 环境变量 WEAVEX_DATA_DIR
-//   2. %APPDATA%\padeyao4.weavex\context.bin（生产版 Weavex 的运行目录；传 --dev 或 WEAVEX_DEV=1 时读 context.dev.bin）
-//   3. 默认 ~\Documents\WeavexData
+//   1. 环境变量 WEAVEX_DATA_DIR（显式指定）
+//   2. 生产版：%APPDATA%\padeyao4.weavex（Tauri appDataDir，按 identifier 隔离）
+//      开发版（--dev 或 WEAVEX_DEV=1）：%APPDATA%\dev.padeyao4.weavex
+//   3. 兜底兼容旧版：~\Documents\WeavexData
 //
 // 存储口径与前端一致：
 //   - SQLite weavex.db：graphs / nodes / edges / notes 四表（时间戳为毫秒）
-//   - 笔记正文：<workDir>/notes/<id>.md
+//   - 笔记正文：<dataDir>/notes/<id>.md
+//
+// 端口：--dev 或 WEAVEX_DEV=1 时默认 8913（开发版），否则默认 8912（生产版）；
+//      均可被环境变量 WEAVEX_MCP_PORT 覆盖（Weavex 应用自动拉起时总是显式传入）。
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
@@ -21,25 +25,25 @@ import os from "node:os";
 
 // ---------------- 数据目录解析 ----------------
 
+function isDevMode() {
+  return process.env.WEAVEX_DEV === "1" || process.argv.includes("--dev");
+}
+
 function resolveDataDir() {
   if (process.env.WEAVEX_DATA_DIR) {
     return process.env.WEAVEX_DATA_DIR;
   }
-  const useDev =
-    process.env.WEAVEX_DEV === "1" || process.argv.includes("--dev");
   const appData =
     process.env.APPDATA || path.join(os.homedir(), "AppData", "Roaming");
-  const ctxFile = path.join(
+  // Tauri appDataDir：dev/prod 使用不同 identifier → 目录天然隔离
+  const dir = path.join(
     appData,
-    "padeyao4.weavex",
-    useDev ? "context.dev.bin" : "context.bin",
+    isDevMode() ? "dev.padeyao4.weavex" : "padeyao4.weavex",
   );
-  try {
-    const ctx = JSON.parse(fs.readFileSync(ctxFile, "utf8"));
-    if (ctx?.context?.workDir) return ctx.context.workDir;
-  } catch {
-    // 忽略读取失败，走默认目录
+  if (fs.existsSync(path.join(dir, "weavex.db"))) {
+    return dir;
   }
+  // 兜底兼容旧版数据位置（文档目录/WeavexData）
   return path.join(os.homedir(), "Documents", "WeavexData");
 }
 
@@ -699,7 +703,9 @@ if (useHttp) {
     "@modelcontextprotocol/sdk/server/streamableHttp.js"
   );
   const { default: express } = await import("express");
-  const port = Number(process.env.WEAVEX_MCP_PORT || 8912);
+  const port = Number(
+    process.env.WEAVEX_MCP_PORT || (isDevMode() ? 8913 : 8912),
+  );
   const app = express();
   // 宽容 Accept：豆包连接器等客户端可能只声明 application/json 而未声明 text/event-stream，
   // 而 MCP SDK 对 GET/POST 都校验 Accept 必须包含 text/event-stream，会直接返回 406。

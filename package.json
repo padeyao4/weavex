@@ -7,7 +7,7 @@
   "scripts": {
     "vue-serve": "vite",
     "vue-build": "vue-tsc --noEmit && vite build",
-    "dev": "tauri dev",
+    "dev": "tauri dev --config src-tauri/tauri.dev.conf.json",
     "build": "tauri build",
     "test": "vitest",
     "tauri": "tauri"

@@ -26,11 +26,11 @@ export const DEFAULT_CONFIG: AppConfig = {
 /**
  * 加载存储目录下的配置文件；不存在或解析失败时生成（写回）默认配置。
  */
-export async function loadConfig(workDir: string): Promise<AppConfig> {
-  const configPath = await resolve(workDir, CONFIG_FILE);
+export async function loadConfig(dataDir: string): Promise<AppConfig> {
+  const configPath = await resolve(dataDir, CONFIG_FILE);
   const exists = await invoke<boolean>("file_exists", { path: configPath });
   if (!exists) {
-    await saveConfig(workDir, DEFAULT_CONFIG);
+    await saveConfig(dataDir, DEFAULT_CONFIG);
     return { ...DEFAULT_CONFIG };
   }
   try {
@@ -48,10 +48,10 @@ export async function loadConfig(workDir: string): Promise<AppConfig> {
  * 保存配置到存储目录 config.json（write_file 会自动创建缺失目录）。
  */
 export async function saveConfig(
-  workDir: string,
+  dataDir: string,
   config: AppConfig,
 ): Promise<void> {
-  const configPath = await resolve(workDir, CONFIG_FILE);
+  const configPath = await resolve(dataDir, CONFIG_FILE);
   await invoke("write_file", {
     path: configPath,
     content: JSON.stringify(config, null, 2),

@@ -2,7 +2,7 @@
 import router from "@/router";
 import { version } from "@/../package.json";
 import FramePage from "@/components/FramePage.vue";
-import { useConfigStore, useContextStore } from "@/stores";
+import { useConfigStore } from "@/stores";
 import {
   Back,
   Folder,
@@ -17,8 +17,8 @@ import {
 import { invoke } from "@tauri-apps/api/core";
 import { applyTheme } from "@/lib/theme";
 import type { ThemeMode } from "@/lib/config";
-
-const contextStore = useContextStore();
+import { getDataDir } from "@/lib/dataDir";
+import { onMounted, ref } from "vue";
 
 const dev = import.meta.env.DEV;
 
@@ -28,12 +28,17 @@ const back = () => {
 
 const configStore = useConfigStore();
 
+const dataDir = ref("");
+
+onMounted(async () => {
+  dataDir.value = await getDataDir();
+});
+
 const openWorkDir = async () => {
-  if (contextStore.context.workDir) {
-    await invoke("open_dir", {
-      dirPath: contextStore.context.workDir ?? "",
-    });
-  }
+  const dir = dataDir.value || (await getDataDir());
+  await invoke("open_dir", {
+    dirPath: dir,
+  });
 };
 
 /** 切换主题：保存到 config.json 并立即应用 */
@@ -80,14 +85,14 @@ const setTheme = (value: ThemeMode) => {
                   </el-icon>
                 </div>
                 <div class="flex-1">
-                  <p class="text-sm font-medium text-text">项目存储目录</p>
+                  <p class="text-sm font-medium text-text">数据存储目录</p>
                   <div class="mt-1 flex items-center gap-2">
                     <div class="min-w-0 flex-1">
                       <div
                         class="w-150 truncate rounded-md border border-border bg-base px-3 py-1.5 font-mono text-xs text-muted"
-                        :title="contextStore.context.workDir"
+                        :title="dataDir"
                       >
-                        {{ contextStore.context.workDir }}
+                        {{ dataDir || "加载中..." }}
                       </div>
                     </div>
                     <button

@@ -1,0 +1,19 @@
+{
+  "productName": "Weavex Dev",
+  "identifier": "dev.padeyao4.weavex",
+  "app": {
+    "windows": [
+      {
+        "title": "Weavex Dev"
+      }
+    ]
+  },
+  "bundle": {
+    "createUpdaterArtifacts": false
+  },
+  "plugins": {
+    "updater": {
+      "active": false
+    }
+  }
+}

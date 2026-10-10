@@ -21,11 +21,15 @@ use tauri_plugin_log::log::{error, info, warn};
 /// 保存 MCP 子进程句柄，应用退出时据此终止
 pub struct McpState(pub Mutex<Option<Child>>);
 
+/// MCP 服务端口：
+///   - 环境变量 WEAVEX_MCP_PORT 优先（手动指定）
+///   - dev（debug）默认 8913，prod（release）默认 8912 —— 两者隔离，可同时运行
 fn mcp_port() -> u16 {
+    let base = if cfg!(debug_assertions) { 8913 } else { 8912 };
     std::env::var("WEAVEX_MCP_PORT")
         .ok()
         .and_then(|v| v.parse().ok())
-        .unwrap_or(8912)
+        .unwrap_or(base)
 }
 
 /// 探测本地端口是否已被监听（能建立 TCP 连接即视为占用）
@@ -92,10 +96,15 @@ pub fn spawn_mcp_server(app: &tauri::AppHandle) -> Result<Option<Child>, String>
         .try_clone()
         .map_err(|e| format!("无法复制日志句柄: {}", e))?;
 
-    let child = Command::new("node")
-        .arg("server.mjs")
-        .arg("--http")
+    let mut cmd = Command::new("node");
+    cmd.arg("server.mjs").arg("--http");
+    // dev（debug）构建：让 server.mjs 按开发版 identifier 解析数据目录
+    #[cfg(debug_assertions)]
+    cmd.arg("--dev");
+    let child = cmd
         .current_dir(&dir)
+        // 端口由应用决定并显式传递，保证与 server.mjs 默认值一致
+        .env("WEAVEX_MCP_PORT", port.to_string())
         // 父进程看护：应用退出（含崩溃/强杀）时让 node 自动退出
         .env("WEAVEX_PARENT_PID", std::process::id().to_string())
         .stdin(Stdio::null())

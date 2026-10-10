@@ -23,7 +23,7 @@
 | **HTTP**（推荐给豆包） | `node server.mjs --http` | 豆包（豆包工作桌面版）等仅支持 HTTP 连接器的客户端 |
 | **stdio** | `node server.mjs` | Claude Desktop / Cursor 等支持本地进程的客户端 |
 
-HTTP 模式默认监听 `http://127.0.0.1:8912/mcp`，端口可用环境变量 `WEAVEX_MCP_PORT` 修改（如 `WEAVEX_MCP_PORT=9000`）。
+HTTP 模式默认监听 `http://127.0.0.1:8912/mcp`（**生产版**），**开发版**（`--dev` / `WEAVEX_DEV=1`）默认 `8913`；端口均可用环境变量 `WEAVEX_MCP_PORT` 修改（如 `WEAVEX_MCP_PORT=9000`）。
 
 ```
 cd H:\workspace\weavex\mcp-server
@@ -40,7 +40,7 @@ node server.mjs --http
 | Weavex 启动 | 自动检测端口：空闲则拉起 `node server.mjs --http`；已被监听（如手动启动过）则跳过，不重复启动 |
 | Weavex 正常退出 | 自动终止 MCP 子进程，释放端口 |
 | Weavex 崩溃 / 被强杀 | MCP 子进程内置父进程看护（每 5s 检测），检测到父进程消失后自动退出 |
-| 服务日志 | `%APPDATA%\padeyao4.weavex\mcp-server.log` |
+| 服务日志 | 生产版 `%APPDATA%\padeyao4.weavex\mcp-server.log`；开发版 `%APPDATA%\dev.padeyao4.weavex\mcp-server.log` |
 | 生产（打包版） | mcp-server 随安装包分发（bundle.resources）；目标机器需安装 Node.js ≥ 22.5 |
 
 ## 在豆包中添加 MCP 服务器（HTTP 连接器）
@@ -63,6 +63,8 @@ node server.mjs --http
 
 * **服务器 URL**：`http://127.0.0.1:8912/mcp`
 
+  > 若同时运行开发版 Weavex（端口 8913），可再添加一个连接器指向 `http://127.0.0.1:8913/mcp`。
+
 5. 保存后即可在豆包对话中直接查询 / 创建 / 修改你的任务与笔记（如「查看我今天的任务」「新建笔记《xxx》」「给 XX 加个子任务」）
 
 > 说明：豆包连接器支持接入本机运行的服务（官方示例即使用 `http://127.0.0.1:8000/mcp` 形式）。若豆包版本没有「连接器」入口，请升级豆包客户端到最新版。
@@ -81,14 +83,16 @@ node server.mjs --http
 
 
 
-| 优先级 | 来源                                          | 说明                                             |
-| --- | ------------------------------------------- | ---------------------------------------------- |
-| 1   | 环境变量 `WEAVEX_DATA_DIR`                      | 显式指定数据目录                                       |
-| 2   | `%APPDATA%\padeyao4.weavex\context.bin`     | Weavex **生产版**运行目录                             |
-| 3   | `%APPDATA%\padeyao4.weavex\context.dev.bin` | 传 `--dev` 参数或设 `WEAVEX_DEV=1` 时读取（**开发版**运行目录） |
-| 4   | `~\Documents\WeavexData`                    | 兜底默认目录                                         |
+| 优先级 | 来源 | 说明 |
+| --- | --- | --- |
+| 1 | 环境变量 `WEAVEX_DATA_DIR` | 显式指定数据目录 |
+| 2 | `%APPDATA%\padeyao4.weavex` | Weavex **生产版** Tauri appDataDir（含 weavex.db） |
+| 3 | `%APPDATA%\dev.padeyao4.weavex` | 传 `--dev` 参数或设 `WEAVEX_DEV=1` 时读取（**开发版** appDataDir） |
+| 4 | `~\Documents\WeavexData` | 兜底兼容旧版数据位置 |
 
-示例：让服务器操作开发版数据
+> dev/prod 通过 **identifier 分离**（`padeyao4.weavex` vs `dev.padeyao4.weavex`）实现数据隔离，MCP 服务随应用自动拉起时会自动匹配对应环境。
+
+示例：让服务器操作开发版数据（同时切到开发版端口 8913）
 
 ```
 node server.mjs --http --dev

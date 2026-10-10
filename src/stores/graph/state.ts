@@ -1,6 +1,5 @@
 import { PGraph, PNode } from "@/types";
 import { computed, reactive } from "vue";
-import { useContextStore } from "../context";
 import {
   dtoToGraph,
   deleteGraphFromDb,
@@ -11,6 +10,7 @@ import {
 } from "@/lib/db";
 import { debug, error } from "@tauri-apps/plugin-log";
 import { debounce } from "lodash-es";
+import { getDataDir } from "@/lib/dataDir";
 
 export type Options = {
   persist?: boolean;
@@ -32,14 +32,9 @@ export function createGraphState() {
   }
 
   async function loadGraphs() {
-    const contextStore = useContextStore();
-    const workDir = contextStore.context.workDir;
-    if (!workDir) {
-      error("loadGraphs skipped: workDir is not set");
-      return;
-    }
-    await initDb(workDir);
-    await migrateLegacyIfNeeded(workDir);
+    const dataDir = await getDataDir();
+    await initDb(dataDir);
+    await migrateLegacyIfNeeded(dataDir);
     const dtos = await loadGraphsFromDb();
     dtos.forEach((dto) => {
       allGraph[dto.id] = dtoToGraph(dto);
