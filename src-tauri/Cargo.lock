@@ -5454,7 +5454,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "weavx"
+name = "weavex"
 version = "0.3.8"
 dependencies = [
  "chrono",

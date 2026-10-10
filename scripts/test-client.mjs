@@ -1,13 +1,13 @@
 // Weavex MCP server 端到端测试客户端（JSON-RPC over stdio）
 // 用法：node test-client.mjs [server-path] [--mcp-stdio]
-//   server-path 为 weavx.exe（主应用单 exe，加 --mcp-stdio 进入 MCP 模式）
+//   server-path 为 weavex.exe（主应用单 exe，加 --mcp-stdio 进入 MCP 模式）
 // 通过 WEAVEX_DATA_DIR 指向测试副本，不会触碰真实数据。
 import { spawn } from "node:child_process";
 import { once } from "node:events";
 
 const serverArg = process.argv[2] || "server.mjs";
 const mcpStdio = process.argv.includes("--mcp-stdio");
-// 支持直接 spawn 可执行文件（weavx.exe --mcp-stdio）；否则按 Node 脚本处理
+// 支持直接 spawn 可执行文件（weavex.exe --mcp-stdio）；否则按 Node 脚本处理
 const isExe = /\.exe$/i.test(serverArg);
 const child = spawn(
   isExe ? serverArg : process.execPath,

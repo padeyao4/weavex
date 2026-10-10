@@ -10,11 +10,11 @@ description: 操作 Weavex 任务图与笔记数据。当用户提到 Weavex、�
 
 # Weavex 技能
 
-通过主程序 `weavx.exe --mcp-stdio`（单 exe MCP 模式，Rust，stdio）读写 Weavex 的 SQLite 数据与 Markdown 笔记，与 Weavex 应用完全同口径（filesystem-first，应用运行时会自动同步 UI）。
+通过主程序 `weavex.exe --mcp-stdio`（单 exe MCP 模式，Rust，stdio）读写 Weavex 的 SQLite 数据与 Markdown 笔记，与 Weavex 应用完全同口径（filesystem-first，应用运行时会自动同步 UI）。
 
 ## 入口
 
-所有工具都通过统一 CLI 调用（脚本位于本技能 `scripts/weavex.ps1`，PowerShell 直接调用 weavx.exe 的 `--mcp-stdio` 模式，**零 Node 依赖**）：
+所有工具都通过统一 CLI 调用（脚本位于本技能 `scripts/weavex.ps1`，PowerShell 直接调用 weavex.exe 的 `--mcp-stdio` 模式，**零 Node 依赖**）：
 
 ```
 powershell -NoProfile -ExecutionPolicy Bypass -File <本技能目录>/scripts/weavex.ps1 <tool> '<json 参数>' [--dev] [--data-dir <目录>]
@@ -23,7 +23,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File <本技能目录>/scripts/we
 - `<tool>`：19 个工具之一，参数与返回手册见 references/tools.md（必读）
 - `--dev`：操作开发版数据（`%APPDATA%\dev.padeyao4.weavex`）；不加则操作生产数据（`%APPDATA%\padeyao4.weavex`）。开发期用户通常用 `--dev`，与 `npm run dev` 的数据一致
 - `--data-dir <目录>`：显式指定数据目录（等效环境变量 `WEAVEX_DATA_DIR`），优先级最高
-- weavx.exe 路径可用环境变量 `WEAVEX_MCP_SERVER` 覆盖（默认开发构建 `C:\weavex-target\debug\weavx.exe`；生产 / 打包环境请设为安装的 weavx.exe 绝对路径）
+- weavex.exe 路径可用环境变量 `WEAVEX_MCP_SERVER` 覆盖（默认开发构建 `C:\weavex-target\debug\weavex.exe`；生产 / 打包环境请设为安装的 weavex.exe 绝对路径）
 
 输出为工具返回的 result JSON（2 空格缩进）。错误时退出码非 0，消息带 `[mcp]` 或 `工具错误：` 前缀。
 

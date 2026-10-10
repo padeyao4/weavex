@@ -2,7 +2,7 @@
 //
 // 与 Node 版 mcp-server/server.mjs 行为对齐（19 个工具、数据目录解析、返回 JSON 结构），
 // 直接复用 crate::db 数据层函数（单一 SQL 实现）。
-// 自 0.4 起与主应用合并为单一二进制：主程序 weavx.exe 以 --mcp-stdio 参数进入本模式，
+// 自 0.4 起与主应用合并为单一二进制：主程序 weavex.exe 以 --mcp-stdio 参数进入本模式，
 // 目标机器无需安装 Node，也无需额外分发 mcp-server.exe。
 //
 // 协议：MCP over stdio（newline-delimited JSON-RPC 2.0）。
@@ -932,7 +932,7 @@ fn handle(conn: &Connection, data_dir: &Path, method: &str, params: &Value) -> R
     }
 }
 
-// ---------------- stdio 入口（主程序 weavx.exe --mcp-stdio 调用） ----------------
+// ---------------- stdio 入口（主程序 weavex.exe --mcp-stdio 调用） ----------------
 
 pub fn stdio_main() {
     // 过滤掉本模式标志 --mcp-stdio，其余参数（--dev 等）继续生效

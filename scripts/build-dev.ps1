@@ -11,7 +11,7 @@
   用法：
     powershell -ExecutionPolicy Bypass -File scripts\build-dev.ps1
   产物：
-    C:\weavex-target\debug\weavx.exe（target 目录由 src-tauri\.cargo\config.toml 重定向到 C:/weavex-target）
+    C:\weavex-target\debug\weavex.exe（target 目录由 src-tauri\.cargo\config.toml 重定向到 C:/weavex-target）
 #>
 $ErrorActionPreference = "Stop"
 $root = "H:\workspace\weavex"
@@ -28,6 +28,6 @@ if ($LASTEXITCODE -ne 0) {
     Write-Host "[FAIL] 编译失败，详见 $outLog" -ForegroundColor Red
     exit 1
 }
-$exe = "C:\weavex-target\debug\weavx.exe"
+$exe = "C:\weavex-target\debug\weavex.exe"
 Write-Host "[OK] 编译成功: $exe" -ForegroundColor Green
 Write-Host "      接下来启动 vite 后再到豆包虚拟桌面启动 dev（见 doc\虚拟桌面跑dev.md）"

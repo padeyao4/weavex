@@ -11,7 +11,7 @@
 | 数据目录 | `%APPDATA%\padeyao4.weavex` | `%APPDATA%\dev.padeyao4.weavex` |
 | MCP 端口 | 8912 | 8913 |
 | 窗口标题 | Weavex | Weavex Dev |
-| 可执行文件 | `C:\Users\11818\AppData\Local\Weavex\weavx.exe`（安装版） | `C:\weavex-target\debug\weavx.exe`（cargo 编译） |
+| 可执行文件 | `C:\Users\11818\AppData\Local\Weavex\weavex.exe`（安装版） | `C:\weavex-target\debug\weavex.exe`（cargo 编译） |
 | 前端加载 | 内置 dist | `http://127.0.0.1:3300`（vite dev server） |
 
 单例互不冲突（按 identifier 隔离），因此两套可同时运行。
@@ -38,13 +38,13 @@ powershell -ExecutionPolicy Bypass -File H:\workspace\weavex\scripts\build-dev.p
 - 直接 `cargo build` 默认读取 `tauri.conf.json`（**prod identifier**），会与真实桌面 prod 单例冲突、启动即退。
 - 脚本设置 `TAURI_CONFIG` 环境变量（内容为 `src-tauri\tauri.dev.conf.json`）后 `cargo build`，
   产物即 **dev identifier + 无控制台** 的 debug exe。
-- 产物路径：`C:\weavex-target\debug\weavx.exe`（target 目录由 `src-tauri\.cargo\config.toml` 重定向到 `C:/weavex-target`，勿改）。
+- 产物路径：`C:\weavex-target\debug\weavex.exe`（target 目录由 `src-tauri\.cargo\config.toml` 重定向到 `C:/weavex-target`，勿改）。
 - 源码变更（前端除外）后需重新编译；前端变更只需 vite 热更新（无需重编）。
 
 ### 3. 在豆包虚拟桌面启动 dev
 
 方式 A（推荐，豆包侧自动完成）：让豆包执行“在虚拟桌面启动 Weavex dev”。
-豆包使用虚拟桌面 GUI 的 `launch_app` 启动 `weavx` 条目，窗口出现在虚拟桌面。
+豆包使用虚拟桌面 GUI 的 `launch_app` 启动 `weavex` 条目，窗口出现在虚拟桌面。
 
 方式 B（手动）：在豆包虚拟桌面上双击桌面 “Weavex” 图标启动。
 
@@ -61,7 +61,7 @@ powershell -ExecutionPolicy Bypass -File H:\workspace\weavex\scripts\build-dev.p
 
 | # | 检查项 | 方法 |
 | --- | --- | --- |
-| 1 | dev 进程存在 | `Get-Process weavx`（应看到 prod + dev 两个 PID） |
+| 1 | dev 进程存在 | `Get-Process weavex`（应看到 prod + dev 两个 PID） |
 | 2 | MCP 8913 监听 | `netstat -ano | Select-String ":8913"` |
 | 3 | dev 数据目录 | dev 日志/进程启动参数确认 `dev.padeyao4.weavex` |
 | 4 | 主窗口显示 | 虚拟桌面截屏可见 “Weavex Dev” 窗口与任务列表 |
@@ -73,7 +73,7 @@ powershell -ExecutionPolicy Bypass -File H:\workspace\weavex\scripts\build-dev.p
 - **启动即退**：exe 是 prod identifier（用错配置编译）→ 用 `build-dev.ps1` 重新编译。
 - **白屏 / ERR_CONNECTION_REFUSED**：vite 未启动，或监听了 IPv6 而非 127.0.0.1 → 跑 `start-dev-vite.ps1`。
 - **launch 返回 accepted_unverified**：属正常（虚拟桌面接受请求但窗口确认延迟），等待几秒后截屏确认，不要重复 launch。
-- **误杀 prod**：dev/prod 同名进程（weavx），杀进程前先区分 PID/数据目录。
+- **误杀 prod**：dev/prod 同名进程（weavex），杀进程前先区分 PID/数据目录。
 - **出现黑色 node 控制台窗口**：那是 MCP server（node server.mjs）的控制台；新版已用 `CREATE_NO_WINDOW` 隐藏。若仍出现（旧 exe 或手动启动的 server.mjs），说明该窗口属于豆包环境自身，勿强行结束。
 
 ## 相关文件

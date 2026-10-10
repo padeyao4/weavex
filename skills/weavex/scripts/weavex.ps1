@@ -1,4 +1,4 @@
-# weavex.ps1 —— Weavex 技能的统一调用入口（零 Node 依赖，调用主程序 weavx.exe 的 --mcp-stdio 模式）
+# weavex.ps1 —— Weavex 技能的统一调用入口（零 Node 依赖，调用主程序 weavex.exe 的 --mcp-stdio 模式）
 # 用法:
 #   powershell -NoProfile -ExecutionPolicy Bypass -File weavex.ps1 <tool> '<json 参数>' [--dev] [--data-dir <目录>]
 # 示例:
@@ -6,12 +6,12 @@
 #   .\weavex.ps1 get_graph '{"graphId":"c0bcc96d-..."}'
 #   .\weavex.ps1 create_node '{"graphId":"...","name":"写周报","parentId":"..."}' --dev
 #
-# 通过 stdio JSON-RPC 调用 weavx.exe --mcp-stdio（单 exe：主应用与 MCP server 合体，19 个工具）。
+# 通过 stdio JSON-RPC 调用 weavex.exe --mcp-stdio（单 exe：主应用与 MCP server 合体，19 个工具）。
 # 输出为工具返回的 result JSON（2 空格缩进）。错误时退出码非 0。
 #
 # 环境变量:
-#   WEAVEX_MCP_SERVER  weavx.exe 路径（默认指向开发构建 C:\weavex-target\debug\weavx.exe；
-#                      打包版/生产数据请设为本机安装的 weavx.exe 绝对路径）
+#   WEAVEX_MCP_SERVER  weavex.exe 路径（默认指向开发构建 C:\weavex-target\debug\weavex.exe；
+#                      打包版/生产数据请设为本机安装的 weavex.exe 绝对路径）
 #   WEAVEX_DATA_DIR    数据目录（也可用 --data-dir 传入）
 
 param()
@@ -50,11 +50,11 @@ if (-not $tool) {
   exit 1
 }
 
-$exe = if ($env:WEAVEX_MCP_SERVER) { $env:WEAVEX_MCP_SERVER } else { 'C:\weavex-target\debug\weavx.exe' }
+$exe = if ($env:WEAVEX_MCP_SERVER) { $env:WEAVEX_MCP_SERVER } else { 'C:\weavex-target\debug\weavex.exe' }
 
 if (-not (Test-Path -LiteralPath $exe)) {
-  [Console]::Error.WriteLine("无法启动 weavx.exe: 文件不存在 ($exe)")
-  [Console]::Error.WriteLine("开发期请先运行 npm run dev 生成 debug 构建；或用 WEAVEX_MCP_SERVER 指向已有 weavx.exe")
+  [Console]::Error.WriteLine("无法启动 weavex.exe: 文件不存在 ($exe)")
+  [Console]::Error.WriteLine("开发期请先运行 npm run dev 生成 debug 构建；或用 WEAVEX_MCP_SERVER 指向已有 weavex.exe")
   exit 1
 }
 
@@ -79,7 +79,7 @@ $reqs = @(
 ) -join "`r`n"
 
 # 用 .NET Process 直接 spawn：
-#  - weavx.exe 是 GUI 子系统程序，cmd /c 对它不等待（竞态）→ Process 显式 WaitForExit
+#  - weavex.exe 是 GUI 子系统程序，cmd /c 对它不等待（竞态）→ Process 显式 WaitForExit
 #  - BaseStream 按原始字节读写，UTF-8 无损（规避 PS 5.1 管道/编码转码）
 $psi = New-Object System.Diagnostics.ProcessStartInfo
 $psi.FileName = $exe
@@ -93,13 +93,13 @@ $psi.Arguments = $exeArgs
 try {
   $proc = [System.Diagnostics.Process]::Start($psi)
 } catch {
-  [Console]::Error.WriteLine("无法启动 weavx.exe: " + $_.Exception.Message)
+  [Console]::Error.WriteLine("无法启动 weavex.exe: " + $_.Exception.Message)
   exit 1
 }
 
 $reqBytes = [Text.Encoding]::UTF8.GetBytes($reqs)
 $proc.StandardInput.BaseStream.Write($reqBytes, 0, $reqBytes.Length)
-$proc.StandardInput.BaseStream.Close()   # stdin EOF → weavx.exe 处理完请求即退出
+$proc.StandardInput.BaseStream.Close()   # stdin EOF → weavex.exe 处理完请求即退出
 
 $errMs = New-Object System.IO.MemoryStream
 $proc.StandardError.BaseStream.CopyTo($errMs)
@@ -118,7 +118,7 @@ if ($stderrText) {
 }
 
 if (-not $respText.Trim()) {
-  [Console]::Error.WriteLine("weavx.exe 无输出（数据库不存在或请求失败，请查看上方 [mcp] 日志）")
+  [Console]::Error.WriteLine("weavex.exe 无输出（数据库不存在或请求失败，请查看上方 [mcp] 日志）")
   exit 1
 }
 
