@@ -52,10 +52,9 @@ function onUpdate(current: TaskNode, other: TaskNode) {
     other.priority = (other.priority ?? 0) + Math.random() * 100;
   }
   [current.priority, other.priority] = [other.priority, current.priority];
-  graphStore.updateNode(current?.graphId, current);
-  graphStore.updateNode(other?.graphId, other);
+  graphStore.updateNode(current?.graphId, current, { persist: true });
+  graphStore.updateNode(other?.graphId, other, { persist: true });
   debug(`Dragging completed, ${current.priority} <-> ${other.priority}`);
-  graphStore.debouncedSave();
 }
 
 const debounceUpdate = debounce(onUpdate, 10);

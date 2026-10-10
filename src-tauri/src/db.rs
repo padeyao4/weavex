@@ -99,6 +99,64 @@ pub struct NoteMetaDto {
     pub updated_at: i64,
 }
 
+/// 图级元数据部分更新（filesystem-first 细粒度写：只更新传入的字段）。
+/// 图不存在且带 name 时按新建处理（INSERT），否则动态 UPDATE。
+#[derive(Serialize, Deserialize, Clone, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct GraphMetaPatch {
+    pub id: String,
+    #[serde(default)]
+    pub name: Option<String>,
+    #[serde(default)]
+    pub priority: Option<f64>,
+    #[serde(default)]
+    pub show_archive: Option<bool>,
+    #[serde(default)]
+    pub viewport: Option<String>,
+    #[serde(default)]
+    pub root_node_ids: Option<Vec<String>>,
+    #[serde(default)]
+    pub updated_at: Option<i64>,
+}
+
+/// 节点部分更新（filesystem-first 细粒度写）。
+/// parent 用 Option<Option<String>> 区分三种语义：
+///   None          = 不更新 parent
+///   Some(None)    = 置空 parent（节点脱离父级成为根）
+///   Some(Some(p)) = 设为 p
+#[derive(Serialize, Deserialize, Clone, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct NodePatch {
+    pub id: String,
+    pub graph_id: String,
+    #[serde(default)]
+    pub name: Option<String>,
+    #[serde(default)]
+    pub description: Option<String>,
+    #[serde(default)]
+    pub record: Option<String>,
+    #[serde(default)]
+    pub start_at: Option<i64>,
+    #[serde(default)]
+    pub end_at: Option<i64>,
+    #[serde(default)]
+    pub parent: Option<Option<String>>,
+    #[serde(default)]
+    pub completed_at: Option<i64>,
+    #[serde(default)]
+    pub completed: Option<bool>,
+    #[serde(default)]
+    pub expanded: Option<bool>,
+    #[serde(default)]
+    pub priority: Option<f64>,
+    #[serde(default)]
+    pub is_followed: Option<bool>,
+    #[serde(default)]
+    pub is_archive: Option<bool>,
+    #[serde(default)]
+    pub updated_at: Option<i64>,
+}
+
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct MigrateResult {
@@ -181,6 +239,14 @@ struct LegacyNoteMeta {
 
 // ---------------- 连接与建表 ----------------
 
+/// 当前毫秒时间戳（与前端/MCP 的 Date.now() 口径一致）
+pub fn now_ms() -> i64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_millis() as i64)
+        .unwrap_or(0)
+}
+
 /// 打开（不存在则创建）工作目录下的 weavex.db，并确保表结构存在。
 pub fn open_db(path: &Path) -> Result<Connection, String> {
     if let Some(parent) = path.parent() {
@@ -188,6 +254,9 @@ pub fn open_db(path: &Path) -> Result<Connection, String> {
     }
     let conn = Connection::open(path)
         .map_err(|e| format!("Failed to open database {}: {}", path.display(), e))?;
+    // 多写者（应用 UI + MCP 独立进程）直写同一库：等待而非立刻报 SQLITE_BUSY
+    conn.busy_timeout(std::time::Duration::from_millis(5000))
+        .map_err(|e| format!("Failed to set busy_timeout: {}", e))?;
     create_schema(&conn)?;
     Ok(conn)
 }
@@ -462,6 +531,348 @@ pub fn delete_graph(conn: &Connection, id: &str) -> Result<(), String> {
     Ok(())
 }
 
+// ---------------- 细粒度图/节点/边操作（filesystem-first） ----------------
+// 与 mcp-server/server.mjs 的 SQL 口径保持一致：节点字段映射、root_node_ids 维护、
+// 删除节点时递归子树 + 连带边 + 根列表清理。每条命令单条事务，避免“全量写回”覆盖外部写入。
+
+/// 递归收集 graph_id 下 node_id 的全部后代 id（含自身），与 MCP collectSubtreeIds 一致。
+fn collect_subtree_ids(conn: &Connection, graph_id: &str, node_id: &str) -> Result<Vec<String>, String> {
+    let mut ids: HashSet<String> = HashSet::from([node_id.to_string()]);
+    let mut queue: Vec<String> = vec![node_id.to_string()];
+    let mut stmt = conn
+        .prepare("SELECT id FROM nodes WHERE graph_id = ?1 AND parent_id = ?2")
+        .map_err(|e| e.to_string())?;
+    while let Some(cur) = queue.pop() {
+        let rows = stmt
+            .query_map(params![graph_id, cur], |row| row.get::<_, String>(0))
+            .map_err(|e| e.to_string())?;
+        for r in rows {
+            let child = r.map_err(|e| e.to_string())?;
+            if ids.insert(child.clone()) {
+                queue.push(child);
+            }
+        }
+    }
+    Ok(ids.into_iter().collect())
+}
+
+fn get_graph_row(conn: &Connection, graph_id: &str) -> Result<(String, String), String> {
+    conn.query_row(
+        "SELECT id, root_node_ids FROM graphs WHERE id = ?1",
+        params![graph_id],
+        |row| Ok((row.get(0)?, row.get(1)?)),
+    )
+    .map_err(|e| format!("项目不存在: {} ({})", graph_id, e))
+}
+
+fn parse_root_ids(json: &str) -> Vec<String> {
+    serde_json::from_str(json).unwrap_or_default()
+}
+
+fn set_root_ids(conn: &Connection, graph_id: &str, ids: &[String], updated_at: i64) -> Result<(), String> {
+    let json = serde_json::to_string(ids).unwrap_or_else(|_| "[]".into());
+    conn.execute(
+        "UPDATE graphs SET root_node_ids = ?1, updated_at = ?2 WHERE id = ?3",
+        params![json, updated_at, graph_id],
+    )
+    .map_err(|e| format!("Failed to update root_node_ids: {}", e))?;
+    Ok(())
+}
+
+/// 图级元数据部分更新：只更新传入字段；图不存在且带 name 时按新建处理。
+pub fn upsert_graph_meta(conn: &Connection, patch: &GraphMetaPatch) -> Result<(), String> {
+    let mut fields: Vec<(String, Box<dyn rusqlite::types::ToSql>)> = Vec::new();
+
+    if let Some(name) = &patch.name {
+        fields.push(("name".into(), Box::new(name.clone())));
+    }
+    if let Some(p) = patch.priority {
+        fields.push(("priority".into(), Box::new(p)));
+    }
+    if let Some(sa) = patch.show_archive {
+        fields.push(("show_archive".into(), Box::new(sa)));
+    }
+    if let Some(vp) = &patch.viewport {
+        fields.push(("viewport".into(), Box::new(vp.clone())));
+    }
+    if let Some(roots) = &patch.root_node_ids {
+        let json = serde_json::to_string(roots).unwrap_or_else(|_| "[]".into());
+        fields.push(("root_node_ids".into(), Box::new(json)));
+    }
+    let now = now_ms();
+    fields.push(("updated_at".into(), Box::new(patch.updated_at.unwrap_or(now))));
+
+    let sets: Vec<String> = fields
+        .iter()
+        .enumerate()
+        .map(|(i, (col, _))| format!("{} = ?{}", col, i + 1))
+        .collect();
+    let sql = format!(
+        "UPDATE graphs SET {} WHERE id = ?{}",
+        sets.join(", "),
+        fields.len() + 1
+    );
+
+    let mut params: Vec<Box<dyn rusqlite::types::ToSql>> = Vec::new();
+    for (_, v) in fields.drain(..) {
+        params.push(v);
+    }
+    params.push(Box::new(patch.id.clone()));
+
+    let mut stmt = conn.prepare_cached(&sql).map_err(|e| e.to_string())?;
+    let updated = stmt
+        .execute(rusqlite::params_from_iter(
+            params.iter().map(|v| v as &dyn rusqlite::types::ToSql),
+        ))
+        .map_err(|e| format!("Failed to upsert graph meta {}: {}", patch.id, e))?;
+    drop(stmt);
+
+    if updated == 0 {
+        // 图不存在：作为新建处理（仅当提供了 name 才插入；否则报错）
+        let name = patch
+            .name
+            .clone()
+            .ok_or_else(|| format!("项目不存在: {}", patch.id))?;
+        let t = now;
+        let roots = patch.root_node_ids.clone().unwrap_or_default();
+        let root_json = serde_json::to_string(&roots).unwrap_or_else(|_| "[]".into());
+        conn.execute(
+            "INSERT INTO graphs (id, name, created_at, updated_at, root_node_ids, show_archive, priority, viewport)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+            params![
+                patch.id,
+                name,
+                patch.updated_at.unwrap_or(t),
+                t,
+                root_json,
+                patch.show_archive,
+                patch.priority,
+                patch.viewport
+            ],
+        )
+        .map_err(|e| format!("Failed to insert graph {}: {}", patch.id, e))?;
+    }
+    Ok(())
+}
+
+/// 创建节点：插入全字段；parent 为空时把节点追加进 root_node_ids（与 MCP create_node 一致）。
+pub fn create_node(conn: &Connection, graph_id: &str, dto: &NodeDto) -> Result<(), String> {
+    get_graph_row(conn, graph_id)?;
+    let t = dto.created_at.max(dto.updated_at).max(now_ms());
+    conn.execute(
+        "INSERT INTO nodes
+           (id, graph_id, name, description, record, created_at, updated_at,
+            start_at, end_at, parent_id, completed_at, completed, expanded,
+            priority, is_followed, is_archive)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16)",
+        params![
+            dto.id,
+            graph_id,
+            dto.name,
+            dto.description,
+            dto.record,
+            t,
+            t,
+            dto.start_at,
+            dto.end_at,
+            dto.parent,
+            dto.completed_at,
+            dto.completed,
+            dto.expanded,
+            dto.priority,
+            dto.is_followed,
+            dto.is_archive
+        ],
+    )
+    .map_err(|e| format!("Failed to create node {}: {}", dto.id, e))?;
+
+    if dto.parent.is_none() {
+        let (_, root_json) = get_graph_row(conn, graph_id)?;
+        let mut roots = parse_root_ids(&root_json);
+        if !roots.contains(&dto.id) {
+            roots.push(dto.id.clone());
+        }
+        set_root_ids(conn, graph_id, &roots, t)?;
+    }
+    Ok(())
+}
+
+/// 更新节点：只更新传入字段；parent 变化时联动 root_node_ids（脱离父级变根/挂到父级移出根列表）。
+pub fn update_node(conn: &Connection, patch: &NodePatch) -> Result<(), String> {
+    let exists = conn
+        .query_row(
+            "SELECT parent_id FROM nodes WHERE graph_id = ?1 AND id = ?2",
+            params![patch.graph_id, patch.id],
+            |row| row.get::<_, Option<String>>(0),
+        )
+        .map_err(|e| format!("节点不存在: {} ({})", patch.id, e))?;
+
+    let mut fields: Vec<(String, Box<dyn rusqlite::types::ToSql>)> = Vec::new();
+
+    if let Some(name) = &patch.name {
+        fields.push(("name".into(), Box::new(name.clone())));
+    }
+    if let Some(d) = &patch.description {
+        fields.push(("description".into(), Box::new(d.clone())));
+    }
+    if let Some(r) = &patch.record {
+        fields.push(("record".into(), Box::new(r.clone())));
+    }
+    if let Some(s) = patch.start_at {
+        fields.push(("start_at".into(), Box::new(s)));
+    }
+    if let Some(e) = patch.end_at {
+        fields.push(("end_at".into(), Box::new(e)));
+    }
+    if let Some(p) = patch.parent.clone() {
+        fields.push(("parent_id".into(), Box::new(p)));
+    }
+    if let Some(c) = patch.completed_at {
+        fields.push(("completed_at".into(), Box::new(c)));
+    }
+    if let Some(c) = patch.completed {
+        fields.push(("completed".into(), Box::new(c)));
+    }
+    if let Some(e) = patch.expanded {
+        fields.push(("expanded".into(), Box::new(e)));
+    }
+    if let Some(p) = patch.priority {
+        fields.push(("priority".into(), Box::new(p)));
+    }
+    if let Some(f) = patch.is_followed {
+        fields.push(("is_followed".into(), Box::new(f)));
+    }
+    if let Some(a) = patch.is_archive {
+        fields.push(("is_archive".into(), Box::new(a)));
+    }
+    let t = patch.updated_at.unwrap_or_else(now_ms);
+    fields.push(("updated_at".into(), Box::new(t)));
+
+    let sets: Vec<String> = fields
+        .iter()
+        .enumerate()
+        .map(|(i, (col, _))| format!("{} = ?{}", col, i + 1))
+        .collect();
+    let sql = format!(
+        "UPDATE nodes SET {} WHERE graph_id = ?{} AND id = ?{}",
+        sets.join(", "),
+        fields.len() + 1,
+        fields.len() + 2
+    );
+
+    let mut params: Vec<Box<dyn rusqlite::types::ToSql>> = Vec::new();
+    for (_, v) in fields.drain(..) {
+        params.push(v);
+    }
+    params.push(Box::new(patch.graph_id.clone()));
+    params.push(Box::new(patch.id.clone()));
+
+    let mut stmt = conn.prepare_cached(&sql).map_err(|e| e.to_string())?;
+    stmt.execute(rusqlite::params_from_iter(
+        params.iter().map(|v| v as &dyn rusqlite::types::ToSql),
+    ))
+    .map_err(|e| format!("Failed to update node {}: {}", patch.id, e))?;
+    drop(stmt);
+
+    // parent 变更 → root_node_ids 联动
+    if let Some(new_parent) = patch.parent.clone() {
+        let (_, root_json) = get_graph_row(conn, &patch.graph_id)?;
+        let mut roots = parse_root_ids(&root_json);
+        let was_root = exists.is_none();
+        match new_parent {
+            Some(_) => {
+                if was_root {
+                    roots.retain(|id| id != &patch.id);
+                }
+            }
+            None => {
+                if !was_root && !roots.contains(&patch.id) {
+                    roots.push(patch.id.clone());
+                }
+            }
+        }
+        set_root_ids(conn, &patch.graph_id, &roots, t)?;
+    }
+    Ok(())
+}
+
+/// 删除节点：递归删除子树 + 连带边 + 从 root_node_ids 清理（与 MCP delete_node 一致）。返回删除的节点数。
+pub fn delete_node(conn: &Connection, graph_id: &str, node_id: &str) -> Result<i64, String> {
+    let ids = collect_subtree_ids(conn, graph_id, node_id)?;
+    let count = ids.len() as i64;
+    let placeholders: Vec<&str> = ids.iter().map(|_| "?").collect();
+    let ph = placeholders.join(",");
+
+    let mut edge_params: Vec<Box<dyn rusqlite::types::ToSql>> = Vec::new();
+    edge_params.push(Box::new(graph_id.to_string()));
+    for id in &ids { edge_params.push(Box::new(id.clone())); }
+    for id in &ids { edge_params.push(Box::new(id.clone())); }
+    let mut estmt = conn
+        .prepare(&format!(
+            "DELETE FROM edges WHERE graph_id = ?1 AND (source_id IN ({}) OR target_id IN ({}))",
+            ph, ph
+        ))
+        .map_err(|e| e.to_string())?;
+    estmt.execute(rusqlite::params_from_iter(edge_params.iter().map(|v| v as &dyn rusqlite::types::ToSql)))
+        .map_err(|e| format!("Failed to delete edges: {}", e))?;
+    drop(estmt);
+
+    let mut node_params: Vec<Box<dyn rusqlite::types::ToSql>> = Vec::new();
+    node_params.push(Box::new(graph_id.to_string()));
+    for id in &ids { node_params.push(Box::new(id.clone())); }
+    let mut nstmt = conn
+        .prepare(&format!("DELETE FROM nodes WHERE graph_id = ?1 AND id IN ({})", ph))
+        .map_err(|e| e.to_string())?;
+    nstmt.execute(rusqlite::params_from_iter(node_params.iter().map(|v| v as &dyn rusqlite::types::ToSql)))
+        .map_err(|e| format!("Failed to delete nodes: {}", e))?;
+    drop(nstmt);
+
+    let (_, root_json) = get_graph_row(conn, graph_id)?;
+    let roots = parse_root_ids(&root_json);
+    let new_roots: Vec<String> = roots.into_iter().filter(|id| !ids.contains(id)).collect();
+    set_root_ids(conn, graph_id, &new_roots, now_ms())?;
+
+    Ok(count)
+}
+
+/// 建立前置/依赖关系（target 依赖 source 完成）。幂等（INSERT OR IGNORE）。
+pub fn add_edge(conn: &Connection, graph_id: &str, source_id: &str, target_id: &str) -> Result<(), String> {
+    conn.execute(
+        "INSERT OR IGNORE INTO edges (graph_id, source_id, target_id) VALUES (?1, ?2, ?3)",
+        params![graph_id, source_id, target_id],
+    )
+    .map_err(|e| format!("Failed to add edge {}-{}: {}", source_id, target_id, e))?;
+    Ok(())
+}
+
+/// 删除前置/依赖关系。
+pub fn remove_edge(conn: &Connection, graph_id: &str, source_id: &str, target_id: &str) -> Result<(), String> {
+    conn.execute(
+        "DELETE FROM edges WHERE graph_id = ?1 AND source_id = ?2 AND target_id = ?3",
+        params![graph_id, source_id, target_id],
+    )
+    .map_err(|e| format!("Failed to remove edge {}-{}: {}", source_id, target_id, e))?;
+    Ok(())
+}
+
+/// 删除笔记：删除 notes 行并连带删除正文文件（notes_dir 为数据目录下的 notes/ 目录）。
+pub fn delete_note(conn: &Connection, note_id: &str, notes_dir: &Path) -> Result<(), String> {
+    let row: Option<String> = conn
+        .query_row("SELECT path FROM notes WHERE id = ?1", params![note_id], |r| r.get(0))
+        .map_err(|e| format!("笔记不存在: {} ({})", note_id, e))?;
+    conn.execute("DELETE FROM notes WHERE id = ?1", params![note_id])
+        .map_err(|e| format!("Failed to delete note {}: {}", note_id, e))?;
+    if let Some(path) = row {
+        if !path.is_empty() {
+            let file = notes_dir.join(&path);
+            if file.exists() {
+                fs::remove_file(&file).map_err(|e| format!("Failed to delete note file {}: {}", file.display(), e))?;
+            }
+        }
+    }
+    Ok(())
+}
+
 // ---------------- 笔记元数据 ----------------
 
 pub fn load_note_metas(conn: &Connection) -> Result<String, String> {
@@ -632,6 +1043,9 @@ pub fn db_init(state: tauri::State<Db>, work_dir: &str) -> Result<(), String> {
     *guard = None;
     let conn = open_db(&Path::new(work_dir).join(DB_FILE))?;
     *guard = Some(conn);
+    // 以真实数据目录校正 watcher 监听范围（dev/prod 目录名不同）
+    crate::watcher::set_watched_dir(Path::new(work_dir).to_path_buf());
+    crate::watcher::mark_self_write();
     Ok(())
 }
 
@@ -652,7 +1066,9 @@ pub fn db_save_graph(state: tauri::State<Db>, graph_json: &str) -> Result<(), St
         .ok_or("Database not initialized, call db_init first")?;
     let dto: GraphDto =
         serde_json::from_str(graph_json).map_err(|e| format!("Invalid graph payload: {}", e))?;
-    save_graph(conn, &dto)
+    save_graph(conn, &dto)?;
+    crate::watcher::mark_self_write();
+    Ok(())
 }
 
 #[tauri::command]
@@ -661,7 +1077,9 @@ pub fn db_delete_graph(state: tauri::State<Db>, id: &str) -> Result<(), String> 
     let conn = guard
         .as_ref()
         .ok_or("Database not initialized, call db_init first")?;
-    delete_graph(conn, id)
+    delete_graph(conn, id)?;
+    crate::watcher::mark_self_write();
+    Ok(())
 }
 
 #[tauri::command]
@@ -681,7 +1099,9 @@ pub fn db_upsert_note_meta(state: tauri::State<Db>, meta_json: &str) -> Result<(
         .ok_or("Database not initialized, call db_init first")?;
     let dto: NoteMetaDto =
         serde_json::from_str(meta_json).map_err(|e| format!("Invalid note meta payload: {}", e))?;
-    upsert_note_meta(conn, &dto)
+    upsert_note_meta(conn, &dto)?;
+    crate::watcher::mark_self_write();
+    Ok(())
 }
 
 #[tauri::command]
@@ -690,7 +1110,97 @@ pub fn db_migrate(state: tauri::State<Db>, work_dir: &str) -> Result<MigrateResu
     let conn = guard
         .as_mut()
         .ok_or("Database not initialized, call db_init first")?;
-    migrate_legacy(conn, work_dir)
+    migrate_legacy(conn, work_dir).map(|r| {
+        crate::watcher::mark_self_write();
+        r
+    })
+}
+
+// ---------------- 细粒度命令（filesystem-first：UI/MCP 单条写，不整图覆盖） ----------------
+
+#[tauri::command]
+pub fn db_upsert_graph_meta(state: tauri::State<Db>, meta_json: &str) -> Result<(), String> {
+    let guard = state.0.lock().map_err(|e| e.to_string())?;
+    let conn = guard
+        .as_ref()
+        .ok_or("Database not initialized, call db_init first")?;
+    let patch: GraphMetaPatch = serde_json::from_str(meta_json)
+        .map_err(|e| format!("Invalid graph meta payload: {}", e))?;
+    upsert_graph_meta(conn, &patch)?;
+    crate::watcher::mark_self_write();
+    Ok(())
+}
+
+#[tauri::command]
+pub fn db_create_node(state: tauri::State<Db>, graph_id: &str, node_json: &str) -> Result<(), String> {
+    let guard = state.0.lock().map_err(|e| e.to_string())?;
+    let conn = guard
+        .as_ref()
+        .ok_or("Database not initialized, call db_init first")?;
+    let dto: NodeDto =
+        serde_json::from_str(node_json).map_err(|e| format!("Invalid node payload: {}", e))?;
+    create_node(conn, graph_id, &dto)?;
+    crate::watcher::mark_self_write();
+    Ok(())
+}
+
+#[tauri::command]
+pub fn db_update_node(state: tauri::State<Db>, node_json: &str) -> Result<(), String> {
+    let guard = state.0.lock().map_err(|e| e.to_string())?;
+    let conn = guard
+        .as_ref()
+        .ok_or("Database not initialized, call db_init first")?;
+    let patch: NodePatch =
+        serde_json::from_str(node_json).map_err(|e| format!("Invalid node patch payload: {}", e))?;
+    update_node(conn, &patch)?;
+    crate::watcher::mark_self_write();
+    Ok(())
+}
+
+#[tauri::command]
+pub fn db_delete_node(state: tauri::State<Db>, graph_id: &str, node_id: &str) -> Result<i64, String> {
+    let guard = state.0.lock().map_err(|e| e.to_string())?;
+    let conn = guard
+        .as_ref()
+        .ok_or("Database not initialized, call db_init first")?;
+    delete_node(conn, graph_id, node_id).map(|n| {
+        crate::watcher::mark_self_write();
+        n
+    })
+}
+
+#[tauri::command]
+pub fn db_add_edge(state: tauri::State<Db>, graph_id: &str, source_id: &str, target_id: &str) -> Result<(), String> {
+    let guard = state.0.lock().map_err(|e| e.to_string())?;
+    let conn = guard
+        .as_ref()
+        .ok_or("Database not initialized, call db_init first")?;
+    add_edge(conn, graph_id, source_id, target_id)?;
+    crate::watcher::mark_self_write();
+    Ok(())
+}
+
+#[tauri::command]
+pub fn db_remove_edge(state: tauri::State<Db>, graph_id: &str, source_id: &str, target_id: &str) -> Result<(), String> {
+    let guard = state.0.lock().map_err(|e| e.to_string())?;
+    let conn = guard
+        .as_ref()
+        .ok_or("Database not initialized, call db_init first")?;
+    remove_edge(conn, graph_id, source_id, target_id)?;
+    crate::watcher::mark_self_write();
+    Ok(())
+}
+
+#[tauri::command]
+pub fn db_delete_note(state: tauri::State<Db>, note_id: &str, data_dir: &str) -> Result<(), String> {
+    let guard = state.0.lock().map_err(|e| e.to_string())?;
+    let conn = guard
+        .as_ref()
+        .ok_or("Database not initialized, call db_init first")?;
+    let notes_dir = Path::new(data_dir).join("notes");
+    delete_note(conn, note_id, &notes_dir)?;
+    crate::watcher::mark_self_write();
+    Ok(())
 }
 
 #[tauri::command]
@@ -698,7 +1208,9 @@ pub fn move_file(src: &str, dst: &str) -> Result<(), String> {
     if let Some(parent) = Path::new(dst).parent() {
         fs::create_dir_all(parent).map_err(|e| e.to_string())?;
     }
-    fs::rename(src, dst).map_err(|e| format!("Failed to move {} -> {}: {}", src, dst, e))
+    fs::rename(src, dst).map_err(|e| format!("Failed to move {} -> {}: {}", src, dst, e))?;
+    crate::watcher::mark_self_write();
+    Ok(())
 }
 
 #[tauri::command]
@@ -842,6 +1354,265 @@ mod tests {
         assert_eq!(metas.len(), 1);
         assert_eq!(metas[0].title, "改名了");
         assert_eq!(metas[0].updated_at, 3);
+        drop(conn);
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn graph_meta_patch_insert_and_update() {
+        let dir = temp_workdir("meta");
+        let db_path = dir.join(DB_FILE);
+        let conn = open_db(&db_path).unwrap();
+
+        // 新图（INSERT 分支）
+        upsert_graph_meta(
+            &conn,
+            &GraphMetaPatch {
+                id: "g1".into(),
+                name: Some("项目A".into()),
+                priority: Some(5.0),
+                show_archive: Some(false),
+                ..Default::default()
+            },
+        )
+        .unwrap();
+
+        // 更新部分字段
+        upsert_graph_meta(
+            &conn,
+            &GraphMetaPatch {
+                id: "g1".into(),
+                name: Some("项目A改".into()),
+                root_node_ids: Some(vec!["a".into(), "b".into()]),
+                ..Default::default()
+            },
+        )
+        .unwrap();
+
+        let graphs: Vec<GraphDto> = serde_json::from_str(&load_graphs(&conn).unwrap()).unwrap();
+        assert_eq!(graphs.len(), 1);
+        assert_eq!(graphs[0].name, "项目A改");
+        assert_eq!(graphs[0].root_node_ids, vec!["a".to_string(), "b".to_string()]);
+        assert_eq!(graphs[0].priority, Some(5.0));
+        assert!(graphs[0].updated_at > 0);
+        drop(conn);
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn create_update_delete_node_with_root_link() {
+        let dir = temp_workdir("node");
+        let db_path = dir.join(DB_FILE);
+        let conn = open_db(&db_path).unwrap();
+
+        upsert_graph_meta(
+            &conn,
+            &GraphMetaPatch {
+                id: "g1".into(),
+                name: Some("项目".into()),
+                ..Default::default()
+            },
+        )
+        .unwrap();
+
+        // 根节点 → 自动进 root_node_ids
+        create_node(
+            &conn,
+            "g1",
+            &NodeDto {
+                id: "a".into(),
+                name: "根".into(),
+                created_at: 1,
+                updated_at: 1,
+                start_at: 1,
+                end_at: 1,
+                priority: Some(100.0),
+                expanded: Some(false),
+                is_followed: Some(false),
+                ..Default::default()
+            },
+        )
+        .unwrap();
+
+        // 子节点（parent=a）→ 不进 root
+        create_node(
+            &conn,
+            "g1",
+            &NodeDto {
+                id: "b".into(),
+                name: "子".into(),
+                parent: Some("a".into()),
+                created_at: 2,
+                updated_at: 2,
+                ..Default::default()
+            },
+        )
+        .unwrap();
+
+        let graphs: Vec<GraphDto> = serde_json::from_str(&load_graphs(&conn).unwrap()).unwrap();
+        assert_eq!(graphs[0].root_node_ids, vec!["a".to_string()]);
+        assert_eq!(graphs[0].nodes.len(), 2);
+        assert_eq!(graphs[0].nodes[1].parent.as_deref(), Some("a"));
+
+        // 更新字段
+        update_node(
+            &conn,
+            &NodePatch {
+                id: "b".into(),
+                graph_id: "g1".into(),
+                name: Some("子改".into()),
+                completed: Some(true),
+                completed_at: Some(999),
+                expanded: Some(true),
+                ..Default::default()
+            },
+        )
+        .unwrap();
+        let graphs2: Vec<GraphDto> = serde_json::from_str(&load_graphs(&conn).unwrap()).unwrap();
+        assert_eq!(graphs2[0].nodes[1].name, "子改");
+        assert!(graphs2[0].nodes[1].completed);
+        assert_eq!(graphs2[0].nodes[1].completed_at, 999);
+        assert_eq!(graphs2[0].nodes[1].expanded, Some(true));
+
+        // parent 置空 → b 变根，进 root_node_ids
+        update_node(
+            &conn,
+            &NodePatch {
+                id: "b".into(),
+                graph_id: "g1".into(),
+                parent: Some(None),
+                ..Default::default()
+            },
+        )
+        .unwrap();
+        let graphs3: Vec<GraphDto> = serde_json::from_str(&load_graphs(&conn).unwrap()).unwrap();
+        assert_eq!(graphs3[0].nodes[1].parent, None);
+        let mut roots = graphs3[0].root_node_ids.clone();
+        roots.sort();
+        assert_eq!(roots, vec!["a".to_string(), "b".to_string()]);
+
+        // 再挂回 a → b 移出 root
+        update_node(
+            &conn,
+            &NodePatch {
+                id: "b".into(),
+                graph_id: "g1".into(),
+                parent: Some(Some("a".into())),
+                ..Default::default()
+            },
+        )
+        .unwrap();
+        let graphs4: Vec<GraphDto> = serde_json::from_str(&load_graphs(&conn).unwrap()).unwrap();
+        assert_eq!(graphs4[0].root_node_ids, vec!["a".to_string()]);
+
+        drop(conn);
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn delete_node_removes_subtree_and_edges() {
+        let dir = temp_workdir("delnode");
+        let db_path = dir.join(DB_FILE);
+        let conn = open_db(&db_path).unwrap();
+
+        upsert_graph_meta(
+            &conn,
+            &GraphMetaPatch {
+                id: "g1".into(),
+                name: Some("项目".into()),
+                root_node_ids: Some(vec!["a".into()]),
+                ..Default::default()
+            },
+        )
+        .unwrap();
+        for (id, parent, name) in [
+            ("a", None, "根"),
+            ("b", Some("a"), "子B"),
+            ("c", Some("b"), "孙C"),
+            ("d", None, "根D"),
+        ] {
+            create_node(
+                &conn,
+                "g1",
+                &NodeDto {
+                    id: id.into(),
+                    name: name.into(),
+                    parent: parent.map(|p| p.to_string()),
+                    created_at: 1,
+                    updated_at: 1,
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+        }
+        add_edge(&conn, "g1", "b", "d").unwrap();
+        add_edge(&conn, "g1", "a", "d").unwrap();
+
+        // 删除 b → 连带 c 与边 (b-d, a-d 中涉及 b 的部分)
+        let removed = delete_node(&conn, "g1", "b").unwrap();
+        assert_eq!(removed, 2); // b + c
+
+        let graphs: Vec<GraphDto> = serde_json::from_str(&load_graphs(&conn).unwrap()).unwrap();
+        assert_eq!(graphs[0].nodes.len(), 2); // a, d
+        assert_eq!(graphs[0].edges.len(), 1); // a-d 保留，b-d 删除
+        let mut roots = graphs[0].root_node_ids.clone();
+        roots.sort();
+        assert_eq!(roots, vec!["a".to_string(), "d".to_string()]);
+        drop(conn);
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn edge_add_remove_roundtrip() {
+        let dir = temp_workdir("edge");
+        let db_path = dir.join(DB_FILE);
+        let conn = open_db(&db_path).unwrap();
+
+        upsert_graph_meta(
+            &conn,
+            &GraphMetaPatch {
+                id: "g1".into(),
+                name: Some("项目".into()),
+                ..Default::default()
+            },
+        )
+        .unwrap();
+        add_edge(&conn, "g1", "a", "b").unwrap();
+        add_edge(&conn, "g1", "a", "b").unwrap(); // 幂等
+        remove_edge(&conn, "g1", "a", "b").unwrap();
+
+        let graphs: Vec<GraphDto> = serde_json::from_str(&load_graphs(&conn).unwrap()).unwrap();
+        assert!(graphs[0].edges.is_empty());
+        drop(conn);
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn delete_note_removes_row_and_file() {
+        let dir = temp_workdir("delnote");
+        let db_path = dir.join(DB_FILE);
+        let notes_dir = dir.join("notes");
+        fs::create_dir_all(&notes_dir).unwrap();
+        let conn = open_db(&db_path).unwrap();
+
+        upsert_note_meta(
+            &conn,
+            &NoteMetaDto {
+                id: "n1".into(),
+                title: "笔记".into(),
+                path: Some("n1.md".into()),
+                created_at: 1,
+                updated_at: 2,
+            },
+        )
+        .unwrap();
+        fs::write(notes_dir.join("n1.md"), "hello").unwrap();
+
+        delete_note(&conn, "n1", &notes_dir).unwrap();
+        assert!(!notes_dir.join("n1.md").exists());
+        let metas: Vec<NoteMetaDto> =
+            serde_json::from_str(&load_note_metas(&conn).unwrap()).unwrap();
+        assert!(metas.is_empty());
         drop(conn);
         let _ = fs::remove_dir_all(&dir);
     }

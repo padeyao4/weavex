@@ -96,16 +96,6 @@ npm run build
 npm run test
 ```
 
-## 🤝 贡献
-
-欢迎提交 Issue 和 Pull Request 来帮助改进 Weavex！
-
-1. Fork 项目
-2. 创建功能分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 开启 Pull Request
-
 ### 开发规范
 - 代码风格遵循 ESLint 和 Prettier 配置
 - 提交信息使用约定式提交规范

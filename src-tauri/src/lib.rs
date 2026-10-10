@@ -10,6 +10,7 @@ use std::process::Command;
 
 mod db;
 mod mcp;
+mod watcher;
 use crate::db::Db;
 use crate::mcp::McpState;
 
@@ -119,7 +120,9 @@ fn write_file(path: &str, content: &str) -> Result<(), String> {
         }
     }
     debug!("rust write file, path: {}", path);
-    fs::write(path, content).map_err(|e| format!("Failed to write file: {}", e))
+    fs::write(path, content).map_err(|e| format!("Failed to write file: {}", e))?;
+    watcher::mark_self_write();
+    Ok(())
 }
 
 #[tauri::command]
@@ -288,6 +291,15 @@ pub fn run() {
                     error!("[mcp] {}", e);
                 }
             }
+            // 数据目录变更监听（filesystem-first：外部写者直写存储 → 广播给前端）
+            let data_dir = app
+                .path()
+                .app_data_dir()
+                .unwrap_or_else(|e| {
+                    error!("[watcher] 获取数据目录失败: {}", e);
+                    std::env::temp_dir()
+                });
+            watcher::init(app.handle().clone(), data_dir);
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -306,6 +318,13 @@ pub fn run() {
             db::db_load_note_metas,
             db::db_upsert_note_meta,
             db::db_migrate,
+            db::db_upsert_graph_meta,
+            db::db_create_node,
+            db::db_update_node,
+            db::db_delete_node,
+            db::db_add_edge,
+            db::db_remove_edge,
+            db::db_delete_note,
             db::move_file,
             db::file_exists
         ])

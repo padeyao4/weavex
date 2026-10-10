@@ -1,9 +1,24 @@
 import { PNode } from "@/types";
 import { pull } from "lodash-es";
 import type { createGraphState } from "./state";
+import {
+  addEdgeToDb,
+  createNodeToDb,
+  deleteNodeFromDb,
+  removeEdgeFromDb,
+  toNodePatch,
+  updateNodeToDb,
+} from "@/lib/db";
+import { error } from "@tauri-apps/plugin-log";
+
+/** 异步写失败只记日志，不打断 UI 操作（存储是真相源，下次广播/操作会纠正）。 */
+function quiet(p: Promise<unknown>, what: string) {
+  p.catch((e) => error(`${what}: ${JSON.stringify(e)}`));
+}
 
 /**
  * 节点/边基础操作：直接修改 allGraph 中单个节点/边的字段与关系。
+ * filesystem-first：options.persist 时按操作粒度立即写库（不再全量写回）。
  * 复合操作（插入前置/后续、删除保边等）见 composite.ts。
  */
 export function createNodeActions(state: ReturnType<typeof createGraphState>) {
@@ -23,6 +38,12 @@ export function createNodeActions(state: ReturnType<typeof createGraphState>) {
           ...node,
         };
         extraProcess(graph, options);
+        if (options?.persist) {
+          quiet(
+            updateNodeToDb(toNodePatch(graphId, node)),
+            `Failed to update node ${node.id}`,
+          );
+        }
       }
     }
   };
@@ -46,6 +67,12 @@ export function createNodeActions(state: ReturnType<typeof createGraphState>) {
       if (graph.nodes[nodeId]) {
         graph.nodes[nodeId].expanded = expanded;
         extraProcess(graph, options);
+        if (options?.persist) {
+          quiet(
+            updateNodeToDb(toNodePatch(graphId, { id: nodeId, expanded })),
+            `Failed to save expanded ${nodeId}`,
+          );
+        }
       }
     }
   };
@@ -93,6 +120,15 @@ export function createNodeActions(state: ReturnType<typeof createGraphState>) {
         ];
         childNode.parent = parentNode.id;
         extraProcess(graph, options);
+        if (options?.persist) {
+          // 子节点挂到父级：写 parent 字段（Rust 侧联动 root_node_ids 移出根列表）
+          quiet(
+            updateNodeToDb(
+              toNodePatch(graphId, { id: childId, parent: parentNode.id }),
+            ),
+            `Failed to set child ${childId}`,
+          );
+        }
       }
     }
   };
@@ -106,6 +142,10 @@ export function createNodeActions(state: ReturnType<typeof createGraphState>) {
       const graph = allGraph[graphId];
       graph.nodes[node.id] = node;
       extraProcess(graph, options);
+      if (options?.persist) {
+        // 新节点落库（Rust 侧：parent 为空时自动进 root_node_ids）
+        quiet(createNodeToDb(graphId, node), `Failed to create node ${node.id}`);
+      }
     }
   };
 
@@ -122,6 +162,15 @@ export function createNodeActions(state: ReturnType<typeof createGraphState>) {
     pull(parentNode.children, childNode.id);
     childNode.parent = undefined;
     extraProcess(graph, options);
+    if (options?.persist) {
+      // 脱离父级变根：parent 置空（Rust 侧联动 root_node_ids 加回根列表）
+      quiet(
+        updateNodeToDb(
+          toNodePatch(graph.id, { id: childNode.id, parent: null }),
+        ),
+        `Failed to detach node ${childNode.id}`,
+      );
+    }
   };
 
   const removeEdge = function (
@@ -138,6 +187,12 @@ export function createNodeActions(state: ReturnType<typeof createGraphState>) {
         fromNode.nexts = fromNode.nexts.filter((nextId) => nextId !== to);
         toNode.prevs = toNode.prevs.filter((prevId) => prevId !== from);
         extraProcess(graph, options);
+        if (options?.persist) {
+          quiet(
+            removeEdgeFromDb(graphId, from, to),
+            `Failed to remove edge ${from}-${to}`,
+          );
+        }
       }
     }
   };
@@ -159,8 +214,9 @@ export function createNodeActions(state: ReturnType<typeof createGraphState>) {
     const currentNode = graph.nodes[nodeId];
     if (!currentNode) return;
 
+    const persistOpts = options?.persist ? { persist: true } : undefined;
     currentNode.prevs.forEach((id) => {
-      removeEdge(graphId, id, currentNode.id);
+      removeEdge(graphId, id, currentNode.id, persistOpts);
     });
     extraProcess(graph, options);
   };
@@ -182,8 +238,9 @@ export function createNodeActions(state: ReturnType<typeof createGraphState>) {
     const currentNode = graph.nodes[nodeId];
     if (!currentNode) return;
 
+    const persistOpts = options?.persist ? { persist: true } : undefined;
     currentNode.nexts.forEach((id) => {
-      removeEdge(graphId, currentNode.id, id);
+      removeEdge(graphId, currentNode.id, id, persistOpts);
     });
     extraProcess(graph, options);
   };
@@ -192,9 +249,13 @@ export function createNodeActions(state: ReturnType<typeof createGraphState>) {
    * 递归删除一个节点
    * @param graphId
    * @param nodeId
-   * @returns
+   * @param options persist 时向存储删除该节点及其子树（Rust 侧递归 + 连带边 + 根列表清理）
    */
-  const removeNode = function (graphId: string, nodeId: string) {
+  const removeNode = function (
+    graphId: string,
+    nodeId: string,
+    options?: Parameters<typeof extraProcess>[1],
+  ) {
     const graph = allGraph[graphId];
     if (graph) {
       const node = graph.nodes[nodeId];
@@ -211,6 +272,13 @@ export function createNodeActions(state: ReturnType<typeof createGraphState>) {
         });
         // 从graph中删除
         delete graph.nodes[nodeId];
+        extraProcess(graph, options);
+        if (options?.persist) {
+          quiet(
+            deleteNodeFromDb(graphId, nodeId),
+            `Failed to delete node ${nodeId}`,
+          );
+        }
       }
     }
   };
@@ -229,6 +297,12 @@ export function createNodeActions(state: ReturnType<typeof createGraphState>) {
         fromNode.nexts.push(to);
         toNode.prevs.push(from);
         extraProcess(graph, options);
+        if (options?.persist) {
+          quiet(
+            addEdgeToDb(graphId, from, to),
+            `Failed to add edge ${from}-${to}`,
+          );
+        }
       }
     }
   };

@@ -3,7 +3,6 @@ import { reactive } from "vue";
 import { v4 } from "uuid";
 import { resolve } from "@tauri-apps/api/path";
 import { readFile, writeFile } from "@/utils";
-import { debounce } from "lodash-es";
 import { debug, error } from "@tauri-apps/plugin-log";
 import {
   initDb,
@@ -25,20 +24,23 @@ export interface NoteMeta {
 
 export const useNodeStore = defineStore("notes", () => {
   const noteMeta = reactive<Record<string, NoteMeta>>({});
+  let dbInitialized = false;
 
-  const saveMeta = async function () {
+  /** 单条笔记元数据立即写库（filesystem-first：不防抖全量写回） */
+  const saveMeta = async function (meta: NoteMeta) {
     try {
       const dataDir = await getDataDir();
-      await initDb(dataDir);
-      for (const meta of Object.values(noteMeta)) {
-        await upsertNoteMetaToDb({
-          id: meta.id,
-          title: meta.title,
-          path: meta.path ?? null,
-          createdAt: meta.createdAt,
-          updatedAt: meta.updatedAt,
-        });
+      if (!dbInitialized) {
+        await initDb(dataDir);
+        dbInitialized = true;
       }
+      await upsertNoteMetaToDb({
+        id: meta.id,
+        title: meta.title,
+        path: meta.path ?? null,
+        createdAt: meta.createdAt,
+        updatedAt: meta.updatedAt,
+      });
     } catch (e) {
       error(`save note meta failed, error is ${JSON.stringify(e)}`);
     }
@@ -52,12 +54,10 @@ export const useNodeStore = defineStore("notes", () => {
     if (!meta.path) {
       meta.path = `${meta.id}.md`;
     }
-    saveMeta();
+    await saveMeta(meta);
     const path = await resolve(dataDir, NOTE_DIR, meta.path);
     await writeFile(path, content);
   };
-
-  const debounceSaveNote = debounce(saveMeta, 5000);
 
   const loadNote = async function (nodeId: string) {
     const dataDir = await getDataDir();
@@ -74,9 +74,16 @@ export const useNodeStore = defineStore("notes", () => {
   const loadNoteMeta = async function () {
     try {
       const dataDir = await getDataDir();
-      await initDb(dataDir);
-      await migrateLegacyIfNeeded(dataDir);
+      if (!dbInitialized) {
+        await initDb(dataDir);
+        await migrateLegacyIfNeeded(dataDir);
+        dbInitialized = true;
+      }
       const metas = await loadNoteMetasFromDb();
+      // 从存储重新投影：清空旧缓存，避免外部删除的笔记残留
+      Object.keys(noteMeta).forEach((key) => {
+        delete noteMeta[key];
+      });
       metas.forEach((m) => {
         noteMeta[m.id] = {
           id: m.id,
@@ -105,7 +112,7 @@ export const useNodeStore = defineStore("notes", () => {
       updatedAt: Date.now(),
     };
     noteMeta[meta.id] = meta;
-    saveMeta();
+    saveMeta(meta);
   };
 
   return {
@@ -115,7 +122,6 @@ export const useNodeStore = defineStore("notes", () => {
     saveNote,
     loadNote,
     addNoteMeta,
-    debounceSaveNote,
     clear,
   };
 });

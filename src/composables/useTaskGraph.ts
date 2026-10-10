@@ -154,10 +154,13 @@ export function useTaskGraph(options: {
   };
 
   const toggleArchive = async () => {
-    graphStore.updateGraph({
-      id: graphId,
-      showArchive: !currentGraph.value?.showArchive,
-    });
+    graphStore.updateGraph(
+      {
+        id: graphId,
+        showArchive: !currentGraph.value?.showArchive,
+      },
+      { persist: true }, // filesystem-first：图级字段细粒度写
+    );
     enableEditAnimation();
     graph.value?.updateTransform({
       key: "archive-transform",
@@ -181,7 +184,7 @@ export function useTaskGraph(options: {
         id: graphId,
         viewport: { zoom: graph.value.getZoom(), x, y },
       },
-      { persist: true }, // persist 走 debouncedSave 防抖写库
+      { persist: true }, // filesystem-first：图级字段（viewport）细粒度写
     );
   };
 
@@ -310,8 +313,11 @@ export function useTaskGraph(options: {
                 graphStore.deleteNodeKeepEdges(graphId, current.id, options);
                 break;
               case "node:delete":
-                graphStore.removeNode(graphId, current.id);
-                graphStore.debouncedSave();
+                graphStore.removeNode(graphId, current.id, {
+                  persist: true,
+                  buildRoots: true,
+                  update: true,
+                });
                 break;
               case "node:add-next":
                 graphStore.appendNewNode(graphId, current.id, options);
@@ -364,6 +370,8 @@ export function useTaskGraph(options: {
               case "node:add-child":
                 graphStore.addNewChildNode(graphId, current.id, {
                   buildRoots: true,
+                  persist: true,
+                  update: true,
                 });
                 graphStore.setNodeExpanded(graphId, current.id, true, {
                   update: true,

@@ -7,9 +7,12 @@ import { onMounted, ref } from "vue";
 import { check } from "@tauri-apps/plugin-updater";
 import { relaunch } from "@tauri-apps/plugin-process";
 import { useRepoStore } from "./stores/repo";
+import { useDataSync } from "./composables/useDataSync";
 import { ElMessageBox, ElMessage } from "element-plus";
 
 const repoStore = useRepoStore();
+// 数据同步：外部写者（MCP）变更存储 → 广播 → 重投影只读缓存
+useDataSync();
 const isDownloading = ref(false);
 const downloadProgress = ref(0);
 

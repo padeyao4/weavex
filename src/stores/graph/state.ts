@@ -6,10 +6,10 @@ import {
   initDb,
   loadGraphsFromDb,
   migrateLegacyIfNeeded,
-  saveGraphToDb,
+  toGraphMetaPatch,
+  upsertGraphMetaToDb,
 } from "@/lib/db";
 import { debug, error } from "@tauri-apps/plugin-log";
-import { debounce } from "lodash-es";
 import { getDataDir } from "@/lib/dataDir";
 
 export type Options = {
@@ -18,12 +18,21 @@ export type Options = {
   buildRoots?: boolean;
 };
 
+/** 异步写失败只记日志，不打断 UI 操作（存储是真相源，下次广播/操作会纠正）。 */
+function quiet(p: Promise<unknown>, what: string) {
+  p.catch((e) => error(`${what}: ${JSON.stringify(e)}`));
+}
+
 /**
- * Graph 状态与数据层：allGraph 内存态 + 图级 CRUD + SQLite 持久化。
- * 不包含节点/边的具体业务操作（见 nodes.ts / composite.ts）。
+ * Graph 状态（filesystem-first 下的只读缓存）：
+ * 存储（weavex.db）= 唯一真相源；UI 操作仍先改内存（响应式即时反馈），
+ * 同时按操作粒度立即写库（见 nodes.ts / composite.ts 的 persist 分支）；
+ * 外部写者（MCP）改库后由 Rust watcher 广播 data-changed，本 store 重新加载投影。
+ * 不再有防抖全量写回，避免覆盖外部写入。
  */
 export function createGraphState() {
   const allGraph = reactive<Record<string, PGraph>>({});
+  let dbInitialized = false;
 
   function clear() {
     Object.keys(allGraph).forEach((key) => {
@@ -33,27 +42,19 @@ export function createGraphState() {
 
   async function loadGraphs() {
     const dataDir = await getDataDir();
-    await initDb(dataDir);
-    await migrateLegacyIfNeeded(dataDir);
+    if (!dbInitialized) {
+      await initDb(dataDir);
+      await migrateLegacyIfNeeded(dataDir);
+      dbInitialized = true;
+    }
     const dtos = await loadGraphsFromDb();
+    clear();
     dtos.forEach((dto) => {
       allGraph[dto.id] = dtoToGraph(dto);
+      buildRoots(dto.id); // 从存储投影后重算派生根列表，避免写者口径漂移
     });
     debug(`Loaded ${dtos.length} graphs from SQLite`);
   }
-
-  async function saveGraphs() {
-    try {
-      for (const graph of Object.values(allGraph)) {
-        await saveGraphToDb(graph);
-      }
-      debug(`Saved ${Object.keys(allGraph).length} graphs to SQLite`);
-    } catch (e) {
-      error(`Failed to save graphs to SQLite: ${JSON.stringify(e)}`);
-    }
-  }
-
-  const debouncedSave = debounce(saveGraphs, 1000);
 
   const addGraph = function (graph: PGraph, options?: Options) {
     allGraph[graph.id] = graph;
@@ -78,11 +79,7 @@ export function createGraphState() {
       delete allGraph[graphId];
       extraProcess(undefined, options);
       if (options?.persist) {
-        deleteGraphFromDb(graphId).catch((e) => {
-          error(
-            `Failed to delete graph ${graphId} from SQLite: ${JSON.stringify(e)}`,
-          );
-        });
+        quiet(deleteGraphFromDb(graphId), `Failed to delete graph ${graphId}`);
       }
     }
   };
@@ -117,7 +114,10 @@ export function createGraphState() {
       graph.updatedAt = Date.now();
     }
     if (options?.persist) {
-      saveGraphs();
+      if (graph) {
+        // 图级字段细粒度写（含 buildRoots 后的 rootNodeIds / updatedAt）
+        quiet(upsertGraphMetaToDb(toGraphMetaPatch(graph)), `Failed to save graph meta ${graph.id}`);
+      }
     }
   };
 
@@ -135,8 +135,6 @@ export function createGraphState() {
     allGraph,
     clear,
     loadGraphs,
-    saveGraphs,
-    debouncedSave,
     addGraph,
     updateGraph,
     removeGraph,

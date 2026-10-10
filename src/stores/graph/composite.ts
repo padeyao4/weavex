@@ -30,6 +30,7 @@ export function createCompositeActions(
     const graph = allGraph[graphId];
     if (!graph) return;
 
+    const persistOpts = options?.persist ? { persist: true } : undefined;
     const currentNode = graph.nodes[nodeId];
     const prevs = [...(currentNode?.prevs ?? [])];
     const nexts = [...(currentNode?.nexts ?? [])];
@@ -40,12 +41,12 @@ export function createCompositeActions(
         const prevNode = graph.nodes[prevId];
         const nextNode = graph.nodes[nextId];
         if (prevNode && nextNode && !prevNode.nexts.includes(nextId)) {
-          addEdge(graphId, prevId, nextId);
+          addEdge(graphId, prevId, nextId, persistOpts);
         }
       }
     }
-    // 删除当前节点
-    removeNode(graphId, nodeId);
+    // 删除当前节点（Rust 侧递归删子树 + 连带边 + 根列表清理）
+    removeNode(graphId, nodeId, persistOpts);
     extraProcess(graph, options);
   };
 
@@ -59,14 +60,15 @@ export function createCompositeActions(
   ) {
     const graph = allGraph[graphId];
     if (!graph) return;
+    const persistOpts = options?.persist ? { persist: true } : undefined;
     const nextNode = NodeUtil.createNode();
     const parentId = graph.nodes[nodeId].parent;
 
-    addNode(graphId, nextNode);
+    addNode(graphId, nextNode, persistOpts);
     if (parentId) {
-      setChild(graphId, parentId, nextNode.id);
+      setChild(graphId, parentId, nextNode.id, persistOpts);
     }
-    addEdge(graphId, nodeId, nextNode.id);
+    addEdge(graphId, nodeId, nextNode.id, persistOpts);
     extraProcess(graph, options);
   };
 
@@ -82,19 +84,20 @@ export function createCompositeActions(
   ) {
     const graph = allGraph[graphId];
     if (!graph) return;
+    const persistOpts = options?.persist ? { persist: true } : undefined;
     const nextNode = NodeUtil.createNode();
     const currentNode = graph.nodes[nodeId];
     if (!currentNode) return;
 
-    addNode(graphId, nextNode);
+    addNode(graphId, nextNode, persistOpts);
     if (currentNode.parent) {
-      setChild(graphId, currentNode.parent, nextNode.id);
+      setChild(graphId, currentNode.parent, nextNode.id, persistOpts);
     }
     currentNode.nexts.forEach((id) => {
-      addEdge(graphId, nextNode.id, id);
-      removeEdge(graphId, currentNode.id, id);
+      addEdge(graphId, nextNode.id, id, persistOpts);
+      removeEdge(graphId, currentNode.id, id, persistOpts);
     });
-    addEdge(graphId, currentNode.id, nextNode.id);
+    addEdge(graphId, currentNode.id, nextNode.id, persistOpts);
     extraProcess(graph, options);
   };
 
@@ -108,16 +111,17 @@ export function createCompositeActions(
   ) {
     const graph = allGraph[graphId];
     if (!graph) return;
+    const persistOpts = options?.persist ? { persist: true } : undefined;
     const currentNode = graph.nodes[nodeId];
     if (!currentNode) return;
 
     const prevNode = NodeUtil.createNode();
     const parentId = graph.nodes[nodeId].parent;
 
-    addNode(graphId, prevNode);
+    addNode(graphId, prevNode, persistOpts);
 
-    parentId && setChild(graphId, parentId, prevNode.id);
-    addEdge(graphId, prevNode.id, nodeId);
+    parentId && setChild(graphId, parentId, prevNode.id, persistOpts);
+    addEdge(graphId, prevNode.id, nodeId, persistOpts);
     extraProcess(graph, options);
   };
 
@@ -135,21 +139,22 @@ export function createCompositeActions(
   ) {
     const graph = allGraph[graphId];
     if (!graph) return;
+    const persistOpts = options?.persist ? { persist: true } : undefined;
     const currentNode = graph.nodes[nodeId];
     const prevNode = NodeUtil.createNode();
 
-    addNode(graphId, prevNode);
+    addNode(graphId, prevNode, persistOpts);
     if (currentNode.parent) {
-      setChild(graphId, currentNode.parent, prevNode.id);
+      setChild(graphId, currentNode.parent, prevNode.id, persistOpts);
     }
 
     // 将当前节点的所有前驱节点转移到新节点前面
     currentNode.prevs.forEach((id) => {
-      addEdge(graphId, id, prevNode.id);
-      removeEdge(graphId, id, currentNode.id);
+      addEdge(graphId, id, prevNode.id, persistOpts);
+      removeEdge(graphId, id, currentNode.id, persistOpts);
     });
 
-    addEdge(graphId, prevNode.id, currentNode.id);
+    addEdge(graphId, prevNode.id, currentNode.id, persistOpts);
     extraProcess(graph, options);
   };
 
@@ -169,9 +174,10 @@ export function createCompositeActions(
     const graph = allGraph[graphId];
     if (!graph) return;
     if (!graph.nodes[parentId]) return;
+    const persistOpts = options?.persist ? { persist: true } : undefined;
     const newNode = NodeUtil.createNode();
-    graph.nodes[newNode.id] = newNode;
-    setChild(graphId, parentId, newNode.id);
+    addNode(graphId, newNode, persistOpts);
+    setChild(graphId, parentId, newNode.id, persistOpts);
     extraProcess(graph, options);
   };
 
@@ -181,8 +187,9 @@ export function createCompositeActions(
   ) {
     const graph = allGraph[graphId];
     if (!graph) return;
+    const persistOpts = options?.persist ? { persist: true } : undefined;
     const newNode = NodeUtil.createNode();
-    graph.nodes[newNode.id] = newNode;
+    addNode(graphId, newNode, persistOpts);
     extraProcess(graph, options);
   };
 
