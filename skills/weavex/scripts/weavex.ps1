@@ -141,6 +141,14 @@ if (-not $callResp) {
   exit 1
 }
 
+# 工具级错误：官方 MCP 协议下，工具运行失败返回 isError 结果（消息在 content[0].text），
+# 与 JSON-RPC 层 error（$msg.error）是两条路径，都要识别并退出非 0。
+if ($callResp.result.isError) {
+  $errText = $callResp.result.content[0].text
+  [Console]::Error.WriteLine("工具错误: " + $errText)
+  exit 1
+}
+
 $text = $callResp.result.content[0].text
 try {
   $obj = $text | ConvertFrom-Json

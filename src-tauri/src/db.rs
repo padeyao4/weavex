@@ -257,6 +257,11 @@ pub fn open_db(path: &Path) -> Result<Connection, String> {
     // 多写者（应用 UI + MCP 独立进程）直写同一库：等待而非立刻报 SQLITE_BUSY
     conn.busy_timeout(std::time::Duration::from_millis(5000))
         .map_err(|e| format!("Failed to set busy_timeout: {}", e))?;
+    // WAL 模式：多进程并发下读不阻塞写、写不互斥读，长事务期间 UI 不再卡顿。
+    // journal_mode 是数据库持久属性，重复设置幂等；WAL 的 -wal/-shm 文件事件
+    // 由 watcher 的 150ms 防抖合并（见 watcher.rs DEBOUNCE_MS 注释）。
+    conn.execute_batch("PRAGMA journal_mode = WAL;")
+        .map_err(|e| format!("Failed to enable WAL: {}", e))?;
     create_schema(&conn)?;
     Ok(conn)
 }

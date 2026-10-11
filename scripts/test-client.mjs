@@ -100,6 +100,10 @@ try {
   const detail1 = JSON.parse(g1.result.content[0].text);
   check("get_graph", detail1.graph?.id === targetId, `name=${detail1.graph?.name} nodes=${detail1.nodes?.length}`);
 
+  // get_graph 语义：nodes 为扁平数组（children 存子节点 ID，O(N)），roots 为完整递归树
+  const childrenAreIds = (detail1.nodes ?? []).every((n) => (n.children ?? []).every((c) => typeof c === "string"));
+  check("get_graph nodes.children 为 ID 数组", childrenAreIds, detail1.nodes?.length + " nodes");
+
   const cr = await request("tools/call", { name: "create_graph", arguments: { name: "MCP 测试项目" } });
   const created = JSON.parse(cr.result.content[0].text);
   const newGraphId = created.graph?.id;
@@ -140,6 +144,8 @@ try {
   check("add_edge", JSON.parse(ae.result.content[0].text).ok === true);
   const g2 = await request("tools/call", { name: "get_graph", arguments: { graphId: newGraphId } });
   check("get_graph(含边)", JSON.parse(g2.result.content[0].text).edges?.length === 1, "edges=1");
+  const rootsNested = JSON.parse(g2.result.content[0].text).roots?.some((r) => Array.isArray(r.children));
+  check("get_graph roots 为嵌套树", !!rootsNested, "roots children 为对象");
 
   // 6. 笔记工具
   const cn = await request("tools/call", { name: "create_note", arguments: { title: "MCP 测试笔记", content: "# 测试\n\nhello world" } });
@@ -158,6 +164,24 @@ try {
   const lns = await request("tools/call", { name: "list_notes", arguments: {} });
   check("list_notes", JSON.parse(lns.result.content[0].text).count >= 1, "count ok");
 
+  // 6.5 资源（resources）：笔记暴露为 weavex://notes/{noteId}
+  const rl = await request("resources/list", {});
+  const resList = rl.result?.resources ?? [];
+  const noteRes = resList.find((r) => r.uri === `weavex://notes/${note.id}`);
+  check("resources/list 含新笔记", !!noteRes && noteRes.mimeType === "text/markdown", noteRes ? `${noteRes.uri} mime=${noteRes.mimeType}` : "未找到 weavex://notes/" + note.id);
+
+  const rr = await request("resources/read", { uri: `weavex://notes/${note.id}` });
+  const readRes = rr.result?.contents?.[0];
+  check("resources/read 正文", readRes?.text === "# 改后" && readRes?.mimeType === "text/markdown", readRes ? readRes.text.replace(/\n/g, " ") : (rr.error?.message || "empty"));
+
+  const rt = await request("resources/templates/list", {});
+  const tpls = rt.result?.resourceTemplates ?? [];
+  check("resources/templates/list", tpls.some((t) => t.uriTemplate === "weavex://notes/{noteId}"), tpls.map((t) => t.uriTemplate).join(","));
+
+  const rb = await request("resources/read", { uri: "weavex://notes/not-exist" });
+  const rbErr = rb.error?.message || "";
+  check("resources/read 不存在", rbErr.includes("未知资源") || rbErr.includes("不存在"), rbErr);
+
   const dn = await request("tools/call", { name: "delete_note", arguments: { noteId: note.id } });
   check("delete_note", JSON.parse(dn.result.content[0].text).ok === true);
 
@@ -175,6 +199,10 @@ try {
   const err = await request("tools/call", { name: "get_graph", arguments: { graphId: "not-exist-id" } });
   const errText = err.result?.isError ? (err.result.content?.[0]?.text || "") : (err.error?.message || "");
   check("错误处理(不存在项目)", !!errText, errText.replace(/\n/g, " ").slice(0, 60));
+
+  const rgErr = await request("tools/call", { name: "rename_graph", arguments: { graphId: "not-exist-id", name: "改名" } });
+  const rgText = rgErr.result?.isError ? (rgErr.result.content?.[0]?.text || "") : (rgErr.error?.message || "");
+  check("错误处理(重命名不存在项目)", rgText.includes("项目不存在"), rgText.replace(/\n/g, " ").slice(0, 60));
 } catch (e) {
   console.log("[FATAL]", e.message);
 }

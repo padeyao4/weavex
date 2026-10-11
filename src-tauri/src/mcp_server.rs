@@ -1,22 +1,23 @@
-// Weavex MCP Server —— Rust 实现（单 exe 模式）
+// Weavex MCP Server —— Rust 实现（基于官方 rmcp SDK，stdio 传输）
 //
-// 与 Node 版 mcp-server/server.mjs 行为对齐（19 个工具、数据目录解析、返回 JSON 结构），
-// 直接复用 crate::db 数据层函数（单一 SQL 实现）。
+// 协议层由官方 SDK rmcp（modelcontextprotocol/rust-sdk）接管，替代早期手写 JSON-RPC：
+//   - initialize / ping / notifications 握手、协议版本协商由 SDK 处理
+//   - tools/list / tools/call 由 ServerHandler 实现（19 个工具）
+//   - 错误语义按 SDK 约定：工具运行失败返回 isError 结果（调用方可读），
+//     不可路由的请求（未知工具）返回 JSON-RPC 协议错误
+// 工具实现与返回 JSON 结构保持不变（与 UI 同口径，直接复用 crate::db 数据层）。
 // 自 0.4 起与主应用合并为单一二进制：主程序 weavex.exe 以 --mcp-stdio 参数进入本模式，
 // 目标机器无需安装 Node，也无需额外分发 mcp-server.exe。
 //
-// 协议：MCP over stdio（newline-delimited JSON-RPC 2.0）。
-//   stdin 读请求，stdout 写响应（每行一条 JSON），日志一律走 stderr。
-//
-// 数据定位（优先级从高到低，与 Node 版一致）：
+// 数据定位（优先级从高到低，与历史版本一致）：
 //   1. 环境变量 WEAVEX_DATA_DIR（显式指定）
 //   2. %APPDATA%\padeyao4.weavex（--dev 或 WEAVEX_DEV=1 时为 dev.padeyao4.weavex，仅当存在 weavex.db）
 //   3. 兜底兼容旧版：~\Documents\WeavexData
 
 use std::env;
 use std::fs;
-use std::io::{BufRead, Write};
 use std::path::{Path, PathBuf};
+use std::sync::{Arc, Mutex};
 
 use rusqlite::{Connection, params};
 use serde_json::{Value, json};
@@ -26,10 +27,23 @@ use crate::db::{
     GraphMetaPatch, NodeDto, NodePatch, NoteMetaDto,
 };
 
+use rmcp::{
+    ErrorData, RoleServer, ServiceExt,
+    handler::server::ServerHandler,
+    model::{
+        CallToolRequestParams, CallToolResponse, CallToolResult, ContentBlock, Implementation,
+        ListResourceTemplatesResult, ListResourcesResult, ListToolsResult, PaginatedRequestParams,
+        ReadResourceRequestParams, ReadResourceResponse, ReadResourceResult, Resource,
+        ResourceContents, ResourceTemplate, ServerCapabilities, ServerConfig, Tool,
+    },
+    service::RequestContext,
+    transport::stdio,
+};
+
 const SERVER_NAME: &str = "weavex";
 const SERVER_VERSION: &str = "0.1.0";
 
-// ---------------- 数据目录解析（与 Node 版一致） ----------------
+// ---------------- 数据目录解析（与历史版本一致） ----------------
 
 fn is_dev_mode(args: &[String]) -> bool {
     env::var("WEAVEX_DEV").is_ok_and(|v| v == "1") || args.iter().any(|a| a == "--dev")
@@ -57,7 +71,7 @@ fn resolve_data_dir(args: &[String]) -> PathBuf {
     PathBuf::from(home).join("Documents").join("WeavexData")
 }
 
-// ---------------- 查询辅助（返回结构与 Node 版对齐） ----------------
+// ---------------- 查询辅助（返回结构与前端对齐） ----------------
 
 struct GraphRow {
     id: String,
@@ -97,7 +111,7 @@ fn notes_dir(data_dir: &Path) -> PathBuf {
     data_dir.join("notes")
 }
 
-// ---------------- normalizeNode（与 Node 版逐字段一致） ----------------
+// ---------------- normalizeNode（与前端逐字段一致） ----------------
 
 struct NodeRow {
     id: String,
@@ -178,8 +192,11 @@ fn normalize_node(n: &NodeRow) -> Value {
     })
 }
 
-/// 组装带 children 的节点树（与前端口径一致：parent 指向父节点，无 parent 为根）。
-/// edges 保持 Node 版返回结构（{source_id, target_id}）。
+/// 组装图详情（与前端口径一致：parent 指向父节点，无 parent 为根）。
+/// - `nodes`：扁平数组，每个节点带 `children`（**子节点 ID 数组**，与前端内存模型一致）；
+///   只序列化每个节点一次，整体 O(N)，避免深图下的 O(N²) 子树重复展开
+/// - `roots`：根节点完整递归树（客户端可直接渲染树形结构）
+/// - `edges`：{source_id, target_id}（snake_case）
 fn build_graph_detail(conn: &Connection, graph_id: &str) -> Result<Value, String> {
     let g = get_graph_row(conn, graph_id)?;
     let nodes = query_nodes(conn, graph_id)?;
@@ -188,6 +205,7 @@ fn build_graph_detail(conn: &Connection, graph_id: &str) -> Result<Value, String
         nodes.iter().map(|n| (n.id.clone(), n)).collect();
     let mut children_of: std::collections::HashMap<String, Vec<String>> =
         std::collections::HashMap::new();
+    // nodes 已按 priority, created_at 排序，children 顺序与之一致
     for n in &nodes {
         if let Some(pid) = &n.parent_id {
             if by_id.contains_key(pid) {
@@ -196,7 +214,6 @@ fn build_graph_detail(conn: &Connection, graph_id: &str) -> Result<Value, String
         }
     }
 
-    // 递归展开子树（等效于 Node 版 map 引用同一对象：每个节点带完整子树）
     fn expand(
         id: &str,
         by_id: &std::collections::HashMap<String, &NodeRow>,
@@ -225,7 +242,22 @@ fn build_graph_detail(conn: &Connection, graph_id: &str) -> Result<Value, String
             roots_out.push(expand(&n.id, &by_id, &children_of));
         }
     }
-    let nodes_out: Vec<Value> = nodes.iter().map(|n| expand(&n.id, &by_id, &children_of)).collect();
+    // 扁平：children 存子节点 ID（与前端 stores/graph 模型一致，O(N)）
+    let nodes_out: Vec<Value> = nodes
+        .iter()
+        .map(|n| {
+            let mut obj = match normalize_node(n) {
+                Value::Object(o) => o,
+                _ => unreachable!(),
+            };
+            let kids = children_of.get(&n.id).cloned().unwrap_or_default();
+            obj.insert(
+                "children".to_string(),
+                Value::Array(kids.into_iter().map(Value::String).collect()),
+            );
+            Value::Object(obj)
+        })
+        .collect();
 
     let mut stmt = conn
         .prepare("SELECT source_id, target_id FROM edges WHERE graph_id = ?1")
@@ -317,12 +349,15 @@ fn tool_create_graph(conn: &Connection, args: &Value) -> Result<Value, String> {
 fn tool_rename_graph(conn: &Connection, args: &Value) -> Result<Value, String> {
     let graph_id = arg_str(args, "graphId")?;
     let name = arg_str(args, "name")?;
-    // 与 Node 版一致：不校验存在性，UPDATE 0 行也返回 ok
-    conn.execute(
-        "UPDATE graphs SET name = ?1, updated_at = ?2 WHERE id = ?3",
-        params![name, now_ms(), graph_id],
-    )
-    .map_err(|e| format!("Failed to rename graph: {}", e))?;
+    let affected = conn
+        .execute(
+            "UPDATE graphs SET name = ?1, updated_at = ?2 WHERE id = ?3",
+            params![name, now_ms(), graph_id],
+        )
+        .map_err(|e| format!("Failed to rename graph: {}", e))?;
+    if affected == 0 {
+        return Err(format!("项目不存在: {}", graph_id));
+    }
     Ok(json!({ "ok": true, "graphId": graph_id, "name": name }))
 }
 
@@ -479,7 +514,7 @@ fn tool_toggle_node_followed(conn: &Connection, args: &Value) -> Result<Value, S
         ..Default::default()
     };
     if followed == 1 {
-        // 关注时置顶：priority = now；取消关注保留原 priority（与 Node 版一致）
+        // 关注时置顶：priority = now；取消关注保留原 priority（与历史版本一致）
         patch.priority = Some(t as f64);
     } else {
         patch.priority = old_priority;
@@ -531,13 +566,13 @@ fn tool_list_notes(conn: &Connection) -> Result<Value, String> {
     Ok(json!({ "count": items.len(), "items": items }))
 }
 
-fn tool_read_note(conn: &Connection, notes_dir: &Path, args: &Value) -> Result<Value, String> {
-    let note_id = arg_str(args, "noteId")?;
-    let (id, title, path, created_at, updated_at): (String, String, Option<String>, i64, i64) = conn
+/// 读取单篇笔记：返回 (标题, 正文 Markdown)。文件缺失/无 path 时正文为空字符串。
+fn load_note(conn: &Connection, notes_dir: &Path, note_id: &str) -> Result<(String, String), String> {
+    let (title, path): (String, Option<String>) = conn
         .query_row(
-            "SELECT id, title, path, created_at, updated_at FROM notes WHERE id = ?1",
+            "SELECT title, path FROM notes WHERE id = ?1",
             params![note_id],
-            |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?, r.get(4)?)),
+            |r| Ok((r.get(0)?, r.get(1)?)),
         )
         .map_err(|_| format!("笔记不存在: {}", note_id))?;
     let mut content = String::new();
@@ -550,6 +585,19 @@ fn tool_read_note(conn: &Connection, notes_dir: &Path, args: &Value) -> Result<V
             }
         }
     }
+    Ok((title, content))
+}
+
+fn tool_read_note(conn: &Connection, notes_dir: &Path, args: &Value) -> Result<Value, String> {
+    let note_id = arg_str(args, "noteId")?;
+    let (id, title, created_at, updated_at): (String, String, i64, i64) = conn
+        .query_row(
+            "SELECT id, title, created_at, updated_at FROM notes WHERE id = ?1",
+            params![note_id],
+            |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?)),
+        )
+        .map_err(|_| format!("笔记不存在: {}", note_id))?;
+    let (_, content) = load_note(conn, notes_dir, &note_id)?;
     Ok(json!({
         "id": id,
         "title": title,
@@ -650,227 +698,11 @@ fn arg_opt_i64(v: &Value, key: &str) -> Option<i64> {
     v.get(key).and_then(|x| x.as_f64().map(|f| f as i64))
 }
 
-// ---------------- tools/list schema（手写，与 Node zod 生成的 JSON Schema 对齐） ----------------
+// ---------------- 工具分发 ----------------
 
-fn tools_list() -> Value {
-    json!([
-        {
-            "name": "list_graphs",
-            "description": "列出 Weavex 中的所有项目（任务图）概要，包含名称、创建/更新时间、根节点数等。",
-            "inputSchema": { "type": "object", "properties": {} }
-        },
-        {
-            "name": "get_graph",
-            "description": "获取单个项目的完整结构：项目信息、节点列表（含父子关系与完成/关注状态）、根节点树、边（前置/后置依赖）。",
-            "inputSchema": {
-                "type": "object",
-                "properties": { "graphId": { "type": "string", "description": "项目 ID，来自 list_graphs" } },
-                "required": ["graphId"]
-            }
-        },
-        {
-            "name": "create_graph",
-            "description": "创建一个新的项目（任务图），并返回项目详情。",
-            "inputSchema": {
-                "type": "object",
-                "properties": { "name": { "type": "string", "description": "项目名称" } },
-                "required": ["name"]
-            }
-        },
-        {
-            "name": "rename_graph",
-            "description": "重命名一个项目（任务图）。",
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "graphId": { "type": "string" },
-                    "name": { "type": "string", "description": "新的项目名称" }
-                },
-                "required": ["graphId", "name"]
-            }
-        },
-        {
-            "name": "delete_graph",
-            "description": "删除一个项目（任务图）及其全部节点与边。注意：该操作不可恢复，会连带删除所有任务数据。",
-            "inputSchema": {
-                "type": "object",
-                "properties": { "graphId": { "type": "string" } },
-                "required": ["graphId"]
-            }
-        },
-        {
-            "name": "list_nodes",
-            "description": "列出某个项目下的全部任务节点（扁平的完整列表），含完成、关注、归档、优先级等状态。",
-            "inputSchema": {
-                "type": "object",
-                "properties": { "graphId": { "type": "string" } },
-                "required": ["graphId"]
-            }
-        },
-        {
-            "name": "get_node",
-            "description": "获取单个任务节点的完整字段。",
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "graphId": { "type": "string" },
-                    "nodeId": { "type": "string" }
-                },
-                "required": ["graphId", "nodeId"]
-            }
-        },
-        {
-            "name": "create_node",
-            "description": "在项目中创建一个任务节点。不传 parentId 时创建为根任务；传 parentId 时创建为其子任务。",
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "graphId": { "type": "string" },
-                    "name": { "type": "string", "description": "任务名称" },
-                    "description": { "type": "string", "description": "任务描述" },
-                    "record": { "type": "string", "description": "备注/记录文本" },
-                    "parentId": { "type": "string", "description": "父任务节点 ID（可选，传则创建为子任务）" },
-                    "startAt": { "type": "number", "description": "开始时间（毫秒时间戳，可选）" },
-                    "endAt": { "type": "number", "description": "截止时间（毫秒时间戳，可选）" }
-                },
-                "required": ["graphId", "name"]
-            }
-        },
-        {
-            "name": "update_node",
-            "description": "更新任务节点的字段（只更新传入的字段）：名称、描述、备注、开始/截止时间。",
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "graphId": { "type": "string" },
-                    "nodeId": { "type": "string" },
-                    "name": { "type": "string" },
-                    "description": { "type": "string" },
-                    "record": { "type": "string" },
-                    "startAt": { "type": "number" },
-                    "endAt": { "type": "number" }
-                },
-                "required": ["graphId", "nodeId"]
-            }
-        },
-        {
-            "name": "delete_node",
-            "description": "删除一个任务节点及其所有后代子节点（连带删除相关依赖边）。注意：不可恢复。",
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "graphId": { "type": "string" },
-                    "nodeId": { "type": "string" }
-                },
-                "required": ["graphId", "nodeId"]
-            }
-        },
-        {
-            "name": "toggle_node_completed",
-            "description": "切换任务节点的完成状态（完成 ↔ 未完成）。",
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "graphId": { "type": "string" },
-                    "nodeId": { "type": "string" }
-                },
-                "required": ["graphId", "nodeId"]
-            }
-        },
-        {
-            "name": "toggle_node_followed",
-            "description": "切换任务节点的关注状态（关注 ↔ 取消关注）。",
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "graphId": { "type": "string" },
-                    "nodeId": { "type": "string" }
-                },
-                "required": ["graphId", "nodeId"]
-            }
-        },
-        {
-            "name": "add_edge",
-            "description": "在两个任务节点之间建立前置/依赖关系：sourceId 是 targetId 的前置节点（target 依赖 source 完成）。",
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "graphId": { "type": "string" },
-                    "sourceId": { "type": "string", "description": "前置节点 ID" },
-                    "targetId": { "type": "string", "description": "后续节点 ID" }
-                },
-                "required": ["graphId", "sourceId", "targetId"]
-            }
-        },
-        {
-            "name": "remove_edge",
-            "description": "删除两个任务节点之间的前置/依赖关系。",
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "graphId": { "type": "string" },
-                    "sourceId": { "type": "string" },
-                    "targetId": { "type": "string" }
-                },
-                "required": ["graphId", "sourceId", "targetId"]
-            }
-        },
-        {
-            "name": "list_notes",
-            "description": "列出 Weavex 中的所有笔记元信息（标题、创建/更新时间）。",
-            "inputSchema": { "type": "object", "properties": {} }
-        },
-        {
-            "name": "read_note",
-            "description": "读取一篇笔记的正文内容（Markdown 文本）。",
-            "inputSchema": {
-                "type": "object",
-                "properties": { "noteId": { "type": "string", "description": "笔记 ID，来自 list_notes" } },
-                "required": ["noteId"]
-            }
-        },
-        {
-            "name": "create_note",
-            "description": "创建一篇新笔记。可传 content 直接写入正文（Markdown）。",
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "title": { "type": "string", "description": "笔记标题" },
-                    "content": { "type": "string", "description": "笔记正文（Markdown），可选" }
-                },
-                "required": ["title"]
-            }
-        },
-        {
-            "name": "update_note",
-            "description": "更新一篇笔记的标题和/或正文。只更新传入的字段。",
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "noteId": { "type": "string" },
-                    "title": { "type": "string" },
-                    "content": { "type": "string", "description": "新的正文（Markdown）" }
-                },
-                "required": ["noteId"]
-            }
-        },
-        {
-            "name": "delete_note",
-            "description": "删除一篇笔记（连同其正文文件）。注意：不可恢复。",
-            "inputSchema": {
-                "type": "object",
-                "properties": { "noteId": { "type": "string" } },
-                "required": ["noteId"]
-            }
-        }
-    ])
-}
-
-// ---------------- tools/call 分发 ----------------
-
-fn call_tool(conn: &Connection, data_dir: &Path, name: &str, args: &Value) -> Result<Value, String> {
+fn dispatch_tool(conn: &Connection, data_dir: &Path, name: &str, args: &Value) -> Result<Value, String> {
     let notes = notes_dir(data_dir);
-    let result = match name {
+    match name {
         "list_graphs" => tool_list_graphs(conn),
         "get_graph" => tool_get_graph(conn, args),
         "create_graph" => tool_create_graph(conn, args),
@@ -890,45 +722,366 @@ fn call_tool(conn: &Connection, data_dir: &Path, name: &str, args: &Value) -> Re
         "create_note" => tool_create_note(conn, &notes, args),
         "update_note" => tool_update_note(conn, &notes, args),
         "delete_note" => tool_delete_note(conn, &notes, args),
-        _ => return Err(format!("未知工具: {}", name)),
-    }?;
-    // 与 Node 版 jsonText 一致：text 为 2 空格缩进的 JSON
-    let text = serde_json::to_string_pretty(&result).unwrap_or_else(|_| "{}".into());
-    Ok(json!({ "content": [{ "type": "text", "text": text }] }))
+        _ => Err(format!("未知工具: {}", name)),
+    }
 }
 
-// ---------------- JSON-RPC 分发 ----------------
+// ---------------- tools/list 定义（rmcp Tool，inputSchema 与历史版本逐字段一致） ----------------
 
-fn handle(conn: &Connection, data_dir: &Path, method: &str, params: &Value) -> Result<Value, String> {
-    match method {
-        "initialize" => {
-            let protocol_version = params
-                .get("protocolVersion")
-                .and_then(|v| v.as_str())
-                .unwrap_or("2024-11-05")
-                .to_string();
-            Ok(json!({
-                "protocolVersion": protocol_version,
-                "capabilities": { "tools": { "listChanged": false } },
-                "serverInfo": { "name": SERVER_NAME, "version": SERVER_VERSION }
-            }))
+/// 把手写的 JSON Schema（json! 对象）转成 rmcp 需要的 Arc<JsonObject>。
+fn tool_def(name: &'static str, description: &'static str, schema: Value) -> Tool {
+    let map = schema.as_object().cloned().unwrap_or_default();
+    Tool::new(name, description, Arc::new(map))
+}
+
+fn tools_meta() -> Vec<Tool> {
+    vec![
+        tool_def(
+            "list_graphs",
+            "列出 Weavex 中的所有项目（任务图）概要，包含名称、创建/更新时间、根节点数等。",
+            json!({ "type": "object", "properties": {} }),
+        ),
+        tool_def(
+            "get_graph",
+            "获取单个项目的完整结构：项目信息、节点列表（含父子关系与完成/关注状态）、根节点树、边（前置/后置依赖）。",
+            json!({
+                "type": "object",
+                "properties": { "graphId": { "type": "string", "description": "项目 ID，来自 list_graphs" } },
+                "required": ["graphId"]
+            }),
+        ),
+        tool_def(
+            "create_graph",
+            "创建一个新的项目（任务图），并返回项目详情。",
+            json!({
+                "type": "object",
+                "properties": { "name": { "type": "string", "description": "项目名称" } },
+                "required": ["name"]
+            }),
+        ),
+        tool_def(
+            "rename_graph",
+            "重命名一个项目（任务图）。",
+            json!({
+                "type": "object",
+                "properties": {
+                    "graphId": { "type": "string" },
+                    "name": { "type": "string", "description": "新的项目名称" }
+                },
+                "required": ["graphId", "name"]
+            }),
+        ),
+        tool_def(
+            "delete_graph",
+            "删除一个项目（任务图）及其全部节点与边。注意：该操作不可恢复，会连带删除所有任务数据。",
+            json!({
+                "type": "object",
+                "properties": { "graphId": { "type": "string" } },
+                "required": ["graphId"]
+            }),
+        ),
+        tool_def(
+            "list_nodes",
+            "列出某个项目下的全部任务节点（扁平的完整列表），含完成、关注、归档、优先级等状态。",
+            json!({
+                "type": "object",
+                "properties": { "graphId": { "type": "string" } },
+                "required": ["graphId"]
+            }),
+        ),
+        tool_def(
+            "get_node",
+            "获取单个任务节点的完整字段。",
+            json!({
+                "type": "object",
+                "properties": {
+                    "graphId": { "type": "string" },
+                    "nodeId": { "type": "string" }
+                },
+                "required": ["graphId", "nodeId"]
+            }),
+        ),
+        tool_def(
+            "create_node",
+            "在项目中创建一个任务节点。不传 parentId 时创建为根任务；传 parentId 时创建为其子任务。",
+            json!({
+                "type": "object",
+                "properties": {
+                    "graphId": { "type": "string" },
+                    "name": { "type": "string", "description": "任务名称" },
+                    "description": { "type": "string", "description": "任务描述" },
+                    "record": { "type": "string", "description": "备注/记录文本" },
+                    "parentId": { "type": "string", "description": "父任务节点 ID（可选，传则创建为子任务）" },
+                    "startAt": { "type": "number", "description": "开始时间（毫秒时间戳，可选）" },
+                    "endAt": { "type": "number", "description": "截止时间（毫秒时间戳，可选）" }
+                },
+                "required": ["graphId", "name"]
+            }),
+        ),
+        tool_def(
+            "update_node",
+            "更新任务节点的字段（只更新传入的字段）：名称、描述、备注、开始/截止时间。",
+            json!({
+                "type": "object",
+                "properties": {
+                    "graphId": { "type": "string" },
+                    "nodeId": { "type": "string" },
+                    "name": { "type": "string" },
+                    "description": { "type": "string" },
+                    "record": { "type": "string" },
+                    "startAt": { "type": "number" },
+                    "endAt": { "type": "number" }
+                },
+                "required": ["graphId", "nodeId"]
+            }),
+        ),
+        tool_def(
+            "delete_node",
+            "删除一个任务节点及其所有后代子节点（连带删除相关依赖边）。注意：不可恢复。",
+            json!({
+                "type": "object",
+                "properties": {
+                    "graphId": { "type": "string" },
+                    "nodeId": { "type": "string" }
+                },
+                "required": ["graphId", "nodeId"]
+            }),
+        ),
+        tool_def(
+            "toggle_node_completed",
+            "切换任务节点的完成状态（完成 ↔ 未完成）。",
+            json!({
+                "type": "object",
+                "properties": {
+                    "graphId": { "type": "string" },
+                    "nodeId": { "type": "string" }
+                },
+                "required": ["graphId", "nodeId"]
+            }),
+        ),
+        tool_def(
+            "toggle_node_followed",
+            "切换任务节点的关注状态（关注 ↔ 取消关注）。",
+            json!({
+                "type": "object",
+                "properties": {
+                    "graphId": { "type": "string" },
+                    "nodeId": { "type": "string" }
+                },
+                "required": ["graphId", "nodeId"]
+            }),
+        ),
+        tool_def(
+            "add_edge",
+            "在两个任务节点之间建立前置/依赖关系：sourceId 是 targetId 的前置节点（target 依赖 source 完成）。",
+            json!({
+                "type": "object",
+                "properties": {
+                    "graphId": { "type": "string" },
+                    "sourceId": { "type": "string", "description": "前置节点 ID" },
+                    "targetId": { "type": "string", "description": "后续节点 ID" }
+                },
+                "required": ["graphId", "sourceId", "targetId"]
+            }),
+        ),
+        tool_def(
+            "remove_edge",
+            "删除两个任务节点之间的前置/依赖关系。",
+            json!({
+                "type": "object",
+                "properties": {
+                    "graphId": { "type": "string" },
+                    "sourceId": { "type": "string" },
+                    "targetId": { "type": "string" }
+                },
+                "required": ["graphId", "sourceId", "targetId"]
+            }),
+        ),
+        tool_def(
+            "list_notes",
+            "列出 Weavex 中的所有笔记元信息（标题、创建/更新时间）。",
+            json!({ "type": "object", "properties": {} }),
+        ),
+        tool_def(
+            "read_note",
+            "读取一篇笔记的正文内容（Markdown 文本）。",
+            json!({
+                "type": "object",
+                "properties": { "noteId": { "type": "string", "description": "笔记 ID，来自 list_notes" } },
+                "required": ["noteId"]
+            }),
+        ),
+        tool_def(
+            "create_note",
+            "创建一篇新笔记。可传 content 直接写入正文（Markdown）。",
+            json!({
+                "type": "object",
+                "properties": {
+                    "title": { "type": "string", "description": "笔记标题" },
+                    "content": { "type": "string", "description": "笔记正文（Markdown），可选" }
+                },
+                "required": ["title"]
+            }),
+        ),
+        tool_def(
+            "update_note",
+            "更新一篇笔记的标题和/或正文。只更新传入的字段。",
+            json!({
+                "type": "object",
+                "properties": {
+                    "noteId": { "type": "string" },
+                    "title": { "type": "string" },
+                    "content": { "type": "string", "description": "新的正文（Markdown）" }
+                },
+                "required": ["noteId"]
+            }),
+        ),
+        tool_def(
+            "delete_note",
+            "删除一篇笔记（连同其正文文件）。注意：不可恢复。",
+            json!({
+                "type": "object",
+                "properties": { "noteId": { "type": "string" } },
+                "required": ["noteId"]
+            }),
+        ),
+    ]
+}
+
+// ---------------- MCP Resources（笔记暴露为 weavex://notes/{id}） ----------------
+
+/// 全部笔记作为 Resource 列出（uri: weavex://notes/{noteId}，MIME: text/markdown）。
+fn note_resources(conn: &Connection) -> Result<Vec<Resource>, String> {
+    let mut stmt = conn
+        .prepare("SELECT id, title FROM notes ORDER BY updated_at DESC")
+        .map_err(|e| e.to_string())?;
+    let rows = stmt
+        .query_map([], |row| {
+            Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?))
+        })
+        .map_err(|e| e.to_string())?;
+    let mut out = Vec::new();
+    for r in rows {
+        let (id, title) = r.map_err(|e| e.to_string())?;
+        out.push(
+            Resource::new(format!("weavex://notes/{}", id), title.clone())
+                .with_title(title)
+                .with_description("Weavex 笔记正文（Markdown）")
+                .with_mime_type("text/markdown"),
+        );
+    }
+    Ok(out)
+}
+
+/// 从 URI 解析笔记 ID；只接受 weavex://notes/{noteId} 形式。
+fn note_id_from_uri(uri: &str) -> Option<String> {
+    let id = uri.strip_prefix("weavex://notes/")?;
+    if id.is_empty() || id.contains('/') {
+        None
+    } else {
+        Some(id.to_string())
+    }
+}
+
+// ---------------- ServerHandler（SDK 接管协议层） ----------------
+
+struct WeavexServer {
+    conn: Arc<Mutex<Connection>>,
+    data_dir: PathBuf,
+}
+
+impl ServerHandler for WeavexServer {
+    fn get_info(&self) -> ServerConfig {
+        ServerConfig::new(
+            ServerCapabilities::builder()
+                .enable_tools()
+                .enable_resources()
+                .build(),
+        )
+        .with_server_info(Implementation::new(SERVER_NAME, SERVER_VERSION))
+    }
+
+    async fn list_tools(
+        &self,
+        _request: Option<PaginatedRequestParams>,
+        _context: RequestContext<RoleServer>,
+    ) -> Result<ListToolsResult, ErrorData> {
+        Ok(ListToolsResult::with_all_items(tools_meta()))
+    }
+
+    async fn list_resources(
+        &self,
+        _request: Option<PaginatedRequestParams>,
+        _context: RequestContext<RoleServer>,
+    ) -> Result<ListResourcesResult, ErrorData> {
+        let conn = self.conn.lock().unwrap_or_else(|e| e.into_inner());
+        match note_resources(&conn) {
+            Ok(items) => Ok(ListResourcesResult::with_all_items(items)),
+            Err(msg) => Err(ErrorData::internal_error(msg, None)),
         }
-        "ping" => Ok(json!({})),
-        "notifications/initialized" => Ok(Value::Null),
-        "tools/list" => Ok(json!({ "tools": tools_list() })),
-        "tools/call" => {
-            let name = params
-                .get("name")
-                .and_then(|n| n.as_str())
-                .ok_or("tools/call 缺少 name")?;
-            let args = params.get("arguments").cloned().unwrap_or_else(|| json!({}));
-            call_tool(conn, data_dir, name, &args)
+    }
+
+    async fn list_resource_templates(
+        &self,
+        _request: Option<PaginatedRequestParams>,
+        _context: RequestContext<RoleServer>,
+    ) -> Result<ListResourceTemplatesResult, ErrorData> {
+        let template = ResourceTemplate::new("weavex://notes/{noteId}", "Weavex 笔记")
+            .with_description("按笔记 ID 读取单篇笔记正文（Markdown）；noteId 来自 resources/list 或 list_notes。")
+            .with_mime_type("text/markdown");
+        Ok(ListResourceTemplatesResult::with_all_items(vec![template]))
+    }
+
+    async fn read_resource(
+        &self,
+        request: ReadResourceRequestParams,
+        _context: RequestContext<RoleServer>,
+    ) -> Result<ReadResourceResponse, ErrorData> {
+        let uri = request.uri;
+        let note_id = match note_id_from_uri(&uri) {
+            Some(id) => id,
+            None => {
+                return Err(ErrorData::resource_not_found(
+                    format!("未知资源: {}", uri),
+                    None,
+                ))
+            }
+        };
+        let conn = self.conn.lock().unwrap_or_else(|e| e.into_inner());
+        let notes = notes_dir(&self.data_dir);
+        match load_note(&conn, &notes, &note_id) {
+            Ok((_title, content)) => Ok(
+                ReadResourceResult::new(vec![ResourceContents::text(content, uri)
+                    .with_mime_type("text/markdown")])
+                .into(),
+            ),
+            Err(msg) => Err(ErrorData::resource_not_found(msg, None)),
         }
-        // 未实现的 MCP 能力：返回空（与 Node SDK 默认一致）
-        "resources/list" => Ok(json!({ "resources": [] })),
-        "prompts/list" => Ok(json!({ "prompts": [] })),
-        "completion/complete" => Ok(json!({ "completion": { "values": [], "hasMore": false } })),
-        _ => Err(format!("未知方法: {}", method)),
+    }
+
+    async fn call_tool(
+        &self,
+        request: CallToolRequestParams,
+        _context: RequestContext<RoleServer>,
+    ) -> Result<CallToolResponse, ErrorData> {
+        let name = request.name.to_string();
+        let args = request
+            .arguments
+            .map(Value::Object)
+            .unwrap_or_else(|| json!({}));
+        // rusqlite::Connection 不是 Sync：用 Mutex 串行化本进程内的数据库访问。
+        // stdio 模式同一时刻只有一个客户端，串行访问不会成为瓶颈；
+        // 跨进程并发由 SQLite 的 busy_timeout 兜底（open_db 已设置）。
+        let conn = self.conn.lock().unwrap_or_else(|e| e.into_inner());
+        match dispatch_tool(&conn, &self.data_dir, &name, &args) {
+            Ok(result) => {
+                // 与历史版本 jsonText 一致：text 为 2 空格缩进的 JSON
+                let text = serde_json::to_string_pretty(&result).unwrap_or_else(|_| "{}".into());
+                Ok(CallToolResult::success(vec![ContentBlock::text(text)]).into())
+            }
+            // 工具运行失败（参数缺失、目标不存在等）：返回 isError 结果，调用方可读消息
+            Err(msg) => Ok(CallToolResult::error(vec![ContentBlock::text(msg)]).into()),
+        }
     }
 }
 
@@ -961,43 +1114,29 @@ pub fn stdio_main() {
         }
     };
 
-    // stdio 主循环：每行一条 JSON-RPC 消息；客户端退出（stdin EOF）即进程结束
-    let stdin = std::io::stdin();
-    let stdout = std::io::stdout();
-    let mut out = stdout.lock();
-    for line in stdin.lock().lines() {
-        let line = match line {
-            Ok(l) => l,
-            Err(_) => break,
-        };
-        let trimmed = line.trim();
-        if trimmed.is_empty() {
-            continue;
+    let server = WeavexServer {
+        conn: Arc::new(Mutex::new(conn)),
+        data_dir,
+    };
+
+    // rmcp 基于 tokio；为 MCP 模式单独启动运行时，不干扰主应用（GUI）路径
+    let rt = match tokio::runtime::Runtime::new() {
+        Ok(rt) => rt,
+        Err(e) => {
+            eprintln!("[weavex-mcp] 启动 tokio 运行时失败: {}", e);
+            std::process::exit(1);
         }
-        let msg: Value = match serde_json::from_str(trimmed) {
-            Ok(v) => v,
-            Err(e) => {
-                eprintln!("[weavex-mcp] 无效 JSON 消息: {}", e);
-                continue;
+    };
+    rt.block_on(async {
+        // stdio 传输：客户端断开（stdin EOF）时 SDK 结束服务循环
+        match server.serve(stdio()).await {
+            Ok(running) => {
+                let _ = running.waiting().await;
             }
-        };
-        let id = msg.get("id").cloned();
-        let method = msg.get("method").and_then(|m| m.as_str()).unwrap_or("").to_string();
-        let params = msg.get("params").cloned().unwrap_or_else(|| json!({}));
-        let result = handle(&conn, &data_dir, &method, &params);
-        if let Some(id) = id {
-            let resp = match result {
-                Ok(r) => json!({ "jsonrpc": "2.0", "id": id, "result": r }),
-                Err(e) => json!({
-                    "jsonrpc": "2.0",
-                    "id": id,
-                    "error": { "code": -32603, "message": e }
-                }),
-            };
-            let s = serde_json::to_string(&resp).unwrap_or_default();
-            let _ = writeln!(out, "{}", s);
-            let _ = out.flush();
+            Err(e) => {
+                eprintln!("[weavex-mcp] MCP 服务启动失败: {}", e);
+                std::process::exit(1);
+            }
         }
-        // notification（无 id）不响应；initialized 等已在上层处理
-    }
+    });
 }

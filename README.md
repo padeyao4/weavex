@@ -31,7 +31,10 @@ Weavex 内置 **MCP（Model Context Protocol）服务**：AI 助手（豆包、C
 ### 架构
 
 - **传输方式**：stdio（标准输入输出上的 JSON-RPC 2.0）
+- **协议层**：基于官方 Rust MCP SDK（[rmcp](https://github.com/modelcontextprotocol/rust-sdk)）——握手、协议版本协商、`tools/list`、`tools/call`、`resources/*` 与标准错误语义（`isError`）由 SDK 接管，不再手写 JSON-RPC；后续协议规范演进由 SDK 跟进
+- **Resources**：笔记同时暴露为 MCP 资源（`weavex://notes/{noteId}`，MIME `text/markdown`）。客户端可 `resources/list` 发现全部笔记、`resources/templates/list` 获取 URI 模板、`resources/read` 直接读取正文，无需先经过工具参数
 - **Filesystem-first**：MCP 服务直接读写应用的本地数据（`weavex.db` SQLite + `notes/*.md` Markdown），与手动操作完全一致；桌面应用运行时，其文件监视器会自动把外部改动同步到界面，无需额外通知机制
+- **并发**：SQLite 开启 **WAL** 模式 + `busy_timeout 5s`——多写者（应用 UI + 多个 MCP 客户端进程）并发下读不阻塞写、写不互斥读，长事务不再卡顿 UI；`-wal`/`-shm` 文件事件由 watcher 的 150ms 防抖合并
 - **入口**：`weavex.exe --mcp-stdio`（Windows 安装版已将该命令加入用户 PATH，新开终端直接可用）
 
 ### 工具清单（19 个）
@@ -86,7 +89,7 @@ node scripts/test-client.mjs C:\weavex-target\release\weavex.exe --mcp-stdio
 ### 环境要求
 
 - Node.js >= 18
-- Rust >= 1.77.2
+- Rust >= 1.88（rmcp 官方 MCP SDK 的最低 Rust 版本要求）
 - npm 或 pnpm
 
 ### 安装与启动

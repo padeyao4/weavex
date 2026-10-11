@@ -11,7 +11,7 @@
 
 - 时间戳均为**毫秒**（`Date.now()` 语义）
 - 节点字段 camelCase：`completed`/`expanded`/`isFollowed`/`isArchive` 为**布尔**（`===1`）；`priority` 为 number 或 null；`parent` 为 string 或 null
-- `get_graph` 返回 `{graph, nodes, roots, edges}`：`nodes` 为带 `children` 的树形扁平数组（按 `priority, created_at` 排序），`roots` 为根节点树，`edges` 为 `{source_id, target_id}`（注意 snake_case）
+- `get_graph` 返回 `{graph, nodes, roots, edges}`：`nodes` 为**扁平数组**（按 `priority, created_at` 排序），每个节点带 `children`（**子节点 ID 数组**，整体 O(N)）；`roots` 为根节点**完整递归树**（`children` 为嵌套节点对象）；`edges` 为 `{source_id, target_id}`（注意 snake_case）
 - 删除类工具不可恢复，调用前与用户确认目标
 
 ## 项目（图）
@@ -53,7 +53,18 @@
 | `update_note` | `noteId`，可选 `title,content` | `{ok,noteId}`；只更新传入字段 |
 | `delete_note` | `noteId` | `{ok,noteId}`（连带正文文件，不可恢复） |
 
+## 资源（MCP Resources）
+
+除工具外，笔记还以标准 MCP 资源暴露，客户端可发现并直接读取正文：
+
+- **URI**：`weavex://notes/{noteId}`，`mimeType` 为 `text/markdown`，正文即笔记的 Markdown 内容
+- `resources/list`：列出全部笔记（`name` 为标题，`description` 为固定说明）
+- `resources/templates/list`：返回 URI 模板 `weavex://notes/{noteId}`
+- `resources/read`：按 URI 读取单篇笔记正文；未知 URI 返回资源不存在错误（`-32002`）
+- `noteId` 与工具 `list_notes` / `read_note` 返回的 `id` 完全一致，可互相引用
+
 ## 错误语义
 
 - 不存在的项目/节点/笔记 → 工具错误，消息形如 `项目不存在: <id>`、`节点不存在: <id>`、`笔记不存在: <id>`
-- 调用入口脚本对错误统一输出 `[mcp]` 前缀或 `工具错误:`，退出码非 0
+- 工具错误按 MCP 标准以 `isError` 结果返回（消息在 `content[0].text`）；协议层错误（如参数格式非法）走 JSON-RPC `error`
+- 调用入口脚本对两类错误统一输出 `[mcp]` 前缀或 `工具错误:`，退出码非 0
